@@ -1,6 +1,6 @@
 from models.user import User
-from models.teacher import Teacher
-from models.employer import Employer
+from models.teacher import Teacher,Reference,WorkHistory
+from models.employer import Employer,RecruitmentHistory
 from models.reviewer import Reviewer
 
 from models.exam import Exam, ExamAttempt

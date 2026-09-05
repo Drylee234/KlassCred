@@ -29,6 +29,20 @@ class Exam(db.Model):
         back_populates="exam",
         cascade="all, delete-orphan"
     )
+    
+    max_attempts = db.Column(db.Integer, nullable=True) # None = unlimited
+
+    @property
+    def attempts_left(self, user_id):
+        if self.max_attempts is None:
+            return float('inf') # Unlimited attempts
+            
+        used_attempts = ExamAttempt.query.filter_by(
+            exam_id=self.id, 
+            user_id=user_id
+        ).count()
+        
+        return max(0, self.max_attempts - used_attempts)
 
 
 class ExamAttempt(db.Model):
