@@ -74,17 +74,11 @@ class Teacher(User):
         cascade="all, delete-orphan"
     )
     
-    work_history=db.relationship(
-        "WorkHistory",
-        back_populates="teacher",
-        cascade="all, delete-orphan"
-    )
-    
-    references = db.relationship(
-        "Reference",
-        back_populates="teacher",
-        cascade="all, delete-orphan"
-    )
+    recruitment_history = db.relationship(
+    "RecruitmentHistory",
+    back_populates="teacher",
+    cascade="all, delete-orphan"
+)
     
 
 

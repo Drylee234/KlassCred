@@ -67,7 +67,7 @@ class RecruitmentHistory(db.Model):
     )
 
     status = db.Column(
-        db.String(30),
+        db.Enum("active","suspended","terminated"),
         nullable=False,
         default="active"
     )

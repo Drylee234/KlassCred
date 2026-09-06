@@ -69,8 +69,8 @@ class VideoSubmission(db.Model):
     )
 
     status = db.Column(
-        db.Enum("uploaded","Reviewed","Accepted"),
-        default="pending"
+        db.Enum("uploaded","reviewed","accepted"),
+        default="uploaded"
     )
 
     teacher = db.relationship(

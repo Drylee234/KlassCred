@@ -24,7 +24,7 @@ class ReviewAssignment(db.Model):
     )
 
     status = db.Column(
-        db.String(30),
+        db.Enum("pending","assigned","completed"),
         nullable=False,
         default="assigned"
     )
@@ -72,7 +72,7 @@ class Review(db.Model):
     )
 
     reviewer_type = db.Column(
-        db.String(20),
+        db.Enum("ai","human"),
         nullable=False
     )
 
