@@ -4,6 +4,11 @@ from models.user import User
 
 class Reviewer(User):
     __tablename__ = "reviewer"
+    
+    __mapper_args__ = {
+        "polymorphic_identity": "reviewer",
+    }
+
 
     review_assignments = db.relationship(
         "ReviewAssignment",
@@ -11,7 +16,7 @@ class Reviewer(User):
         cascade="all, delete-orphan"
     )
 
-    reviews = db.relationship(
+    reviews = db.relationship( 
         "Review",
         back_populates="reviewer"
     )

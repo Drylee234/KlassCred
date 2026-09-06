@@ -5,6 +5,11 @@ from sqlalchemy import CheckConstraint
 
 class Teacher(User):
     __tablename__ = "teacher"
+    
+    __mapper_args__ = {
+        "polymorphic_identity": "teacher",
+    }
+
 
     full_name = db.Column(
         db.String(100),
@@ -17,12 +22,6 @@ class Teacher(User):
 
     experience_years = db.Column(
         db.Integer
-    )
-
-    id_verified = db.Column(
-        db.Boolean,
-        nullable=False,
-        default=False
     )
 
     profile_complete = db.Column(
