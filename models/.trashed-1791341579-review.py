@@ -23,10 +23,8 @@ class ReviewAssignment(db.Model):
         index=True
     )
 
-    # FIX: removed dead "pending" value — assignment is active the moment it's created
     status = db.Column(
-        db.Enum("assigned", "in_progress", "completed", "cancelled",
-                name="assignment_status"),
+        db.Enum("pending","assigned","completed"),
         nullable=False,
         default="assigned"
     )
@@ -74,7 +72,7 @@ class Review(db.Model):
     )
 
     reviewer_type = db.Column(
-        db.Enum("ai", "human"),
+        db.Enum("ai","human"),
         nullable=False
     )
 

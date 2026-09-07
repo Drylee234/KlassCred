@@ -1,14 +1,14 @@
 from extensions import db
 from models.user import User
 
-
 class Employer(User):
     __tablename__ = "employer"
 
     id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key=True)
+    type = db.Column(db.String(50))
 
-    # FIX: removed duplicate `type` column and `polymorphic_on` — those belong on User only
     __mapper_args__ = {
+        "polymorphic_on": type,
         "polymorphic_identity": "employer",
     }
 
@@ -17,7 +17,7 @@ class Employer(User):
         back_populates="employer",
         cascade="all, delete-orphan"
     )
-
+    
     recruitment_history = db.relationship(
         "RecruitmentHistory",
         back_populates="employer",
@@ -82,11 +82,5 @@ class RecruitmentHistory(db.Model):
 
     employer = db.relationship(
         "Employer",
-        back_populates="recruitment_history"
-    )
-
-    # FIX: was missing — Teacher declares back_populates="teacher" on its side
-    teacher = db.relationship(
-        "Teacher",
         back_populates="recruitment_history"
     )

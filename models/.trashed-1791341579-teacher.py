@@ -5,12 +5,11 @@ from sqlalchemy import CheckConstraint
 
 class Teacher(User):
     __tablename__ = "teacher"
-
-    id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key=True)  # FIX: was missing
-
+    
     __mapper_args__ = {
         "polymorphic_identity": "teacher",
     }
+
 
     full_name = db.Column(
         db.String(100),
@@ -19,7 +18,7 @@ class Teacher(User):
 
     subjects = db.Column(
         db.JSON,
-        nullable=False
+        nullable = False
     )
 
     experience_years = db.Column(
@@ -33,30 +32,35 @@ class Teacher(User):
         default=False
     )
 
+    # Teacher → WorkHistory
     work_history = db.relationship(
         "WorkHistory",
         back_populates="teacher",
         cascade="all, delete-orphan"
     )
 
+    # Teacher → Reference
     references = db.relationship(
         "Reference",
         back_populates="teacher",
         cascade="all, delete-orphan"
     )
 
+    # Teacher → ExamAttempt
     exam_attempts = db.relationship(
         "ExamAttempt",
         back_populates="teacher",
         cascade="all, delete-orphan"
     )
 
+    # Teacher → VideoSubmission
     video_submissions = db.relationship(
         "VideoSubmission",
         back_populates="teacher",
         cascade="all, delete-orphan"
     )
 
+    # Teacher → Rating
     rating = db.relationship(
         "Rating",
         back_populates="teacher",
@@ -64,17 +68,13 @@ class Teacher(User):
         cascade="all, delete-orphan"
     )
 
+    # Teacher → InterviewRequest
     interview_requests = db.relationship(
         "InterviewRequest",
         back_populates="teacher",
         cascade="all, delete-orphan"
     )
-
-    recruitment_history = db.relationship(
-        "RecruitmentHistory",
-        back_populates="teacher"
-    )
-
+    
 
 class Reference(db.Model):
     __tablename__ = "reference"
@@ -113,23 +113,23 @@ class Reference(db.Model):
 
     relationship_type = db.Column(
         db.String(100),
-        nullable=False
+        nullable = False
     )
 
     teacher = db.relationship(
         "Teacher",
         back_populates="references"
     )
+    
+
 
 
 class WorkHistory(db.Model):
     __tablename__ = "work_history"
-
+    
     __table_args__ = (
-        CheckConstraint(
-            'end_date IS NULL OR end_date >= start_date',
-            name='check_end_date_after_start_date'
-        ),
+        # Ensures end_date is on or after start_date if end_date is provided
+        CheckConstraint('end_date IS NULL OR end_date >= start_date', name='check_end_date_after_start_date'),
     )
 
     id = db.Column(
@@ -156,7 +156,7 @@ class WorkHistory(db.Model):
 
     start_date = db.Column(
         db.Date,
-        nullable=False
+        nullable=False,
     )
 
     end_date = db.Column(

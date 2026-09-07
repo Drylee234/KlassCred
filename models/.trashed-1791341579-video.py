@@ -25,7 +25,7 @@ class TeachingScenario(db.Model):
     )
 
     generated_by = db.Column(
-        db.Enum("ai", "bank"),
+        db.Enum("ai","bank"),
         nullable=False
     )
 
@@ -70,15 +70,13 @@ class VideoSubmission(db.Model):
 
     status = db.Column(
         db.Enum(
+            "pending",
             "uploaded",
             "ai_reviewed",
-            "assigned",
-            "in_progress",
+            "human_review",
             "completed",
-            "failed",
-            name="video_status"
+            "failed"
         ),
-        nullable=False,
         default="uploaded"
     )
 

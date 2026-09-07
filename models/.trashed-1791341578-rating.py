@@ -17,10 +17,21 @@ class Rating(db.Model):
         index=True
     )
 
-    exam_score = db.Column(db.Float)
-    video_score = db.Column(db.Float)
-    reference_score = db.Column(db.Float)
-    profile_score = db.Column(db.Float)
+    exam_score = db.Column(
+        db.Float
+    )
+
+    video_score = db.Column(
+        db.Float
+    )
+
+    reference_score = db.Column(
+        db.Float
+    )
+
+    profile_score = db.Column(
+        db.Float
+    )
 
     composite = db.Column(
         db.Float,
@@ -33,9 +44,13 @@ class Rating(db.Model):
         default=False
     )
 
-    override_reason = db.Column(db.Text)
+    override_reason = db.Column(
+        db.Text
+    )
 
-    breakdown = db.Column(db.JSON)
+    breakdown = db.Column(
+        db.JSON
+    )
 
     updated_at = db.Column(
         db.DateTime,

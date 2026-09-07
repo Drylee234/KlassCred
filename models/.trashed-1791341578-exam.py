@@ -23,26 +23,27 @@ class Exam(db.Model):
         db.Integer,
         nullable=False
     )
-
+    
     max_attempts = db.Column(
         db.Integer
-    )
+    ) 
+
 
     attempts = db.relationship(
         "ExamAttempt",
         back_populates="exam",
         cascade="all, delete-orphan"
     )
-
+    
     def attempts_left(self, teacher_id):
         if self.max_attempts is None:
-            return float('inf')
-
+            return float('inf') # Unlimited attempts
+            
         used_attempts = ExamAttempt.query.filter_by(
-            exam_id=self.id,
+            exam_id=self.id, 
             teacher_id=teacher_id
         ).count()
-
+        
         return max(0, self.max_attempts - used_attempts)
 
 

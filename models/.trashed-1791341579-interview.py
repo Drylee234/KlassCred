@@ -29,7 +29,7 @@ class InterviewRequest(db.Model):
     )
 
     status = db.Column(
-        db.Enum("pending", "accepted", "rejected"),
+        db.Enum("pending","accepted","rejected"),
         nullable=False,
         default="pending"
     )
@@ -38,7 +38,7 @@ class InterviewRequest(db.Model):
         db.DateTime,
         server_default=db.func.now()
     )
-
+    
     updated_at = db.Column(
         db.DateTime
     )
@@ -52,3 +52,4 @@ class InterviewRequest(db.Model):
         "Teacher",
         back_populates="interview_requests"
     )
+    
