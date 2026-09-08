@@ -1,5 +1,6 @@
-flask
+flaskflask-sqlalchemyflask-migrategunicornmarshmallowpsycopg2-binaryflask
 flask-sqlalchemy
 flask-migrate
 gunicorn
 marshmallow
+psycopg2-binary
