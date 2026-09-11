@@ -1,5 +1,5 @@
 from flask import Flask
-from extensions import db, migrate
+from extensions import db, migrate, init_cloudinary
 from config import Config
 
 def create_app():
@@ -8,14 +8,15 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
+    init_cloudinary(app)
 
-    import models  
+    import models
 
     @app.get("/")
     def health():
         return {"status": "ok"}
 
     return app
-
+    
 app = create_app()
 
