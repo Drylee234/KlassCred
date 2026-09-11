@@ -32,6 +32,8 @@ class Teacher(User):
         nullable=False,
         default=False
     )
+    
+    documents = db.Column(db.JSON)
 
     work_history = db.relationship(
         "WorkHistory",

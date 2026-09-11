@@ -41,6 +41,10 @@ class TeacherSchema(Schema):
 
     id_verified = fields.Bool(dump_only=True)
     profile_complete = fields.Bool(dump_only=True)
+    documents = fields.Dict(
+        allow_none=True,
+        load_default=None
+    )
 
     work_history = fields.List(
         fields.Nested(WorkHistorySchema),

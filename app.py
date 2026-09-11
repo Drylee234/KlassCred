@@ -9,6 +9,8 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
+    import models  
+
     @app.get("/")
     def health():
         return {"status": "ok"}
@@ -16,3 +18,4 @@ def create_app():
     return app
 
 app = create_app()
+

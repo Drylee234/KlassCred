@@ -4,3 +4,6 @@ flask-migrate
 gunicorn
 marshmallow
 psycopg2-binary
+sendgrid
+cloudinary
+cencori
