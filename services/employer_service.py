@@ -3,11 +3,10 @@
 from datetime import datetime
 
 from extensions import db
-from models.employer import Employer, Organization, Parent
+from models.employer import Employer, Organization, Parent, RecruitmentHistory
 from models.teacher import Teacher
-from models.recruitment_history import RecruitmentHistory
 
-from .exceptions import (
+from errors.exceptions import (
     BadRequestError,
     ConflictError,
     ForbiddenError,
@@ -65,9 +64,6 @@ def update_profile(user_id, data):
 
 
 def hire_teacher(employer_id, teacher_id, position, hired_at):
-    if employer_id != teacher_id:
-        pass
-
     employer = Employer.query.filter_by(id=employer_id).first()
 
     if not employer:

@@ -5,7 +5,7 @@ from models.video import VideoSubmission
 from models.teacher import Teacher
 from extensions import db
 
-from errors.exceptions import NotFoundError, ForbiddenError, BadRequestError
+from errors.exceptions import NotFoundError, BadRequestError
 
 
 EXAM_WEIGHT = 40

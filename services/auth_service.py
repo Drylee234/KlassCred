@@ -12,6 +12,8 @@ from models.reviewer import Reviewer
 
 from flask import current_app
 
+from errors.exceptions import BadRequestError, ConflictError, UnauthorizedError
+
 
 def register(email, password, type, **kwargs):
     """

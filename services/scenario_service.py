@@ -4,6 +4,7 @@ from models.video import TeachingScenario, VideoSubmission
 from models.teacher import Teacher
 from api import cencori
 from extensions import db
+from errors.exceptions import BadRequestError
 
 
 def get_scenario_for_teacher(teacher):
@@ -34,6 +35,9 @@ def get_scenario_for_teacher(teacher):
 
 
 def generate_scenario(teacher):
+    if not teacher.subjects:
+        raise BadRequestError("Teacher has no subjects assigned")
+
     target_level = "secondary"
 
     # Cencori integration is not implemented yet.

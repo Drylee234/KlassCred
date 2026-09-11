@@ -2,24 +2,24 @@ from datetime import datetime
 
 from models.video import VideoSubmission
 from models.review import Review, ReviewAssignment
-from reviewer_service import reviewer_service
-from services import rating_service
+from services import reviewer_service, rating_service
 from extensions import db
+from errors.exceptions import NotFoundError, BadRequestError
 
 
 def run_ai_review(video_id):
     submission = VideoSubmission.query.get(video_id)
 
     if not submission:
-        raise LookupError("Video submission not found")
+        raise NotFoundError("Video submission not found")
 
     if submission.status != "uploaded":
-        raise ValueError("Video submission is not ready for AI review")
+        raise BadRequestError("Video submission is not ready for AI review")
 
     scenario = submission.scenario
 
     if not scenario:
-        raise LookupError("Teaching scenario not found")
+        raise NotFoundError("Teaching scenario not found")
 
     # Cencori integration is not implemented yet.
     pass
@@ -59,10 +59,10 @@ def assign_human_reviewer(video_id):
     submission = VideoSubmission.query.get(video_id)
 
     if not submission:
-        raise LookupError("Video submission not found")
+        raise NotFoundError("Video submission not found")
 
     if submission.status != "ai_reviewed":
-        raise ValueError("Video submission is not ready for human assignment")
+        raise BadRequestError("Video submission is not ready for human assignment")
 
     ai_review = (
         Review.query
@@ -74,7 +74,7 @@ def assign_human_reviewer(video_id):
     )
 
     if not ai_review:
-        raise LookupError("AI review not found")
+        raise NotFoundError("AI review not found")
 
     reviewer = reviewer_service.get_least_loaded_reviewer()
 

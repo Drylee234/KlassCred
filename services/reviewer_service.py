@@ -1,5 +1,6 @@
 from models.reviewer import Reviewer
 from models.review import ReviewAssignment
+from errors.exceptions import NotFoundError
 
 
 def get_workload(reviewer_id):
@@ -17,7 +18,7 @@ def get_least_loaded_reviewer():
     reviewers = Reviewer.query.all()
 
     if not reviewers:
-        raise LookupError("No reviewers available")
+        raise NotFoundError("No reviewers available")
 
     reviewer_workloads = []
 

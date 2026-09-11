@@ -3,6 +3,7 @@ from datetime import datetime
 from models.video import VideoSubmission, TeachingScenario
 from services import review_service
 from extensions import db
+from errors.exceptions import NotFoundError
 
 
 def request_upload_url(teacher_id, scenario_id):
@@ -10,7 +11,7 @@ def request_upload_url(teacher_id, scenario_id):
     scenario = TeachingScenario.query.get(scenario_id)
 
     if not scenario:
-        raise LookupError("Teaching scenario not found")
+        raise NotFoundError("Teaching scenario not found")
 
     # Cloudinary integration is not implemented yet.
     pass
@@ -29,7 +30,7 @@ def confirm_upload(teacher_id, scenario_id, video_url):
     scenario = TeachingScenario.query.get(scenario_id)
 
     if not scenario:
-        raise LookupError("Teaching scenario not found")
+        raise NotFoundError("Teaching scenario not found")
 
     existing = (
         VideoSubmission.query

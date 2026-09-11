@@ -3,7 +3,7 @@
 from models.teacher import Teacher, WorkHistory, Reference
 from extensions import db
 
-from .exceptions import (
+from errors.exceptions import (
     BadRequestError,
     ConflictError,
     ForbiddenError,
@@ -36,9 +36,6 @@ def update_profile(user_id, data):
 
     if not teacher:
         raise NotFoundError("Teacher profile not found.")
-
-    if teacher.id != user_id:
-        raise ForbiddenError("You do not own this profile.")
 
     allowed_fields = {
         "full_name",
@@ -74,9 +71,6 @@ def add_work_history(user_id, data):
 
     if not teacher:
         raise NotFoundError("Teacher profile not found.")
-
-    if teacher.id != user_id:
-        raise ForbiddenError("You do not own this profile.")
 
     start_date = data["start_date"]
     end_date = data.get("end_date")
@@ -130,9 +124,6 @@ def add_reference(user_id, data):
 
     if not teacher:
         raise NotFoundError("Teacher profile not found.")
-
-    if teacher.id != user_id:
-        raise ForbiddenError("You do not own this profile.")
 
     record = Reference(
         teacher_id=user_id,

@@ -5,13 +5,13 @@ from datetime import datetime
 from extensions import db
 from models.exam import Exam, ExamAttempt
 
-from .exceptions import (
+from errors.exceptions import (
     BadRequestError,
     ForbiddenError,
     NotFoundError,
     ConflictError,
 )
-from . import rating_service
+from services import rating_service
 
 
 def get_available_exams(teacher_id):
@@ -110,6 +110,6 @@ def submit_exam(teacher_id, attempt_id, answers):
 
     db.session.commit()
 
-    rating_service.recompute(teacher_id)
+    rating_service.recompute_rating(teacher_id)
 
     return attempt
