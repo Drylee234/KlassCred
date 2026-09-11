@@ -1,53 +1,151 @@
-from models.reviewer import Reviewer
-from models.review import ReviewAssignment
-from errors.exceptions import NotFoundError
+from datetime import datetime
+
+from models.video import VideoSubmission
+from models.review import Review, ReviewAssignment
+from services import reviewer_service, rating_service
+from extensions import db
+from errors.exceptions import NotFoundError, BadRequestError, ForbiddenError
 
 
-def get_workload(reviewer_id):
-    return (
-        ReviewAssignment.query
+def run_ai_review(video_id):
+    submission = VideoSubmission.query.get(video_id)
+
+    if not submission:
+        raise NotFoundError("Video submission not found")
+
+    if submission.status != "uploaded":
+        raise BadRequestError("Video submission is not ready for AI review")
+
+    scenario = submission.scenario
+
+    if not scenario:
+        raise NotFoundError("Teaching scenario not found")
+
+    # Cencori integration is not implemented yet.
+    pass
+
+    # Expected normalized result from the Cencori adapter:
+    # {
+    #     "score": ...,
+    #     "notes": ...,
+    #     "flagged": ...,
+    #     "flag_reason": ...
+    # }
+
+    review = Review(
+        video_id=video_id,
+        reviewer_id=None,
+        reviewer_type="ai",
+        score=result["score"],
+        notes=result["notes"],
+        flagged=result["flagged"],
+        flag_reason=result.get("flag_reason"),
+    )
+
+    submission.status = "ai_reviewed"
+
+    db.session.add(review)
+    db.session.commit()
+
+    assignment = assign_human_reviewer(video_id)
+
+    return {
+        "review": review,
+        "assignment": assignment,
+    }
+
+
+def assign_human_reviewer(video_id):
+    submission = VideoSubmission.query.get(video_id)
+
+    if not submission:
+        raise NotFoundError("Video submission not found")
+
+    if submission.status != "ai_reviewed":
+        raise BadRequestError("Video submission is not ready for human assignment")
+
+    ai_review = (
+        Review.query
         .filter(
-            ReviewAssignment.reviewer_id == reviewer_id,
-            ReviewAssignment.status.in_(["assigned", "in_progress"])
+            Review.video_id == video_id,
+            Review.reviewer_type == "ai",
         )
-        .count()
+        .first()
     )
 
+    if not ai_review:
+        raise NotFoundError("AI review not found")
 
-def get_least_loaded_reviewer():
-    reviewers = Reviewer.query.all()
+    reviewer = reviewer_service.get_least_loaded_reviewer()
 
-    if not reviewers:
-        raise NotFoundError("No reviewers available")
-
-    reviewer_workloads = []
-
-    for reviewer in reviewers:
-        workload = get_workload(reviewer.id)
-
-        most_recent_assignment = (
-            ReviewAssignment.query
-            .filter_by(reviewer_id=reviewer.id)
-            .order_by(ReviewAssignment.assigned_at.desc())
-            .first()
-        )
-
-        reviewer_workloads.append(
-            (
-                reviewer,
-                workload,
-                most_recent_assignment.assigned_at
-                if most_recent_assignment
-                else None,
-            )
-        )
-
-    reviewer_workloads.sort(
-        key=lambda item: (
-            item[1],
-            item[2] is not None,
-            item[2] if item[2] is not None else 0,
-        )
+    assignment = ReviewAssignment(
+        video_id=video_id,
+        reviewer_id=reviewer.id,
+        status="assigned",
     )
 
-    return reviewer_workloads[0][0]
+    submission.status = "assigned"
+
+    db.session.add(assignment)
+    db.session.commit()
+
+    return assignment
+
+
+def get_assignments_for_reviewer(reviewer_id, status_filter=None):
+    query = ReviewAssignment.query.filter_by(
+        reviewer_id=reviewer_id,
+    )
+
+    if status_filter is not None:
+        if status_filter not in ("assigned", "in_progress", "completed", "cancelled"):
+            raise BadRequestError("Invalid status filter")
+
+        query = query.filter(
+            ReviewAssignment.status == status_filter
+        )
+
+    return query.order_by(ReviewAssignment.assigned_at.desc()).all()
+
+
+def submit_human_review(reviewer_id, assignment_id, data):
+    assignment = ReviewAssignment.query.get(assignment_id)
+
+    if not assignment:
+        raise NotFoundError("Assignment not found")
+
+    if assignment.reviewer_id != reviewer_id:
+        raise ForbiddenError("You do not own this assignment")
+
+    if assignment.status == "completed":
+        raise BadRequestError("Assignment is already completed")
+
+    if assignment.status == "cancelled":
+        raise BadRequestError("Assignment has been cancelled")
+
+    submission = VideoSubmission.query.get(assignment.video_id)
+
+    if not submission:
+        raise NotFoundError("Video submission not found")
+
+    review = Review(
+        video_id=assignment.video_id,
+        reviewer_id=reviewer_id,
+        reviewer_type="human",
+        score=data["score"],
+        notes=data.get("notes"),
+        flagged=data["flagged"],
+        flag_reason=data.get("flag_reason"),
+    )
+
+    assignment.status = "completed"
+    assignment.completed_at = datetime.utcnow()
+
+    submission.status = "completed"
+
+    db.session.add(review)
+    db.session.commit()
+
+    rating_service.recompute_rating(submission.teacher_id)
+
+    return review

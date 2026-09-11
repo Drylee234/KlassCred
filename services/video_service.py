@@ -4,6 +4,7 @@ from models.video import VideoSubmission, TeachingScenario
 from services import review_service
 from extensions import db
 from errors.exceptions import NotFoundError
+from api import cloudinary as cloudinary_api
 
 
 def request_upload_url(teacher_id, scenario_id):
