@@ -1,8 +1,6 @@
-from flask import Flask, send_from_directory
-
-from extensions import db, migrate, bcrypt, init_cloudinary
+from flask import Flask
+from extensions import db, migrate, init_cloudinary
 from config import Config
-from errors.handlers import register_error_handlers
 
 
 def create_app():
@@ -11,7 +9,6 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
-    bcrypt.init_app(app)
     init_cloudinary(app)
 
     import models
@@ -30,15 +27,12 @@ def create_app():
     app.register_blueprint(verification_bp)
     app.register_blueprint(webhooks_bp)
 
+    from errors.handlers import register_error_handlers
     register_error_handlers(app)
 
     @app.get("/")
     def health():
         return {"status": "ok"}
-
-    @app.get("/test-ui")
-    def test_ui():
-        return send_from_directory("static", "index.html")
 
     return app
 
