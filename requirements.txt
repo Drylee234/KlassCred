@@ -7,3 +7,4 @@ psycopg2-binary
 sendgrid
 cloudinary
 cencori
+flask_bcyrpt
