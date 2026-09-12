@@ -1,4 +1,6 @@
+webhooks
 flask
+flask_login
 flask-sqlalchemy
 flask-migrate
 gunicorn
@@ -7,4 +9,5 @@ psycopg2-binary
 sendgrid
 cloudinary
 cencori
-flask_bcyrpt
+flask_bcrypt
+jwt

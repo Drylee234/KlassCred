@@ -3,6 +3,7 @@ from extensions import db, migrate, init_cloudinary
 from config import Config
 
 
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
