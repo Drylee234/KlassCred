@@ -9,3 +9,4 @@ sendgrid
 cloudinary
 cencori
 flask_bcrypt
+jwt
