@@ -35,6 +35,11 @@ def create_app():
     def health():
         return {"status": "ok"}
 
+    @app.get("/test")
+    def test_ui():
+        return send_from_directory("static", "index.html")
+
+
     return app
 
 
