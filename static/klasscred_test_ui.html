@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VerifyTeach — Test UI</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
+    --border: #2e3250; --accent: #5b7cfa; --accent2: #3eccb6;
+    --danger: #e05c6a; --warn: #f0a500; --text: #e4e6f1; --muted: #7a7f9a;
+    --radius: 8px; --mono: "Courier New", monospace;
+  }
+  body { background:var(--bg); color:var(--text); font-family:system-ui,sans-serif; font-size:14px; display:flex; min-height:100vh; }
+
+  /* Sidebar */
+  #sidebar { width:230px; min-width:230px; background:var(--surface); border-right:1px solid var(--border); padding:16px 0; overflow-y:auto; position:sticky; top:0; height:100vh; }
+  #sidebar h1 { font-size:15px; font-weight:700; padding:0 16px 12px; border-bottom:1px solid var(--border); color:var(--accent); }
+  .nav-group { padding:10px 0 4px; }
+  .nav-label { font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--muted); padding:0 16px 4px; display:block; }
+  .nav-item { display:block; padding:7px 16px; color:var(--text); cursor:pointer; border-left:3px solid transparent; font-size:13px; }
+  .nav-item:hover { background:var(--surface2); }
+  .nav-item.active { border-left-color:var(--accent); color:var(--accent); background:var(--surface2); }
+
+  /* Main */
+  #main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  #topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:10px 24px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  #topbar label { font-size:11px; color:var(--muted); display:block; margin-bottom:3px; }
+  #topbar input { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:var(--radius); font-size:13px; width:300px; }
+  #token-status { font-size:12px; padding:3px 10px; border-radius:20px; background:var(--surface2); border:1px solid var(--border); white-space:nowrap; }
+  #token-status.ok { border-color:var(--accent2); color:var(--accent2); }
+
+  #content { flex:1; overflow-y:auto; padding:24px; display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+
+  /* Panels */
+  .panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; width:100%; max-width:540px; }
+  .panel h2 { font-size:14px; font-weight:700; margin-bottom:14px; color:var(--accent); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .badge { font-size:10px; padding:2px 7px; border-radius:20px; background:var(--surface2); color:var(--muted); font-weight:600; letter-spacing:0.4px; font-family:var(--mono); }
+  .hint { font-size:11px; color:var(--muted); margin:-6px 0 10px; }
+
+  .field { margin-bottom:11px; }
+  .field label { display:block; font-size:11px; color:var(--muted); margin-bottom:4px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+  .field input, .field select, .field textarea { width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:7px 10px; border-radius:var(--radius); font-size:13px; font-family:inherit; }
+  .field textarea { resize:vertical; min-height:60px; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline:none; border-color:var(--accent); }
+
+  .btn-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+  button { padding:7px 14px; border:none; border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; transition:opacity 0.15s; }
+  button:hover { opacity:0.85; }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-success { background:var(--accent2); color:#0f1117; }
+  .btn-danger  { background:var(--danger); color:#fff; }
+  .btn-warn    { background:var(--warn); color:#0f1117; }
+  .btn-ghost   { background:transparent; color:var(--text); border:1px solid var(--border); }
+
+  .response-box { margin-top:12px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); padding:12px; font-family:var(--mono); font-size:12px; white-space:pre-wrap; word-break:break-word; max-height:260px; overflow-y:auto; color:var(--accent2); display:none; }
+  .response-box.visible { display:block; }
+  .response-box.error { color:var(--danger); }
+
+  .section { display:none; flex-wrap:wrap; gap:24px; }
+  .section.active { display:flex; }
+
+  .divider { height:1px; background:var(--border); margin:12px 0; }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <h1>VerifyTeach Test UI</h1>
+
+  <div class="nav-group">
+    <span class="nav-label">Auth</span>
+    <div class="nav-item active" onclick="show('auth')">Register / Login</div>
+    <div class="nav-item" onclick="show('auth-misc')">Change Password</div>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-label">Teacher</span>
+    <div class="nav-item" onclick="show('t-profile')">Profile</div>
+    <div class="nav-item" onclick="show('t-work')">Work History</div>
+    <div class="nav-item" onclick="show('t-refs')">References</div>
+    <div class="nav-item" onclick="show('t-exam')">Exams</div>
+    <div class="nav-item" onclick="show('t-video')">Scenario & Video</div>
+    <div class="nav-item" onclick="show('t-interview')">Interviews</div>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-label">Employer</span>
+    <div class="nav-item" onclick="show('e-profile')">Profile</div>
+    <div class="nav-item" onclick="show('e-search')">Search Teachers</div>
+    <div class="nav-item" onclick="show('e-recruit')">Recruitment</div>
+    <div class="nav-item" onclick="show('e-interview')">Interviews</div>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-label">Reviewer</span>
+    <div class="nav-item" onclick="show('rv-assignments')">Assignments</div>
+    <div class="nav-item" onclick="show('rv-override')">Rating Override</div>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-label">Verification</span>
+    <div class="nav-item" onclick="show('verify')">Verify Users</div>
+  </div>
+</nav>
+
+<div id="main">
+  <div id="topbar">
+    <div>
+      <label>JWT Token (auto-filled on login)</label>
+      <input id="jwt-token" placeholder="eyJ...">
+    </div>
+    <span id="token-status">No token</span>
+    <button class="btn-ghost" style="font-size:12px;padding:5px 10px" onclick="clearToken()">Clear Token</button>
+  </div>
+
+  <div id="content">
+
+    <!-- ══════════════ AUTH ══════════════ -->
+    <div id="section-auth" class="section active">
+
+      <div class="panel">
+        <h2>Register <span class="badge">POST /auth/register</span></h2>
+        <div class="field"><label>Email</label><input id="reg-email" type="email" placeholder="teacher@example.com"></div>
+        <div class="field"><label>Password</label><input id="reg-password" type="password" placeholder="securepassword"></div>
+        <div class="field">
+          <label>Type</label>
+          <select id="reg-type">
+            <option value="teacher">teacher</option>
+            <option value="organization">organization</option>
+            <option value="parent">parent</option>
+            <option value="reviewer">reviewer</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="api('POST','/auth/register',{email:v('reg-email'),password:v('reg-password'),type:v('reg-type')},false,'reg-res')">Register</button>
+        </div>
+        <div class="response-box" id="reg-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Login <span class="badge">POST /auth/login</span></h2>
+        <div class="field"><label>Email</label><input id="login-email" type="email" placeholder="teacher@example.com"></div>
+        <div class="field"><label>Password</label><input id="login-password" type="password" placeholder="securepassword"></div>
+        <div class="btn-row">
+          <button class="btn-success" onclick="doLogin()">Login &amp; Save Token</button>
+        </div>
+        <div class="response-box" id="login-res"></div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════ AUTH MISC ══════════════ -->
+    <div id="section-auth-misc" class="section">
+      <div class="panel">
+        <h2>Change Password <span class="badge">POST /auth/change-password</span></h2>
+        <p class="hint">Any authenticated user.</p>
+        <div class="field"><label>Old Password</label><input id="cp-old" type="password"></div>
+        <div class="field"><label>New Password</label><input id="cp-new" type="password"></div>
+        <div class="btn-row">
+          <button class="btn-warn" onclick="api('POST','/auth/change-password',{old_password:v('cp-old'),new_password:v('cp-new')},true,'cp-res')">Change Password</button>
+        </div>
+        <div class="response-box" id="cp-res"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════ TEACHER PROFILE ══════════════ -->
+    <div id="section-t-profile" class="section">
+
+      <div class="panel">
+        <h2>Create Profile <span class="badge">POST /teachers/profile</span></h2>
+        <div class="field"><label>Full Name</label><input id="tp-name" placeholder="Jane Doe"></div>
+        <div class="field"><label>Subjects (comma-separated)</label><input id="tp-subjects" placeholder="Mathematics, Physics"></div>
+        <div class="field"><label>Experience Years</label><input id="tp-exp" type="number" min="0" value="3"></div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="api('POST','/teachers/profile',{full_name:v('tp-name'),subjects:csv('tp-subjects'),experience_years:int('tp-exp')},true,'tp-c-res')">Create Profile</button>
+        </div>
+        <div class="response-box" id="tp-c-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Update Profile <span class="badge">PUT /teachers/profile</span></h2>
+        <p class="hint">Only send fields you want to change.</p>
+        <div class="field"><label>Full Name</label><input id="tp-u-name" placeholder="Jane Doe"></div>
+        <div class="field"><label>Subjects (comma-separated)</label><input id="tp-u-subjects" placeholder="Mathematics, Physics"></div>
+        <div class="field"><label>Experience Years</label><input id="tp-u-exp" type="number" min="0"></div>
+        <div class="field"><label>Documents (JSON, optional)</label><textarea id="tp-u-docs" placeholder='{"nin_slip":"https://...","cert":"https://..."}'></textarea></div>
+        <div class="btn-row">
+          <button class="btn-warn" onclick="updateTeacherProfile()">Update Profile</button>
+        </div>
+        <div class="response-box" id="tp-u-res"></div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════ WORK HISTORY ══════════════ -->
+    <div id="section-t-work" class="section">
+
+      <div class="panel">
+        <h2>Add Work History <span class="badge">POST /teachers/profile/work-history</span></h2>
+        <div class="field"><label>Organization</label><input id="wh-org" placeholder="Bright Future Academy"></div>
+        <div class="field"><label>Role</label><input id="wh-role" placeholder="Mathematics Teacher"></div>
+        <div class="field"><label>Start Date</label><input id="wh-start" type="date"></div>
+        <div class="field"><label>End Date (leave blank if current)</label><input id="wh-end" type="date"></div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="addWorkHistory()">Add</button>
+        </div>
+        <div class="response-box" id="wh-add-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Delete Work History <span class="badge">DELETE /teachers/profile/work-history/:id</span></h2>
+        <div class="field"><label>Work History ID</label><input id="wh-del-id" type="number" placeholder="1"></div>
+        <div class="btn-row">
+          <button class="btn-danger" onclick="api('DELETE',`/teachers/profile/work-history/${v('wh-del-id')}`,null,true,'wh-del-res')">Delete</button>
+        </div>
+        <div class="response-box" id="wh-del-res"></div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════ REFERENCES ══════════════ -->
+    <div id="section-t-refs" class="section">
+
+      <div class="panel">
+        <h2>Add Reference <span class="badge">POST /teachers/profile/references</span></h2>
+        <div class="field"><label>Full Name</label><input id="ref-name" placeholder="Dr. John Smith"></div>
+        <div class="field"><label>Organization (optional)</label><input id="ref-org" placeholder="University of Lagos"></div>
+        <div class="field"><label>Role (optional)</label><input id="ref-role" placeholder="Head of Department"></div>
+        <div class="field"><label>Email</label><input id="ref-email" type="email" placeholder="john@example.com"></div>
+        <div class="field"><label>Phone</label><input id="ref-phone" placeholder="+2348012345678"></div>
+        <div class="field"><label>Relationship Type</label><input id="ref-rel" placeholder="Former Supervisor"></div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="addReference()">Add Reference</button>
+        </div>
+        <div class="response-box" id="ref-add-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Delete Reference <span class="badge">DELETE /teachers/profile/references/:id</span></h2>
+        <div class="field"><label>Reference ID</label><input id="ref-del-id" type="number" placeholder="1"></div>
+        <div class="btn-row">
+          <button class="btn-danger" onclick="api('DELETE',`/teachers/profile/references/${v('ref-del-id')}`,null,true,'ref-del-res')">Delete</button>
+        </div>
+        <div class="response-box" id="ref-del-res"></div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════ EXAMS ══════════════ -->
+    <div id="section-t-exam" class="section">
+
+      <div class="panel">
+        <h2>List Available Exams <span class="badge">GET /teachers/exams</span></h2>
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="api('GET','/teachers/exams',null,true,'exam-list-res')">Fetch Exams</button>
+        </div>
+        <div class="response-box" id="exam-list-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Start Exam <span class="badge">POST /teachers/exams/start</span></h2>
+        <div class="field"><label>Exam ID</label><input id="exam-start-id" type="number" placeholder="1"></div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="api('POST','/teachers/exams/start',{exam_id:int('exam-start-id')},true,'exam-start-res')">Start Exam</button>
+        </div>
+        <div class="response-box" id="exam-start-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Submit Exam <span class="badge">POST /teachers/exams/submit</span></h2>
+        <p class="hint">Answers: question index (1-based) → chosen option string.</p>
+        <div class="field"><label>Attempt ID</label><input id="exam-att-id" type="number" placeholder="1"></div>
+        <div class="field"><label>Answers (JSON)</label><textarea id="exam-answers" placeholder='{"1":"A","2":"C","3":"B"}'></textarea></div>
+        <div class="btn-row">
+          <button class="btn-success" onclick="submitExam()">Submit Exam</button>
+        </div>
+        <div class="response-box" id="exam-submit-res"></div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════ SCENARIO & VIDEO ══════════════ -->
+    <div id="section-t-video" class="section">
+
+      <div class="panel">
+        <h2>Get Scenario <span class="badge">GET /teachers/scenario</span></h2>
+        <p class="hint">Returns an unused scenario matched to your subjects, or AI-generates one.</p>
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="api('GET','/teachers/scenario',null,true,'scenario-res')">Get Scenario</button>
+        </div>
+        <div class="response-box" id="scenario-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Request Upload URL <span class="badge">POST /teachers/video/upload-url</span></h2>
+        <p class="hint">Returns a signed Cloudinary URL for direct browser upload.</p>
+        <div class="field"><label>Scenario ID</label><input id="vid-sid" type="number" placeholder="1"></div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="api('POST','/teachers/video/upload-url',{scenario_id:int('vid-sid')},true,'vid-url-res')">Get Upload URL</button>
+        </div>
+        <div class="response-box" id="vid-url-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Confirm Upload <span class="badge">POST /teachers/video/confirm</span></h2>
+        <p class="hint">Call after direct Cloudinary upload completes. Triggers AI review pipeline automatically.</p>
+        <div class="field"><label>Scenario ID</label><input id="vid-confirm-sid" type="number" placeholder="1"></div>
+        <div class="field"><label>Video URL (from Cloudinary)</label><input id="vid-confirm-url" placeholder="https://res.cloudinary.com/..."></div>
+        <div class="btn-row">
+          <button class="btn-success" onclick="api('POST','/teachers/video/confirm',{scenario_id:int('vid-confirm-sid'),video_url:v('vid-confirm-url')},true,'vid-confirm-res')">Confirm Upload</button>
+        </div>
+        <div class="response-box" id="vid-confirm-res"></div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════ TEACHER INTERVIEWS ══════════════ -->
+    <div id="section-t-interview" class="section">
+
+      <div class="panel">
+        <h2>Get Interview Requests <span class="badge">GET /teachers/interviews</span></h2>
+        <div class="field">
+          <label>Status Filter (optional)</label>
+          <select id="t-ir-filter">
+            <option value="">All</option>
+            <option value="pending">pending</option>
+            <option value="accepted">accepted</option>
+            <option value="rejected">rejected</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="fetchWithStatus('/teachers/interviews','t-ir-filter','t-ir-list-res')">Fetch</button>
+        </div>
+        <div class="response-box" id="t-ir-list-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Respond to Request <span class="badge">POST /teachers/interviews/:id/respond</span></h2>
+        <div class="field"><label>Request ID</label><input id="t-ir-id" type="number" placeholder="1"></div>
+        <div class="field">
+          <label>Action</label>
+          <select id="t-ir-action">
+            <option value="accepted">Accept</option>
+            <option value="rejected">Reject</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn-warn" onclick="api('POST',`/teachers/interviews/${v('t-ir-id')}/respond`,{action:v('t-ir-action')},true,'t-ir-respond-res')">Respond</button>
+        </div>
+        <div class="response-box" id="t-ir-respond-res"></div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════ EMPLOYER PROFILE ══════════════ -->
+    <div id="section-e-profile" class="section">
+
+      <div class="panel">
+        <h2>Create Organization Profile <span class="badge">POST /employers/profile</span></h2>
+        <div class="field"><label>Org Name</label><input id="ep-org-name" placeholder="Bright Future Academy"></div>
+        <div class="field"><label>CAC Number (optional)</label><input id="ep-org-cac" placeholder="RC123456"></div>
+        <div class="field"><label>Location (optional)</label><input id="ep-org-loc" placeholder="Lagos, Nigeria"></div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="api('POST','/employers/profile',{org_name:v('ep-org-name'),cac_number:v('ep-org-cac')||null,location:v('ep-org-loc')||null},true,'ep-org-res')">Create</button>
+        </div>
+        <div class="response-box" id="ep-org-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Create Parent Profile <span class="badge">POST /employers/profile</span></h2>
+        <div class="field"><label>Full Name</label><input id="ep-par-name" placeholder="Amaka Obi"></div>
+        <div class="field"><label>ID Card URL (optional)</label><input id="ep-par-id" placeholder="https://..."></div>
+        <div class="field"><label>Picture URL (optional)</label><input id="ep-par-pic" placeholder="https://..."></div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="api('POST','/employers/profile',{name:v('ep-par-name'),id_card:v('ep-par-id')||null,picture_upload:v('ep-par-pic')||null},true,'ep-par-res')">Create</button>
+        </div>
+        <div class="response-box" id="ep-par-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Update Profile <span class="badge">PUT /employers/profile</span></h2>
+        <p class="hint">Send only the fields you want to update as raw JSON.</p>
+        <div class="field"><label>Body (JSON)</label><textarea id="ep-update-body" placeholder='{"org_name":"New Name","location":"Abuja"}'></textarea></div>
+        <div class="btn-row">
+          <button class="btn-warn" onclick="apiRaw('PUT','/employers/profile',v('ep-update-body'),true,'ep-update-res')">Update</button>
+        </div>
+        <div class="response-box" id="ep-update-res"></div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════ SEARCH ══════════════ -->
+    <div id="section-e-search" class="section">
+
+      <div class="panel">
+        <h2>Search Teachers <span class="badge">GET /employers/search</span></h2>
+        <div class="field"><label>Subject (optional)</label><input id="s-subject" placeholder="Mathematics"></div>
+        <div class="field"><label>Min Rating (optional, 0–100)</label><input id="s-min-rating" type="number" min="0" max="100" placeholder="60"></div>
+        <div class="field">
+          <label>Verified Only</label>
+          <select id="s-verified">
+            <option value="true">Yes (default)</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="searchTeachers()">Search</button>
+        </div>
+        <div class="response-box" id="search-res"></div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════ RECRUITMENT ══════════════ -->
+    <div id="section-e-recruit" class="section">
+
+      <div class="panel">
+        <h2>Hire Teacher <span class="badge">POST /employers/hire</span></h2>
+        <div class="field"><label>Teacher ID</label><input id="hire-tid" type="number" placeholder="2"></div>
+        <div class="field"><label>Position</label><input id="hire-pos" placeholder="Mathematics Teacher"></div>
+        <div class="field"><label>Hired At</label><input id="hire-date" type="date"></div>
+        <div class="btn-row">
+          <button class="btn-success" onclick="api('POST','/employers/hire',{teacher_id:int('hire-tid'),position:v('hire-pos'),hired_at:v('hire-date')},true,'hire-res')">Hire</button>
+        </div>
+        <div class="response-box" id="hire-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Update Recruitment Status <span class="badge">PUT /employers/recruitment/:id</span></h2>
+        <div class="field"><label>Recruitment ID</label><input id="rec-id" type="number" placeholder="1"></div>
+        <div class="field">
+          <label>New Status</label>
+          <select id="rec-status">
+            <option value="suspended">suspended</option>
+            <option value="terminated">terminated</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn-warn" onclick="api('PUT',`/employers/recruitment/${v('rec-id')}`,{status:v('rec-status')},true,'rec-update-res')">Update</button>
+        </div>
+        <div class="response-box" id="rec-update-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Get Recruitment History <span class="badge">GET /employers/recruitment</span></h2>
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="api('GET','/employers/recruitment',null,true,'rec-list-res')">Fetch</button>
+        </div>
+        <div class="response-box" id="rec-list-res"></div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════ EMPLOYER INTERVIEWS ══════════════ -->
+    <div id="section-e-interview" class="section">
+
+      <div class="panel">
+        <h2>Send Interview Request <span class="badge">POST /employers/interviews</span></h2>
+        <div class="field"><label>Teacher ID</label><input id="e-ir-tid" type="number" placeholder="1"></div>
+        <div class="field">
+          <label>Contact Method</label>
+          <select id="e-ir-method">
+            <option value="whatsapp">WhatsApp</option>
+            <option value="email">Email</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="api('POST','/employers/interviews',{teacher_id:int('e-ir-tid'),contact_method:v('e-ir-method')},true,'e-ir-create-res')">Send Request</button>
+        </div>
+        <div class="response-box" id="e-ir-create-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Get Interview Requests <span class="badge">GET /employers/interviews</span></h2>
+        <div class="field">
+          <label>Status Filter (optional)</label>
+          <select id="e-ir-filter">
+            <option value="">All</option>
+            <option value="pending">pending</option>
+            <option value="accepted">accepted</option>
+            <option value="rejected">rejected</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="fetchWithStatus('/employers/interviews','e-ir-filter','e-ir-list-res')">Fetch</button>
+        </div>
+        <div class="response-box" id="e-ir-list-res"></div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════ REVIEWER ASSIGNMENTS ══════════════ -->
+    <div id="section-rv-assignments" class="section">
+
+      <div class="panel">
+        <h2>My Assignments <span class="badge">GET /reviewer/assignments</span></h2>
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="api('GET','/reviewer/assignments',null,true,'rv-list-res')">Fetch</button>
+        </div>
+        <div class="response-box" id="rv-list-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Submit Human Review <span class="badge">POST /reviewer/assignments/:id/review</span></h2>
+        <div class="field"><label>Assignment ID</label><input id="rv-asn-id" type="number" placeholder="1"></div>
+        <div class="field"><label>Score (0–100)</label><input id="rv-score" type="number" min="0" max="100" placeholder="78"></div>
+        <div class="field"><label>Notes</label><textarea id="rv-notes" placeholder="Clear explanation, good pacing..."></textarea></div>
+        <div class="field">
+          <label>Flagged?</label>
+          <select id="rv-flagged">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
+        </div>
+        <div class="field"><label>Flag Reason (if flagged)</label><input id="rv-flag-reason" placeholder="Inappropriate content"></div>
+        <div class="btn-row">
+          <button class="btn-success" onclick="submitHumanReview()">Submit Review</button>
+        </div>
+        <div class="response-box" id="rv-review-res"></div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════ RATING OVERRIDE ══════════════ -->
+    <div id="section-rv-override" class="section">
+
+      <div class="panel">
+        <h2>Override Rating <span class="badge">POST /reviewer/ratings/:teacher_id/override</span></h2>
+        <p class="hint">Manually sets a teacher's composite score. Reviewer role required.</p>
+        <div class="field"><label>Teacher ID</label><input id="ov-tid" type="number" placeholder="1"></div>
+        <div class="field"><label>New Composite (0–100)</label><input id="ov-score" type="number" min="0" max="100" placeholder="85"></div>
+        <div class="field"><label>Reason</label><textarea id="ov-reason" placeholder="Adjusted for missing video score due to upload failure..."></textarea></div>
+        <div class="btn-row">
+          <button class="btn-danger" onclick="api('POST',`/reviewer/ratings/${v('ov-tid')}/override`,{composite:parseFloat(v('ov-score')),reason:v('ov-reason')},true,'ov-res')">Override</button>
+        </div>
+        <div class="response-box" id="ov-res"></div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════ VERIFICATION ══════════════ -->
+    <div id="section-verify" class="section">
+
+      <div class="panel">
+        <h2>Verify Teacher <span class="badge">POST /verify/teacher/:id</span></h2>
+        <p class="hint">Reviewer role. Teacher must have profile_complete + references + documents.</p>
+        <div class="field"><label>Teacher ID</label><input id="v-tid" type="number" placeholder="1"></div>
+        <div class="btn-row">
+          <button class="btn-success" onclick="api('POST',`/verify/teacher/${v('v-tid')}`,{},true,'v-teacher-res')">Verify</button>
+        </div>
+        <div class="response-box" id="v-teacher-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Verify Organization <span class="badge">POST /verify/organization/:id</span></h2>
+        <p class="hint">Reviewer role. Organization must have a CAC number on profile.</p>
+        <div class="field"><label>Employer ID</label><input id="v-oid" type="number" placeholder="2"></div>
+        <div class="btn-row">
+          <button class="btn-success" onclick="api('POST',`/verify/organization/${v('v-oid')}`,{},true,'v-org-res')">Verify</button>
+        </div>
+        <div class="response-box" id="v-org-res"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Verify Parent <span class="badge">POST /verify/parent/:id</span></h2>
+        <p class="hint">Reviewer role. Parent must have an ID card on profile.</p>
+        <div class="field"><label>Employer ID</label><input id="v-pid" type="number" placeholder="3"></div>
+        <div class="btn-row">
+          <button class="btn-success" onclick="api('POST',`/verify/parent/${v('v-pid')}`,{},true,'v-par-res')">Verify</button>
+        </div>
+        <div class="response-box" id="v-par-res"></div>
+      </div>
+
+    </div>
+
+  </div><!-- /#content -->
+</div><!-- /#main -->
+
+<script>
+  /* ── Helpers ── */
+  const v   = id => document.getElementById(id)?.value?.trim() ?? '';
+  const el  = id => document.getElementById(id);
+  const int = id => parseInt(v(id));
+  const csv = id => v(id).split(',').map(s=>s.trim()).filter(Boolean);
+
+  function show(section) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el(`section-${section}`).classList.add('active');
+    document.querySelector(`[onclick="show('${section}')"]`).classList.add('active');
+  }
+
+  function setRes(boxId, data, isError=false) {
+    const box = el(boxId);
+    box.classList.add('visible');
+    box.classList.toggle('error', isError);
+    box.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+  }
+
+  function getToken() { return v('jwt-token'); }
+
+  function clearToken() {
+    el('jwt-token').value = '';
+    el('token-status').textContent = 'No token';
+    el('token-status').classList.remove('ok');
+  }
+
+  el('jwt-token').addEventListener('input', () => {
+    const t = el('jwt-token').value.trim();
+    el('token-status').textContent = t ? 'Token ready ✓' : 'No token';
+    el('token-status').classList.toggle('ok', !!t);
+  });
+
+  /* ── Core fetch ── */
+  async function api(method, path, body, auth, boxId) {
+    const base = 'https://klasscred.pxxlspace.cv';
+
+    const headers = { 'Content-Type': 'application/json' };
+    if (auth) {
+      const tok = getToken();
+      if (!tok) return setRes(boxId, 'No JWT token — login first', true);
+      headers['Authorization'] = `Bearer ${tok}`;
+    }
+
+    try {
+      const opts = { method, headers };
+      if (body !== null && method !== 'GET' && method !== 'DELETE') opts.body = JSON.stringify(body);
+      const res = await fetch(base + path, opts);
+      const text = await res.text();
+      let json; try { json = JSON.parse(text); } catch { json = text; }
+      setRes(boxId, json, !res.ok);
+      return { ok: res.ok, data: json };
+    } catch(err) {
+      setRes(boxId, `Network error: ${err.message}`, true);
+    }
+  }
+
+  async function apiRaw(method, path, rawBody, auth, boxId) {
+    let parsed;
+    try { parsed = JSON.parse(rawBody); }
+    catch { return setRes(boxId, 'Invalid JSON in body', true); }
+    return api(method, path, parsed, auth, boxId);
+  }
+
+  /* ── Auth ── */
+  async function doLogin() {
+    const base = 'https://klasscred.pxxlspace.cv';
+    try {
+      const res = await fetch(base + '/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: v('login-email'), password: v('login-password') })
+      });
+      const json = await res.json();
+      setRes('login-res', json, !res.ok);
+      const token = json.token ?? json.access_token ?? json.jwt;
+      if (token) {
+        el('jwt-token').value = token;
+        el('token-status').textContent = 'Token saved ✓';
+        el('token-status').classList.add('ok');
+      }
+    } catch(err) {
+      setRes('login-res', `Network error: ${err.message}`, true);
+    }
+  }
+
+  /* ── Teacher ── */
+  async function updateTeacherProfile() {
+    const body = {};
+    if (v('tp-u-name'))     body.full_name = v('tp-u-name');
+    if (v('tp-u-subjects')) body.subjects  = csv('tp-u-subjects');
+    if (v('tp-u-exp'))      body.experience_years = int('tp-u-exp');
+    if (v('tp-u-docs')) {
+      try { body.documents = JSON.parse(v('tp-u-docs')); }
+      catch { return setRes('tp-u-res', 'Invalid JSON in Documents field', true); }
+    }
+    await api('PUT', '/teachers/profile', body, true, 'tp-u-res');
+  }
+
+  async function addWorkHistory() {
+    const body = {
+      organization: v('wh-org'),
+      role: v('wh-role'),
+      start_date: v('wh-start'),
+    };
+    const end = v('wh-end');
+    if (end) body.end_date = end;
+    await api('POST', '/teachers/profile/work-history', body, true, 'wh-add-res');
+  }
+
+  async function addReference() {
+    const body = {
+      full_name: v('ref-name'),
+      email: v('ref-email'),
+      phone: v('ref-phone'),
+      relationship_type: v('ref-rel'),
+    };
+    if (v('ref-org'))  body.organization = v('ref-org');
+    if (v('ref-role')) body.role = v('ref-role');
+    await api('POST', '/teachers/profile/references', body, true, 'ref-add-res');
+  }
+
+  /* ── Exam ── */
+  async function submitExam() {
+    const raw = v('exam-answers');
+    let answers;
+    try { answers = JSON.parse(raw); }
+    catch { return setRes('exam-submit-res', 'Invalid JSON for answers', true); }
+    await api('POST', '/teachers/exams/submit', {
+      attempt_id: int('exam-att-id'),
+      answers
+    }, true, 'exam-submit-res');
+  }
+
+  /* ── Review ── */
+  async function submitHumanReview() {
+    const body = {
+      score: parseFloat(v('rv-score')),
+      notes: v('rv-notes') || null,
+      flagged: v('rv-flagged') === 'true',
+      flag_reason: v('rv-flag-reason') || null,
+    };
+    await api('POST', `/reviewer/assignments/${v('rv-asn-id')}/review`, body, true, 'rv-review-res');
+  }
+
+  /* ── Search ── */
+  async function searchTeachers() {
+    const params = new URLSearchParams();
+    if (v('s-subject'))    params.set('subject', v('s-subject'));
+    if (v('s-min-rating')) params.set('min_rating', v('s-min-rating'));
+    params.set('verified_only', v('s-verified'));
+    await api('GET', `/employers/search?${params}`, null, true, 'search-res');
+  }
+
+  /* ── Generic status-filtered GET ── */
+  async function fetchWithStatus(path, filterId, boxId) {
+    const filter = v(filterId);
+    const url = filter ? `${path}?status=${filter}` : path;
+    await api('GET', url, null, true, boxId);
+  }
+</script>
+</body>
+</html>

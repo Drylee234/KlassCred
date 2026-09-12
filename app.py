@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask,send_from_directory
 
 from extensions import db, migrate, bcrypt, init_cloudinary
 from config import Config
@@ -35,8 +35,16 @@ def create_app():
     @app.get("/")
     def health():
         return {"status": "ok"}
+            
+        return app
+            
+    
 
-    return app
+@app.get("/test-ui")
+def test_ui():
+    return send_from_directory("static", "index.html")
+
+    
 
 
 app = create_app()
