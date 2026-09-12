@@ -4,7 +4,7 @@ from models.video import VideoSubmission
 from models.review import Review, ReviewAssignment
 from services import reviewer_service, rating_service
 from extensions import db
-from errors.exceptions import NotFoundError, BadRequestError
+from errors.exceptions import NotFoundError, BadRequestError, ForbiddenError
 
 
 def run_ai_review(video_id):
@@ -80,4 +80,63 @@ def assign_human_reviewer(video_id):
 
     assignment = ReviewAssignment(
         video_id=video_id,
-        reviewer_id=reviewer
+        reviewer_id=reviewer.id,
+        status="assigned",
+    )
+
+    submission.status = "assigned"
+
+    db.session.add(assignment)
+    db.session.commit()
+
+    return assignment
+
+
+def get_assignments_for_reviewer(reviewer_id):
+    return (
+        ReviewAssignment.query
+        .filter_by(reviewer_id=reviewer_id)
+        .order_by(ReviewAssignment.assigned_at.desc())
+        .all()
+    )
+
+
+def submit_human_review(reviewer_id, assignment_id, data):
+    assignment = ReviewAssignment.query.get(assignment_id)
+
+    if not assignment:
+        raise NotFoundError("Assignment not found")
+
+    if assignment.reviewer_id != reviewer_id:
+        raise ForbiddenError("You do not own this assignment")
+
+    if assignment.status == "completed":
+        raise BadRequestError("This assignment is already completed")
+
+    if assignment.status == "cancelled":
+        raise BadRequestError("This assignment has been cancelled")
+
+    review = Review(
+        video_id=assignment.video_id,
+        reviewer_id=reviewer_id,
+        reviewer_type="human",
+        score=data["score"],
+        notes=data.get("notes"),
+        flagged=data["flagged"],
+        flag_reason=data.get("flag_reason"),
+    )
+
+    assignment.status = "completed"
+    assignment.completed_at = datetime.utcnow()
+
+    submission = VideoSubmission.query.get(assignment.video_id)
+
+    if submission:
+        submission.status = "completed"
+
+    db.session.add(review)
+    db.session.commit()
+
+    rating_service.recompute_rating(submission.teacher_id)
+
+    return review
