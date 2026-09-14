@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask,send_from_directory
 from extensions import db, migrate, init_cloudinary
 from config import Config
 
