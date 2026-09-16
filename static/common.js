@@ -14,7 +14,7 @@ const session = {
   clear() { localStorage.removeItem('kc_token'); localStorage.removeItem('kc_type'); },
   required() {
     const t = this.token();
-    if (!t) { window.location.href = 'index.html'; return null; }
+    if (!t) { window.location.href = '/test-ui/'; return null; }
     return t;
   }
 };
@@ -84,7 +84,7 @@ function showSection(id) {
 // ── Logout ───────────────────────────────────────────────────
 function logout() {
   session.clear();
-  window.location.href = 'index.html';
+  window.location.href = '/test-ui/';
 }
 
 // ── Badge helper ─────────────────────────────────────────────
