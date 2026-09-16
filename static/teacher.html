@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KlassCred — Teacher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">KlassCred <span>Teacher Portal</span></div>
+
+    <span class="nav-section">Overview</span>
+    <button class="nav-item active" data-page="dashboard" onclick="nav('dashboard')">
+      <span class="nav-icon">🏠</span> Dashboard
+    </button>
+
+    <span class="nav-section">My Profile</span>
+    <button class="nav-item" data-page="profile" onclick="nav('profile')">
+      <span class="nav-icon">👤</span> Profile
+    </button>
+    <button class="nav-item" data-page="docs" onclick="nav('docs')">
+      <span class="nav-icon">📄</span> Documents
+    </button>
+    <button class="nav-item" data-page="work_history" onclick="nav('work_history')">
+      <span class="nav-icon">🏢</span> Work History
+    </button>
+    <button class="nav-item" data-page="references" onclick="nav('references')">
+      <span class="nav-icon">👥</span> References
+    </button>
+
+    <span class="nav-section">Activity</span>
+    <button class="nav-item" data-page="exams" onclick="nav('exams')">
+      <span class="nav-icon">📝</span> Exams
+    </button>
+    <button class="nav-item" data-page="interviews" onclick="nav('interviews')">
+      <span class="nav-icon">💬</span> Interview Requests
+    </button>
+    <button class="nav-item" data-page="scenario" onclick="nav('scenario')">
+      <span class="nav-icon">🎬</span> Teaching Scenario
+    </button>
+
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="logout()" style="color:var(--red)">
+        <span class="nav-icon">🚪</span> Logout
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Main ────────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- DASHBOARD ──────────────────────────────────────────── -->
+    <section id="sec_dashboard" class="page-section">
+      <div class="page-header flex-between">
+        <div><h2>Dashboard</h2><p id="dash_greeting">Welcome back</p></div>
+        <div class="flex-row">
+          <span id="dash_verified" class="badge badge-gray">Unverified</span>
+        </div>
+      </div>
+
+      <div class="stat-grid" id="dash_stats">
+        <div class="stat-card"><div class="label">Composite Rating</div><div class="value" id="ds_rating">—</div><div class="sub">out of 100</div></div>
+        <div class="stat-card"><div class="label">Exam Attempts</div><div class="value" id="ds_exams">—</div></div>
+        <div class="stat-card"><div class="label">Interview Requests</div><div class="value" id="ds_interviews">—</div></div>
+        <div class="stat-card"><div class="label">Profile</div><div class="value" id="ds_profile">—</div><div class="sub" id="ds_profile_sub"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Rating Breakdown</div>
+        <div id="dash_breakdown">
+          <div class="empty-state"><div class="icon">📊</div><p>No rating yet — complete your profile and take an exam.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROFILE ────────────────────────────────────────────── -->
+    <section id="sec_profile" class="page-section" style="display:none">
+      <div class="page-header flex-between">
+        <div><h2>Profile</h2><p>Your teacher profile information</p></div>
+        <button class="btn btn-sm" onclick="openModal('editProfileModal')">Edit</button>
+      </div>
+
+      <div class="card">
+        <div id="profile_view">
+          <div class="empty-state"><div class="icon">👤</div><p>Loading profile…</p></div>
+        </div>
+      </div>
+
+      <!-- Change Password -->
+      <div class="card mt-24">
+        <div class="card-title">Change Password</div>
+        <label>Current password</label>
+        <input id="cp_old" type="password">
+        <label>New password</label>
+        <input id="cp_new" type="password">
+        <button class="btn btn-sm mt-16" onclick="doChangePassword()">Update password</button>
+        <div id="cpResp" class="response-box"></div>
+      </div>
+    </section>
+
+    <!-- DOCUMENTS ──────────────────────────────────────────── -->
+    <section id="sec_docs" class="page-section" style="display:none">
+      <div class="page-header">
+        <h2>Documents</h2>
+        <p>Identity and certification documents (stored in <code>teacher.documents</code> JSON field)</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Current Documents</div>
+        <div id="docs_view">
+          <div class="empty-state"><div class="icon">📄</div><p>Loading…</p></div>
+        </div>
+      </div>
+
+      <div class="card mt-24">
+        <div class="card-title">Upload / Update Documents</div>
+        <p class="hint">Provide URLs (Cloudinary or direct link). Mandatory: id_card_front, id_card_back.</p>
+        <label>ID Card Front URL</label>
+        <input id="doc_front" placeholder="https://res.cloudinary.com/…">
+        <label>ID Card Back URL</label>
+        <input id="doc_back" placeholder="https://res.cloudinary.com/…">
+        <label>Certificate URL (optional)</label>
+        <input id="doc_cert" placeholder="https://…">
+        <button class="btn btn-sm mt-16" onclick="doUpdateDocs()">Save documents</button>
+        <div id="docsResp" class="response-box"></div>
+      </div>
+    </section>
+
+    <!-- WORK HISTORY ────────────────────────────────────────── -->
+    <section id="sec_work_history" class="page-section" style="display:none">
+      <div class="page-header flex-between">
+        <div><h2>Work History</h2><p>POST /teachers/profile/work-history</p></div>
+        <button class="btn btn-sm" onclick="openModal('addWorkModal')">+ Add</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Organization</th><th>Role</th><th>Start</th><th>End</th><th></th></tr></thead>
+            <tbody id="work_table"><tr><td colspan="5" class="empty-state" style="padding:28px;text-align:center;color:var(--text-dim)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- REFERENCES ─────────────────────────────────────────── -->
+    <section id="sec_references" class="page-section" style="display:none">
+      <div class="page-header flex-between">
+        <div><h2>References</h2><p>POST /teachers/profile/references</p></div>
+        <button class="btn btn-sm" onclick="openModal('addRefModal')">+ Add</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Org</th><th>Role</th><th>Email</th><th>Phone</th><th>Relation</th><th></th></tr></thead>
+            <tbody id="ref_table"><tr><td colspan="7" class="empty-state" style="padding:28px;text-align:center;color:var(--text-dim)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXAMS ───────────────────────────────────────────────── -->
+    <section id="sec_exams" class="page-section" style="display:none">
+      <div class="page-header">
+        <h2>Exams</h2><p>Available exams &amp; your attempt history</p>
+      </div>
+
+      <div class="card section">
+        <div class="card-title">Available Exams — GET /teachers/exams</div>
+        <button class="btn btn-sm" onclick="loadExams()">Refresh</button>
+        <div id="exam_list" class="mt-16">
+          <div class="empty-state"><div class="icon">📝</div><p>Click Refresh to load exams.</p></div>
+        </div>
+        <div id="examListResp" class="response-box"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Submit Exam Answers — POST /teachers/exams/submit</div>
+        <label>Attempt ID</label>
+        <input id="submit_attempt_id" type="number" placeholder="From start response">
+        <label>Answers JSON (e.g. {"1":"A","2":"B"})</label>
+        <textarea id="submit_answers" placeholder='{"1":"A","2":"B"}'></textarea>
+        <button class="btn btn-sm mt-16" onclick="doSubmitExam()">Submit Answers</button>
+        <div id="submitExamResp" class="response-box"></div>
+      </div>
+    </section>
+
+    <!-- INTERVIEWS ──────────────────────────────────────────── -->
+    <section id="sec_interviews" class="page-section" style="display:none">
+      <div class="page-header">
+        <h2>Interview Requests</h2><p>GET /teachers/interviews</p>
+      </div>
+
+      <div class="flex-row" style="margin-bottom:16px">
+        <select id="iv_status_filter" style="width:auto;min-width:160px">
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="accepted">Accepted</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <button class="btn btn-sm" onclick="loadInterviews()">Load</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Employer</th><th>Contact</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
+            <tbody id="iv_table"><tr><td colspan="6" class="empty-state" style="padding:28px;text-align:center;color:var(--text-dim)">Click Load to fetch requests.</td></tr></tbody>
+          </table>
+        </div>
+        <div id="ivResp" class="response-box"></div>
+      </div>
+    </section>
+
+    <!-- SCENARIO / VIDEO ───────────────────────────────────── -->
+    <section id="sec_scenario" class="page-section" style="display:none">
+      <div class="page-header">
+        <h2>Teaching Scenario &amp; Video</h2>
+        <p>Get a scenario, then request an upload URL</p>
+      </div>
+
+      <div class="card section">
+        <div class="card-title">Fetch Scenario — GET /teachers/scenario</div>
+        <button class="btn btn-sm" onclick="loadScenario()">Get Scenario</button>
+        <div id="scenario_view" class="mt-16"></div>
+        <div id="scenarioResp" class="response-box"></div>
+      </div>
+
+      <div class="card section">
+        <div class="card-title">Request Upload URL — POST /teachers/video/upload-url</div>
+        <label>Scenario ID</label>
+        <input id="vid_scenario_id" type="number" placeholder="From scenario above">
+        <button class="btn btn-sm mt-16" onclick="doRequestUploadUrl()">Get Upload URL</button>
+        <div id="uploadUrlResp" class="response-box"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Confirm Upload — POST /teachers/video/confirm</div>
+        <label>Scenario ID</label>
+        <input id="confirm_scenario_id" type="number">
+        <label>Video URL (from Cloudinary)</label>
+        <input id="confirm_video_url" placeholder="https://res.cloudinary.com/…">
+        <button class="btn btn-sm mt-16" onclick="doConfirmUpload()">Confirm Upload</button>
+        <div id="confirmResp" class="response-box"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── Edit Profile Modal ──────────────────────────────────── -->
+<div class="modal-overlay" id="editProfileModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Edit Profile</h3>
+      <button class="modal-close" onclick="closeModal('editProfileModal')">✕</button>
+    </div>
+    <label>Full name</label>
+    <input id="ep_full_name">
+    <label>Subjects (comma-separated)</label>
+    <input id="ep_subjects">
+    <label>Years of experience</label>
+    <input id="ep_exp" type="number" min="0">
+    <button class="btn btn-primary" onclick="doUpdateProfile()">Save changes</button>
+    <div id="editProfileResp" class="response-box"></div>
+  </div>
+</div>
+
+<!-- ── Add Work History Modal ─────────────────────────────── -->
+<div class="modal-overlay" id="addWorkModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Work History</h3>
+      <button class="modal-close" onclick="closeModal('addWorkModal')">✕</button>
+    </div>
+    <label>Organization</label>
+    <input id="wh_org">
+    <label>Role</label>
+    <input id="wh_role">
+    <label>Start date</label>
+    <input id="wh_start" type="date">
+    <label>End date (leave blank if current)</label>
+    <input id="wh_end" type="date">
+    <button class="btn btn-primary" onclick="doAddWork()">Add</button>
+    <div id="addWorkResp" class="response-box"></div>
+  </div>
+</div>
+
+<!-- ── Add Reference Modal ───────────────────────────────── -->
+<div class="modal-overlay" id="addRefModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Reference</h3>
+      <button class="modal-close" onclick="closeModal('addRefModal')">✕</button>
+    </div>
+    <label>Full name</label>
+    <input id="ref_full_name">
+    <label>Organization</label>
+    <input id="ref_org">
+    <label>Role</label>
+    <input id="ref_role">
+    <label>Email</label>
+    <input id="ref_email" type="email">
+    <label>Phone</label>
+    <input id="ref_phone">
+    <label>Relationship type</label>
+    <input id="ref_rel" placeholder="Former supervisor / colleague …">
+    <button class="btn btn-primary" onclick="doAddRef()">Add</button>
+    <div id="addRefResp" class="response-box"></div>
+  </div>
+</div>
+
+<!-- ── Respond to Interview Modal ───────────────────────── -->
+<div class="modal-overlay" id="respondModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Respond to Interview Request</h3>
+      <button class="modal-close" onclick="closeModal('respondModal')">✕</button>
+    </div>
+    <input type="hidden" id="respond_req_id">
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Request ID: <strong id="respond_req_label"></strong></p>
+    <div class="flex-row">
+      <button class="btn btn-sm" style="flex:1" onclick="doRespond('accepted')">✅ Accept</button>
+      <button class="btn btn-danger-sm" style="flex:1" onclick="doRespond('rejected')">✗ Reject</button>
+    </div>
+    <div id="respondResp" class="response-box"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="common.js"></script>
+<script>
+const token = session.required();
+let profileData = null;
+
+// ── Navigation ───────────────────────────────────────────────
+function nav(page) {
+  document.querySelectorAll('.page-section').forEach(s => s.style.display = 'none');
+  document.getElementById(`sec_${page}`).style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.page === page);
+  });
+  if (page === 'dashboard')    loadDashboard();
+  if (page === 'profile')      loadProfile();
+  if (page === 'docs')         loadDocs();
+  if (page === 'work_history') loadWorkHistory();
+  if (page === 'references')   loadReferences();
+}
+
+// ── Dashboard ────────────────────────────────────────────────
+async function loadDashboard() {
+  // fetch profile, rating, exams, interviews in parallel
+  const [profRes, ivRes] = await Promise.all([
+    api('GET', '/teachers/profile', undefined, token).catch(() => null),
+    api('GET', '/teachers/interviews', undefined, token).catch(() => null),
+  ]);
+
+  if (profRes?.ok) {
+    profileData = profRes.data;
+    document.getElementById('dash_greeting').textContent = `Welcome, ${profileData.full_name ?? profileData.email}`;
+    document.getElementById('ds_profile').textContent = profileData.profile_complete ? '✓' : '✗';
+    document.getElementById('ds_profile_sub').textContent = profileData.profile_complete ? 'Complete' : 'Incomplete';
+    if (profileData.id_verified) {
+      document.getElementById('dash_verified').textContent = 'Verified';
+      document.getElementById('dash_verified').className = 'badge badge-green';
+    }
+    if (profileData.rating) {
+      const r = profileData.rating;
+      document.getElementById('ds_rating').textContent = r.composite != null ? r.composite.toFixed(1) : '—';
+      renderBreakdown(r.breakdown);
+    }
+  }
+
+  if (ivRes?.ok) {
+    const total = Array.isArray(ivRes.data) ? ivRes.data.length : 0;
+    document.getElementById('ds_interviews').textContent = total;
+    const pending = Array.isArray(ivRes.data) ? ivRes.data.filter(r => r.status === 'pending').length : 0;
+    if (pending) document.getElementById('ds_interviews').textContent = `${total} (${pending} pending)`;
+  }
+
+  // exams
+  const examRes = await api('GET', '/teachers/exams', undefined, token);
+  if (examRes?.ok && Array.isArray(examRes.data)) {
+    document.getElementById('ds_exams').textContent = examRes.data.length + ' available';
+  }
+}
+
+function renderBreakdown(breakdown) {
+  if (!breakdown || !Object.keys(breakdown).length) return;
+  const box = document.getElementById('dash_breakdown');
+  const rows = Object.entries(breakdown).map(([k, v]) =>
+    `<tr>
+      <td style="text-transform:capitalize">${k}</td>
+      <td>${v.score?.toFixed(1) ?? '—'}</td>
+      <td>${(v.weight)}%</td>
+      <td>${(v.effective_weight * 100).toFixed(1)}%</td>
+    </tr>`
+  ).join('');
+  box.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Component</th><th>Score</th><th>Weight</th><th>Effective</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ── Profile ──────────────────────────────────────────────────
+async function loadProfile() {
+  const res = await api('GET', '/teachers/profile', undefined, token);
+  if (res.ok) {
+    profileData = res.data;
+    renderProfile(res.data);
+  } else {
+    document.getElementById('profile_view').innerHTML =
+      `<div class="empty-state"><div class="icon">⚠️</div><p>${res.data.error ?? 'Could not load profile'}</p></div>`;
+  }
+}
+
+function renderProfile(p) {
+  document.getElementById('profile_view').innerHTML = `
+    <div class="profile-grid">
+      <div class="profile-field"><div class="label">Full name</div><div class="val">${p.full_name ?? '—'}</div></div>
+      <div class="profile-field"><div class="label">Email</div><div class="val">${p.email ?? '—'}</div></div>
+      <div class="profile-field"><div class="label">Experience</div><div class="val">${p.experience_years ?? '—'} yrs</div></div>
+      <div class="profile-field"><div class="label">Verified</div><div class="val">${badge(p.id_verified ? 'verified' : 'unverified', {'verified':'badge-green','unverified':'badge-red'})}</div></div>
+      <div class="profile-field"><div class="label">Profile complete</div><div class="val">${badge(p.profile_complete ? 'yes' : 'no', {'yes':'badge-green','no':'badge-yellow'})}</div></div>
+      <div class="profile-field"><div class="label">Member since</div><div class="val">${p.created_at ? p.created_at.slice(0,10) : '—'}</div></div>
+    </div>
+    <div class="mt-16">
+      <div class="label">Subjects</div>
+      <div class="chip-list">${(p.subjects ?? []).map(s => `<span class="chip">${s}</span>`).join('') || '—'}</div>
+    </div>`;
+
+  // Pre-fill edit modal
+  document.getElementById('ep_full_name').value = p.full_name ?? '';
+  document.getElementById('ep_subjects').value  = (p.subjects ?? []).join(', ');
+  document.getElementById('ep_exp').value        = p.experience_years ?? '';
+}
+
+async function doUpdateProfile() {
+  const subjects = document.getElementById('ep_subjects').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const body = {
+    full_name: document.getElementById('ep_full_name').value.trim(),
+    subjects,
+    experience_years: parseInt(document.getElementById('ep_exp').value) || 0,
+  };
+  const res = await api('PUT', '/teachers/profile', body, token);
+  showResponse('editProfileResp', res.data, res.ok);
+  if (res.ok) { toast('Profile updated'); closeModal('editProfileModal'); loadProfile(); }
+  else toast(res.data.error ?? 'Update failed', 'error');
+}
+
+async function doChangePassword() {
+  const body = {
+    old_password: document.getElementById('cp_old').value,
+    new_password: document.getElementById('cp_new').value,
+  };
+  const res = await api('POST', '/auth/change-password', body, token);
+  showResponse('cpResp', res.data, res.ok);
+  if (res.ok) toast('Password changed');
+  else toast(res.data.error ?? 'Failed', 'error');
+}
+
+// ── Documents ────────────────────────────────────────────────
+async function loadDocs() {
+  const res = await api('GET', '/teachers/profile', undefined, token);
+  if (!res.ok) return;
+  const docs = res.data.documents ?? {};
+  if (!Object.keys(docs).length) {
+    document.getElementById('docs_view').innerHTML =
+      `<div class="empty-state"><div class="icon">📄</div><p>No documents uploaded yet.</p></div>`;
+    return;
+  }
+  document.getElementById('docs_view').innerHTML =
+    Object.entries(docs).map(([k,v]) =>
+      `<div class="profile-field" style="margin-bottom:12px">
+         <div class="label">${k.replace(/_/g,' ')}</div>
+         <div class="val"><a href="${v}" target="_blank" style="color:var(--accent)">${v}</a></div>
+       </div>`
+    ).join('');
+}
+
+async function doUpdateDocs() {
+  const docs = {};
+  const front = document.getElementById('doc_front').value.trim();
+  const back  = document.getElementById('doc_back').value.trim();
+  const cert  = document.getElementById('doc_cert').value.trim();
+  if (!front || !back) { toast('Front and back ID card URLs required', 'error'); return; }
+  docs.id_card_front = front;
+  docs.id_card_back  = back;
+  if (cert) docs.certificate = cert;
+  const res = await api('PUT', '/teachers/profile', { documents: docs }, token);
+  showResponse('docsResp', res.data, res.ok);
+  if (res.ok) { toast('Documents saved'); loadDocs(); }
+  else toast(res.data.error ?? 'Failed', 'error');
+}
+
+// ── Work History ─────────────────────────────────────────────
+async function loadWorkHistory() {
+  const res = await api('GET', '/teachers/profile', undefined, token);
+  const tbody = document.getElementById('work_table');
+  if (!res.ok) { tbody.innerHTML = `<tr><td colspan="5">Error loading</td></tr>`; return; }
+  const wh = res.data.work_history ?? [];
+  if (!wh.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:24px">No work history yet.</td></tr>`; return; }
+  tbody.innerHTML = wh.map(w => `
+    <tr>
+      <td>${w.organization}</td>
+      <td>${w.role}</td>
+      <td>${w.start_date}</td>
+      <td>${w.end_date ?? '—'}</td>
+      <td><button class="btn btn-danger-sm" onclick="deleteWork(${w.id})">Delete</button></td>
+    </tr>`).join('');
+}
+
+async function doAddWork() {
+  const body = {
+    organization: document.getElementById('wh_org').value.trim(),
+    role: document.getElementById('wh_role').value.trim(),
+    start_date: document.getElementById('wh_start').value,
+    end_date: document.getElementById('wh_end').value || null,
+  };
+  const res = await api('POST', '/teachers/profile/work-history', body, token);
+  showResponse('addWorkResp', res.data, res.ok);
+  if (res.ok) { toast('Work history added'); closeModal('addWorkModal'); loadWorkHistory(); }
+  else toast(res.data.error ?? 'Failed', 'error');
+}
+
+async function deleteWork(id) {
+  if (!confirm('Delete this work history entry?')) return;
+  const res = await api('DELETE', `/teachers/profile/work-history/${id}`, undefined, token);
+  if (res.ok || res.status === 204) { toast('Deleted'); loadWorkHistory(); }
+  else toast(res.data.error ?? 'Delete failed', 'error');
+}
+
+// ── References ───────────────────────────────────────────────
+async function loadReferences() {
+  const res = await api('GET', '/teachers/profile', undefined, token);
+  const tbody = document.getElementById('ref_table');
+  if (!res.ok) { tbody.innerHTML = `<tr><td colspan="7">Error</td></tr>`; return; }
+  const refs = res.data.references ?? [];
+  if (!refs.length) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:24px">No references yet.</td></tr>`; return; }
+  tbody.innerHTML = refs.map(r => `
+    <tr>
+      <td>${r.full_name}</td>
+      <td>${r.organization ?? '—'}</td>
+      <td>${r.role ?? '—'}</td>
+      <td>${r.email}</td>
+      <td>${r.phone}</td>
+      <td>${r.relationship_type}</td>
+      <td><button class="btn btn-danger-sm" onclick="deleteRef(${r.id})">Delete</button></td>
+    </tr>`).join('');
+}
+
+async function doAddRef() {
+  const body = {
+    full_name: document.getElementById('ref_full_name').value.trim(),
+    organization: document.getElementById('ref_org').value.trim() || null,
+    role: document.getElementById('ref_role').value.trim() || null,
+    email: document.getElementById('ref_email').value.trim(),
+    phone: document.getElementById('ref_phone').value.trim(),
+    relationship_type: document.getElementById('ref_rel').value.trim(),
+  };
+  const res = await api('POST', '/teachers/profile/references', body, token);
+  showResponse('addRefResp', res.data, res.ok);
+  if (res.ok) { toast('Reference added'); closeModal('addRefModal'); loadReferences(); }
+  else toast(res.data.error ?? 'Failed', 'error');
+}
+
+async function deleteRef(id) {
+  if (!confirm('Remove this reference?')) return;
+  const res = await api('DELETE', `/teachers/profile/references/${id}`, undefined, token);
+  if (res.ok || res.status === 204) { toast('Deleted'); loadReferences(); }
+  else toast(res.data.error ?? 'Delete failed', 'error');
+}
+
+// ── Exams ────────────────────────────────────────────────────
+async function loadExams() {
+  const res = await api('GET', '/teachers/exams', undefined, token);
+  showResponse('examListResp', res.data, res.ok);
+  if (!res.ok) { toast(res.data.error ?? 'Failed', 'error'); return; }
+  const list = document.getElementById('exam_list');
+  if (!res.data.length) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No exams available.</p></div>`;
+    return;
+  }
+  list.innerHTML = res.data.map(item => {
+    const e = item.exam;
+    const left = item.attempts_left;
+    return `
+      <div class="card" style="margin-bottom:12px">
+        <div class="flex-between">
+          <div>
+            <strong>${e.subject}</strong>
+            <span class="badge badge-blue" style="margin-left:8px">${e.questions?.length ?? 0} questions</span>
+          </div>
+          <div class="flex-row">
+            <span style="font-size:12px;color:var(--text-dim)">${left === Infinity ? '∞' : left} attempts left</span>
+            ${left > 0
+              ? `<button class="btn btn-sm" onclick="startExam(${e.id})">Start</button>`
+              : `<span class="badge badge-red">No attempts left</span>`}
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:12px;color:var(--text-dim)">Time limit: ${e.time_limit} min &nbsp;·&nbsp; Max attempts: ${e.max_attempts ?? '∞'}</div>
+      </div>`;
+  }).join('');
+}
+
+async function startExam(examId) {
+  const res = await api('POST', '/teachers/exams/start', { exam_id: examId }, token);
+  showResponse('examListResp', res.data, res.ok);
+  if (res.ok) {
+    toast(`Exam started — attempt ID: ${res.data.attempt?.id}`);
+    document.getElementById('submit_attempt_id').value = res.data.attempt?.id ?? '';
+  } else {
+    toast(res.data.error ?? 'Failed', 'error');
+  }
+}
+
+async function doSubmitExam() {
+  const attempt_id = parseInt(document.getElementById('submit_attempt_id').value);
+  let answers;
+  try { answers = JSON.parse(document.getElementById('submit_answers').value); }
+  catch { toast('Invalid JSON in answers', 'error'); return; }
+  const res = await api('POST', '/teachers/exams/submit', { attempt_id, answers }, token);
+  showResponse('submitExamResp', res.data, res.ok);
+  if (res.ok) toast(`Score: ${res.data.score?.toFixed(1) ?? '—'}%`);
+  else toast(res.data.error ?? 'Submit failed', 'error');
+}
+
+// ── Interviews ───────────────────────────────────────────────
+async function loadInterviews() {
+  const status = document.getElementById('iv_status_filter').value;
+  const path = `/teachers/interviews${status ? `?status=${status}` : ''}`;
+  const res = await api('GET', path, undefined, token);
+  showResponse('ivResp', res.data, res.ok);
+  const tbody = document.getElementById('iv_table');
+  if (!res.ok) { tbody.innerHTML = `<tr><td colspan="6">Error</td></tr>`; toast(res.data.error,'error'); return; }
+  const list = Array.isArray(res.data) ? res.data : [];
+  if (!list.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:24px">No requests.</td></tr>`; return; }
+  tbody.innerHTML = list.map(r => `
+    <tr>
+      <td>#${r.id}</td>
+      <td>${r.employer_id}</td>
+      <td>${r.contact_method}</td>
+      <td>${badge(r.status, STATUS_COLORS)}</td>
+      <td>${r.created_at?.slice(0,10) ?? '—'}</td>
+      <td>${r.status === 'pending' ? `<button class="btn btn-sm" onclick="openRespond(${r.id})">Respond</button>` : '—'}</td>
+    </tr>`).join('');
+}
+
+function openRespond(reqId) {
+  document.getElementById('respond_req_id').value = reqId;
+  document.getElementById('respond_req_label').textContent = '#' + reqId;
+  document.getElementById('respondResp').className = 'response-box';
+  openModal('respondModal');
+}
+
+async function doRespond(action) {
+  const reqId = document.getElementById('respond_req_id').value;
+  const res = await api('POST', `/teachers/interviews/${reqId}/respond`, { action }, token);
+  showResponse('respondResp', res.data, res.ok);
+  if (res.ok) { toast(`Request ${action}`); closeModal('respondModal'); loadInterviews(); }
+  else toast(res.data.error ?? 'Failed', 'error');
+}
+
+// ── Scenario ─────────────────────────────────────────────────
+async function loadScenario() {
+  const res = await api('GET', '/teachers/scenario', undefined, token);
+  showResponse('scenarioResp', res.data, res.ok);
+  if (!res.ok) { toast(res.data.error ?? 'Failed', 'error'); return; }
+  const s = res.data;
+  document.getElementById('scenario_view').innerHTML = `
+    <div class="card" style="background:var(--surface2)">
+      <div class="flex-row" style="margin-bottom:10px">
+        <span class="badge badge-blue">${s.subject ?? '—'}</span>
+        <span class="badge badge-gray">${s.level ?? '—'}</span>
+        <span class="badge ${s.generated_by === 'ai' ? 'badge-yellow' : 'badge-gray'}">${s.generated_by}</span>
+      </div>
+      <p style="line-height:1.6">${s.prompt_text ?? '—'}</p>
+      <p class="hint" style="margin-top:8px">Scenario ID: ${s.id}</p>
+    </div>`;
+  document.getElementById('vid_scenario_id').value  = s.id ?? '';
+  document.getElementById('confirm_scenario_id').value = s.id ?? '';
+}
+
+async function doRequestUploadUrl() {
+  const scenario_id = parseInt(document.getElementById('vid_scenario_id').value);
+  const res = await api('POST', '/teachers/video/upload-url', { scenario_id }, token);
+  showResponse('uploadUrlResp', res.data, res.ok);
+  if (res.ok) toast('Upload URL received');
+  else toast(res.data.error ?? 'Failed', 'error');
+}
+
+async function doConfirmUpload() {
+  const body = {
+    scenario_id: parseInt(document.getElementById('confirm_scenario_id').value),
+    video_url: document.getElementById('confirm_video_url').value.trim(),
+  };
+  const res = await api('POST', '/teachers/video/confirm', body, token);
+  showResponse('confirmResp', res.data, res.ok);
+  if (res.ok) toast('Upload confirmed');
+  else toast(res.data.error ?? 'Failed', 'error');
+}
+
+// ── Init ─────────────────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>

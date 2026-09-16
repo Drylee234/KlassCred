@@ -1,4 +1,4 @@
-# services/auth_service.py
+
 
 from datetime import datetime, timedelta, timezone
 
@@ -16,12 +16,7 @@ from errors.exceptions import BadRequestError, ConflictError, UnauthorizedError
 
 
 def register(email, password, type, **kwargs):
-    """
-    Create a user account and its corresponding user subtype.
-
-    Profile-specific onboarding data is intentionally not handled here.
-    """
-
+    
     existing_user = User.query.filter_by(email=email).first()
 
     if existing_user:
@@ -45,7 +40,7 @@ def register(email, password, type, **kwargs):
         email=email,
         password_hash=password_hash,
         type=type,
-    )
+        **kwargs)
 
     db.session.add(user)
     db.session.commit()
@@ -54,9 +49,6 @@ def register(email, password, type, **kwargs):
 
 
 def login(email, password):
-    """
-    Authenticate a user and issue a JWT.
-    """
 
     user = User.query.filter_by(email=email).first()
 
@@ -85,9 +77,6 @@ def login(email, password):
 
 
 def get_current_user(token):
-    """
-    Decode a JWT and return the corresponding User.
-    """
 
     try:
         payload = jwt.decode(
@@ -114,9 +103,6 @@ def get_current_user(token):
 
 
 def change_password(user, old_password, new_password):
-    """
-    Change an authenticated user's password.
-    """
 
     if not bcrypt.check_password_hash(
         user.password_hash,

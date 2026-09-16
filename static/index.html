@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KlassCred — Login / Register</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1>KlassCred</h1>
+    <p class="subtitle">Teacher verification & hiring platform — Test UI</p>
+
+    <!-- Login / Register tab -->
+    <div class="tab-row" id="authTabs">
+      <button class="active" onclick="switchAuthTab('login')">Login</button>
+      <button onclick="switchAuthTab('register')">Register</button>
+    </div>
+
+    <!-- ── LOGIN ───────────────────────────────────────────── -->
+    <div id="loginForm">
+      <label>Email</label>
+      <input id="l_email" type="email" placeholder="you@example.com">
+
+      <label>Password</label>
+      <input id="l_password" type="password" placeholder="••••••••">
+
+      <button class="btn btn-primary" onclick="doLogin()">Sign in</button>
+      <div id="loginResp" class="response-box"></div>
+    </div>
+
+    <!-- ── REGISTER ─────────────────────────────────────────── -->
+    <div id="registerForm" style="display:none">
+
+      <!-- User type selector -->
+      <label>Account type</label>
+      <select id="r_type" onchange="onTypeChange()">
+        <option value="">— Select type —</option>
+        <option value="teacher">Teacher</option>
+        <option value="organization">Organization</option>
+        <option value="parent">Parent</option>
+        <option value="reviewer">Reviewer</option>
+      </select>
+
+      <label>Email</label>
+      <input id="r_email" type="email" placeholder="you@example.com">
+
+      <label>Password</label>
+      <input id="r_password" type="password" placeholder="min 8 chars">
+
+      <!-- ── Teacher-only fields ── -->
+      <div class="type-fields" id="fields_teacher" style="display:none">
+        <hr class="divider">
+        <p class="hint">Teacher profile fields (set after registration via /teachers/profile)</p>
+        <label>Full name</label>
+        <input id="t_full_name" placeholder="Jane Doe">
+        <label>Subjects (comma-separated)</label>
+        <input id="t_subjects" placeholder="Mathematics, Physics">
+        <label>Years of experience</label>
+        <input id="t_exp" type="number" min="0" placeholder="3">
+      </div>
+
+      <!-- ── Organization-only fields ── -->
+      <div class="type-fields" id="fields_organization" style="display:none">
+        <hr class="divider">
+        <p class="hint">Organization profile (set after registration)</p>
+        <label>Organization name</label>
+        <input id="o_name" placeholder="Greenfield Academy">
+        <label>CAC number</label>
+        <input id="o_cac" placeholder="RC000000">
+        <label>Location</label>
+        <input id="o_location" placeholder="Lagos, Nigeria">
+      </div>
+
+      <!-- ── Parent-only fields ── -->
+      <div class="type-fields" id="fields_parent" style="display:none">
+        <hr class="divider">
+        <p class="hint">Parent profile (set after registration)</p>
+        <label>Full name</label>
+        <input id="p_name" placeholder="Mr John Doe">
+      </div>
+
+      <!-- ── Reviewer-only fields ── -->
+      <div class="type-fields" id="fields_reviewer" style="display:none">
+        <hr class="divider">
+        <p class="hint">Reviewer account — no extra profile fields at registration</p>
+      </div>
+
+      <button class="btn btn-primary" onclick="doRegister()">Create account</button>
+      <div id="registerResp" class="response-box"></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="common.js"></script>
+<script>
+// redirect if already logged in
+if (session.token()) {
+  const t = session.type();
+  if (t === 'teacher') location.href = 'teacher.html';
+  else if (t === 'organization' || t === 'parent') location.href = 'employer.html';
+  else if (t === 'reviewer') location.href = 'reviewer.html';
+}
+
+function switchAuthTab(tab) {
+  const tabs = document.querySelectorAll('#authTabs button');
+  tabs[0].classList.toggle('active', tab === 'login');
+  tabs[1].classList.toggle('active', tab === 'register');
+  document.getElementById('loginForm').style.display    = tab === 'login'    ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+}
+
+function onTypeChange() {
+  const type = document.getElementById('r_type').value;
+  document.querySelectorAll('.type-fields').forEach(el => el.style.display = 'none');
+  if (type) {
+    const el = document.getElementById(`fields_${type}`);
+    if (el) el.style.display = 'block';
+  }
+}
+
+async function doLogin() {
+  const email    = document.getElementById('l_email').value.trim();
+  const password = document.getElementById('l_password').value;
+  if (!email || !password) { toast('Fill in email and password', 'error'); return; }
+
+  const { ok, data } = await api('POST', '/auth/login', { email, password });
+  showResponse('loginResp', data, ok);
+
+  if (ok && data.token) {
+    // We need the user type — decode JWT payload (base64)
+    try {
+      const payload = JSON.parse(atob(data.token.split('.')[1]));
+      const type = payload.type;
+      session.save(data.token, type);
+      toast('Logged in!');
+      setTimeout(() => {
+        if (type === 'teacher') location.href = 'teacher.html';
+        else if (type === 'organization' || type === 'parent') location.href = 'employer.html';
+        else if (type === 'reviewer') location.href = 'reviewer.html';
+        else location.href = 'index.html';
+      }, 600);
+    } catch(e) {
+      toast('Login OK but could not read token payload', 'error');
+    }
+  } else {
+    toast(data.error ?? 'Login failed', 'error');
+  }
+}
+
+async function doRegister() {
+  const type     = document.getElementById('r_type').value;
+  const email    = document.getElementById('r_email').value.trim();
+  const password = document.getElementById('r_password').value;
+
+  if (!type || !email || !password) {
+    toast('Type, email and password are required', 'error'); return;
+  }
+
+  const { ok, data } = await api('POST', '/auth/register', { email, password, type });
+  showResponse('registerResp', data, ok);
+
+  if (ok) {
+    toast('Account created — logging in…');
+    // Auto-login
+    const loginRes = await api('POST', '/auth/login', { email, password });
+    if (loginRes.ok && loginRes.data.token) {
+      const payload = JSON.parse(atob(loginRes.data.token.split('.')[1]));
+      session.save(loginRes.data.token, payload.type);
+
+      // Auto-create profile if fields filled
+      const token = loginRes.data.token;
+      if (type === 'teacher') await tryCreateTeacherProfile(token);
+      else if (type === 'organization') await tryCreateOrgProfile(token);
+      else if (type === 'parent') await tryCreateParentProfile(token);
+
+      setTimeout(() => {
+        if (type === 'teacher') location.href = 'teacher.html';
+        else if (type === 'organization' || type === 'parent') location.href = 'employer.html';
+        else if (type === 'reviewer') location.href = 'reviewer.html';
+      }, 800);
+    }
+  } else {
+    toast(data.error ?? 'Registration failed', 'error');
+  }
+}
+
+async function tryCreateTeacherProfile(token) {
+  const full_name       = document.getElementById('t_full_name').value.trim();
+  const subjectsRaw     = document.getElementById('t_subjects').value.trim();
+  const experience_years = parseInt(document.getElementById('t_exp').value) || 0;
+  if (!full_name || !subjectsRaw) return;
+  const subjects = subjectsRaw.split(',').map(s => s.trim()).filter(Boolean);
+  await api('POST', '/teachers/profile', { full_name, subjects, experience_years }, token);
+}
+
+async function tryCreateOrgProfile(token) {
+  const org_name  = document.getElementById('o_name').value.trim();
+  const cac_number = document.getElementById('o_cac').value.trim();
+  const location  = document.getElementById('o_location').value.trim();
+  if (!org_name) return;
+  await api('POST', '/employers/profile', { org_name, cac_number, location }, token);
+}
+
+async function tryCreateParentProfile(token) {
+  const name = document.getElementById('p_name').value.trim();
+  if (!name) return;
+  await api('POST', '/employers/profile', { name }, token);
+}
+</script>
+
+</body>
+</html>

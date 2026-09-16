@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KlassCred — Employer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">KlassCred <span id="sbar_type">Employer Portal</span></div>
+
+    <span class="nav-section">Overview</span>
+    <button class="nav-item active" data-page="dashboard" onclick="nav('dashboard')">
+      <span class="nav-icon">🏠</span> Dashboard
+    </button>
+
+    <span class="nav-section">My Profile</span>
+    <button class="nav-item" data-page="profile" onclick="nav('profile')">
+      <span class="nav-icon">👤</span> Profile
+    </button>
+
+    <span class="nav-section">Hiring</span>
+    <button class="nav-item" data-page="search" onclick="nav('search')">
+      <span class="nav-icon">🔍</span> Search Teachers
+    </button>
+    <button class="nav-item" data-page="recruitment" onclick="nav('recruitment')">
+      <span class="nav-icon">📋</span> Recruitment History
+    </button>
+    <button class="nav-item" data-page="interviews" onclick="nav('interviews')">
+      <span class="nav-icon">💬</span> Interview Requests
+    </button>
+
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="logout()" style="color:var(--red)">
+        <span class="nav-icon">🚪</span> Logout
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Main ────────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- DASHBOARD ──────────────────────────────────────────── -->
+    <section id="sec_dashboard" class="page-section">
+      <div class="page-header flex-between">
+        <div><h2>Dashboard</h2><p id="dash_greeting">Welcome back</p></div>
+        <span id="dash_verified" class="badge badge-gray">Unverified</span>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="label">Active Hires</div><div class="value" id="ds_active">—</div></div>
+        <div class="stat-card"><div class="label">Total Recruited</div><div class="value" id="ds_total">—</div></div>
+        <div class="stat-card"><div class="label">Interview Requests</div><div class="value" id="ds_interviews">—</div></div>
+        <div class="stat-card"><div class="label">Account type</div><div class="value" id="ds_type" style="font-size:16px">—</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Recent Recruitment</div>
+        <div id="dash_recruitment">
+          <div class="empty-state"><div class="icon">📋</div><p>Loading…</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROFILE ────────────────────────────────────────────── -->
+    <section id="sec_profile" class="page-section" style="display:none">
+      <div class="page-header flex-between">
+        <div><h2>Profile</h2><p>Your employer profile</p></div>
+        <button class="btn btn-sm" onclick="openModal('editProfileModal')">Edit</button>
+      </div>
+
+      <div class="card">
+        <div id="profile_view">
+          <div class="empty-state"><div class="icon">👤</div><p>Loading…</p></div>
+        </div>
+      </div>
+
+      <div class="card mt-24">
+        <div class="card-title">Change Password</div>
+        <label>Current password</label><input id="cp_old" type="password">
+        <label>New password</label><input id="cp_new" type="password">
+        <button class="btn btn-sm mt-16" onclick="doChangePassword()">Update</button>
+        <div id="cpResp" class="response-box"></div>
+      </div>
+    </section>
+
+    <!-- SEARCH ─────────────────────────────────────────────── -->
+    <section id="sec_search" class="page-section" style="display:none">
+      <div class="page-header">
+        <h2>Search Teachers</h2><p>GET /employers/search</p>
+      </div>
+
+      <div class="card section">
+        <div class="card-title">Filters</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+          <div>
+            <label>Subject</label>
+            <input id="s_subject" placeholder="Mathematics">
+          </div>
+          <div>
+            <label>Min rating (0–100)</label>
+            <input id="s_min_rating" type="number" min="0" max="100">
+          </div>
+          <div>
+            <label>Verified only</label>
+            <select id="s_verified">
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-sm mt-16" onclick="doSearch()">Search</button>
+      </div>
+
+      <div id="search_results">
+        <div class="empty-state"><div class="icon">🔍</div><p>Run a search above.</p></div>
+      </div>
+      <div id="searchResp" class="response-box"></div>
+    </section>
+
+    <!-- RECRUITMENT ─────────────────────────────────────────── -->
+    <section id="sec_recruitment" class="page-section" style="display:none">
+      <div class="page-header flex-between">
+        <div><h2>Recruitment History</h2><p>GET /employers/recruitment</p></div>
+        <button class="btn btn-sm" onclick="openModal('hireModal')">+ Hire Teacher</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Teacher ID</th><th>Position</th><th>Hired</th><th>Ended</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="rec_table"><tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:24px">Loading…</td></tr></tbody>
+          </table>
+        </div>
+        <div id="recResp" class="response-box"></div>
+      </div>
+    </section>
+
+    <!-- INTERVIEWS ──────────────────────────────────────────── -->
+    <section id="sec_interviews" class="page-section" style="display:none">
+      <div class="page-header flex-between">
+        <div><h2>Interview Requests</h2><p>GET /employers/interviews</p></div>
+        <button class="btn btn-sm" onclick="openModal('sendIvModal')">+ Send Request</button>
+      </div>
+
+      <div class="flex-row" style="margin-bottom:16px">
+        <select id="iv_status_filter" style="width:auto;min-width:160px">
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="accepted">Accepted</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <button class="btn btn-sm" onclick="loadInterviews()">Load</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Teacher ID</th><th>Contact</th><th>Status</th><th>Created</th></tr></thead>
+            <tbody id="iv_table"><tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:24px">Click Load to fetch.</td></tr></tbody>
+          </table>
+        </div>
+        <div id="ivResp" class="response-box"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── Edit Profile Modal ──────────────────────────────────── -->
+<div class="modal-overlay" id="editProfileModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Edit Profile</h3>
+      <button class="modal-close" onclick="closeModal('editProfileModal')">✕</button>
+    </div>
+    <!-- org fields -->
+    <div id="ep_org_fields">
+      <label>Organization name</label><input id="ep_org_name">
+      <label>CAC number</label><input id="ep_cac">
+      <label>Location</label><input id="ep_location">
+    </div>
+    <!-- parent fields -->
+    <div id="ep_parent_fields" style="display:none">
+      <label>Full name</label><input id="ep_p_name">
+    </div>
+    <button class="btn btn-primary" onclick="doUpdateProfile()">Save</button>
+    <div id="editProfileResp" class="response-box"></div>
+  </div>
+</div>
+
+<!-- ── Hire Teacher Modal ─────────────────────────────────── -->
+<div class="modal-overlay" id="hireModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Hire a Teacher</h3>
+      <button class="modal-close" onclick="closeModal('hireModal')">✕</button>
+    </div>
+    <label>Teacher ID</label>
+    <input id="hire_teacher_id" type="number" placeholder="e.g. 42">
+    <label>Position</label>
+    <input id="hire_position" placeholder="Mathematics Teacher">
+    <label>Hire date</label>
+    <input id="hire_date" type="date">
+    <button class="btn btn-primary" onclick="doHireTeacher()">Hire</button>
+    <div id="hireResp" class="response-box"></div>
+  </div>
+</div>
+
+<!-- ── Update Recruitment Status Modal ───────────────────── -->
+<div class="modal-overlay" id="statusModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Update Recruitment Status</h3>
+      <button class="modal-close" onclick="closeModal('statusModal')">✕</button>
+    </div>
+    <input type="hidden" id="status_rec_id">
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Record ID: <strong id="status_rec_label"></strong></p>
+    <label>New status</label>
+    <select id="new_status">
+      <option value="suspended">Suspended</option>
+      <option value="terminated">Terminated</option>
+    </select>
+    <button class="btn btn-primary" onclick="doUpdateStatus()">Update</button>
+    <div id="statusResp" class="response-box"></div>
+  </div>
+</div>
+
+<!-- ── Send Interview Request Modal ──────────────────────── -->
+<div class="modal-overlay" id="sendIvModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Send Interview Request</h3>
+      <button class="modal-close" onclick="closeModal('sendIvModal')">✕</button>
+    </div>
+    <label>Teacher ID</label>
+    <input id="iv_teacher_id" type="number">
+    <label>Contact method</label>
+    <select id="iv_contact">
+      <option value="whatsapp">WhatsApp</option>
+      <option value="email">Email</option>
+    </select>
+    <button class="btn btn-primary" onclick="doSendInterviewRequest()">Send</button>
+    <div id="sendIvResp" class="response-box"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="common.js"></script>
+<script>
+const token = session.required();
+const userType = session.type();
+
+// show correct sidebar label
+document.getElementById('sbar_type').textContent =
+  userType === 'organization' ? 'Organization Portal' : 'Parent Portal';
+
+// ── Navigation ───────────────────────────────────────────────
+function nav(page) {
+  document.querySelectorAll('.page-section').forEach(s => s.style.display = 'none');
+  document.getElementById(`sec_${page}`).style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.page === page));
+  if (page === 'dashboard')   loadDashboard();
+  if (page === 'profile')     loadProfile();
+  if (page === 'recruitment') loadRecruitment();
+  if (page === 'interviews')  loadInterviews();
+}
+
+// ── Dashboard ────────────────────────────────────────────────
+async function loadDashboard() {
+  document.getElementById('ds_type').textContent = userType;
+
+  const [profRes, recRes, ivRes] = await Promise.all([
+    api('GET', '/employers/profile', undefined, token).catch(() => null),
+    api('GET', '/employers/recruitment', undefined, token).catch(() => null),
+    api('GET', '/employers/interviews', undefined, token).catch(() => null),
+  ]);
+
+  if (profRes?.ok) {
+    const p = profRes.data;
+    const name = p.org_name ?? p.name ?? p.email ?? 'Employer';
+    document.getElementById('dash_greeting').textContent = `Welcome, ${name}`;
+    if (p.id_verified) {
+      document.getElementById('dash_verified').textContent = 'Verified';
+      document.getElementById('dash_verified').className = 'badge badge-green';
+    }
+  }
+
+  if (recRes?.ok && Array.isArray(recRes.data)) {
+    const recs = recRes.data;
+    document.getElementById('ds_total').textContent = recs.length;
+    document.getElementById('ds_active').textContent = recs.filter(r => r.status === 'active').length;
+    // mini table for dashboard
+    const recent = recs.slice(-5).reverse();
+    if (recent.length) {
+      document.getElementById('dash_recruitment').innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Teacher ID</th><th>Position</th><th>Status</th><th>Hired</th></tr></thead>
+            <tbody>${recent.map(r => `
+              <tr>
+                <td>${r.teacher_id}</td>
+                <td>${r.position}</td>
+                <td>${badge(r.status, STATUS_COLORS)}</td>
+                <td>${r.hired_at}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    } else {
+      document.getElementById('dash_recruitment').innerHTML =
+        `<div class="empty-state"><div class="icon">📭</div><p>No recruitment records yet.</p></div>`;
+    }
+  }
+
+  if (ivRes?.ok && Array.isArray(ivRes.data)) {
+    const pending = ivRes.data.filter(r => r.status === 'pending').length;
+    document.getElementById('ds_interviews').textContent = `${ivRes.data.length} (${pending} pending)`;
+  }
+}
+
+// ── Profile ──────────────────────────────────────────────────
+async function loadProfile() {
+  const res = await api('GET', '/employers/profile', undefined, token);
+  const view = document.getElementById('profile_view');
+  if (!res.ok) { view.innerHTML = `<div class="empty-state"><p>${res.data.error ?? 'Error loading profile'}</p></div>`; return; }
+  const p = res.data;
+
+  let rows = '';
+  if (userType === 'organization') {
+    rows = `
+      <div class="profile-field"><div class="label">Org name</div><div class="val">${p.org_name ?? '—'}</div></div>
+      <div class="profile-field"><div class="label">CAC number</div><div class="val">${p.cac_number ?? '—'}</div></div>
+      <div class="profile-field"><div class="label">Location</div><div class="val">${p.location ?? '—'}</div></div>`;
+    document.getElementById('ep_org_name').value = p.org_name ?? '';
+    document.getElementById('ep_cac').value      = p.cac_number ?? '';
+    document.getElementById('ep_location').value = p.location ?? '';
+    document.getElementById('ep_org_fields').style.display    = 'block';
+    document.getElementById('ep_parent_fields').style.display = 'none';
+  } else {
+    rows = `<div class="profile-field"><div class="label">Name</div><div class="val">${p.name ?? '—'}</div></div>`;
+    document.getElementById('ep_p_name').value = p.name ?? '';
+    document.getElementById('ep_org_fields').style.display    = 'none';
+    document.getElementById('ep_parent_fields').style.display = 'block';
+  }
+
+  view.innerHTML = `
+    <div class="profile-grid">
+      <div class="profile-field"><div class="label">Email</div><div class="val">${p.email ?? '—'}</div></div>
+      <div class="profile-field"><div class="label">Type</div><div class="val">${p.type ?? userType}</div></div>
+      <div class="profile-field"><div class="label">Verified</div><div class="val">${badge(p.id_verified ? 'verified' : 'unverified', {'verified':'badge-green','unverified':'badge-red'})}</div></div>
+      <div class="profile-field"><div class="label">Member since</div><div class="val">${p.created_at?.slice(0,10) ?? '—'}</div></div>
+      ${rows}
+    </div>`;
+}
+
+async function doUpdateProfile() {
+  let body = {};
+  if (userType === 'organization') {
+    body = {
+      org_name: document.getElementById('ep_org_name').value.trim(),
+      cac_number: document.getElementById('ep_cac').value.trim() || null,
+      location: document.getElementById('ep_location').value.trim() || null,
+    };
+  } else {
+    body = { name: document.getElementById('ep_p_name').value.trim() };
+  }
+  const res = await api('PUT', '/employers/profile', body, token);
+  showResponse('editProfileResp', res.data, res.ok);
+  if (res.ok) { toast('Profile updated'); closeModal('editProfileModal'); loadProfile(); }
+  else toast(res.data.error ?? 'Update failed', 'error');
+}
+
+async function doChangePassword() {
+  const res = await api('POST', '/auth/change-password', {
+    old_password: document.getElementById('cp_old').value,
+    new_password: document.getElementById('cp_new').value,
+  }, token);
+  showResponse('cpResp', res.data, res.ok);
+  if (res.ok) toast('Password changed');
+  else toast(res.data.error ?? 'Failed', 'error');
+}
+
+// ── Search ───────────────────────────────────────────────────
+async function doSearch() {
+  const params = new URLSearchParams();
+  const sub = document.getElementById('s_subject').value.trim();
+  const min = document.getElementById('s_min_rating').value.trim();
+  const ver = document.getElementById('s_verified').value;
+  if (sub) params.set('subject', sub);
+  if (min) params.set('min_rating', min);
+  params.set('verified_only', ver);
+  const res = await api('GET', `/employers/search?${params}`, undefined, token);
+  showResponse('searchResp', res.data, res.ok);
+  const container = document.getElementById('search_results');
+  if (!res.ok) { container.innerHTML = `<div class="empty-state"><p>${res.data.error ?? 'Search failed'}</p></div>`; return; }
+  const teachers = Array.isArray(res.data) ? res.data : [];
+  if (!teachers.length) { container.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>No teachers found.</p></div>`; return; }
+  container.innerHTML = teachers.map(t => `
+    <div class="card" style="margin-bottom:12px">
+      <div class="flex-between">
+        <div>
+          <strong>${t.full_name ?? '—'}</strong>
+          <span style="color:var(--text-dim);font-size:12px;margin-left:8px">#${t.id}</span>
+          ${t.id_verified ? `<span class="badge badge-green" style="margin-left:8px">Verified</span>` : ''}
+        </div>
+        <div class="flex-row">
+          ${t.rating?.composite != null ? `<span class="badge badge-blue">★ ${t.rating.composite.toFixed(1)}</span>` : ''}
+          <button class="btn btn-sm" onclick="prefillHire(${t.id})">Hire</button>
+          <button class="btn btn-sm" onclick="prefillInterview(${t.id})">Interview</button>
+        </div>
+      </div>
+      <div class="chip-list" style="margin-top:8px">
+        ${(t.subjects ?? []).map(s => `<span class="chip">${s}</span>`).join('')}
+      </div>
+      <div style="font-size:12px;color:var(--text-dim);margin-top:6px">${t.experience_years ?? '—'} yrs experience</div>
+    </div>`).join('');
+}
+
+function prefillHire(teacherId) {
+  document.getElementById('hire_teacher_id').value = teacherId;
+  openModal('hireModal');
+}
+
+function prefillInterview(teacherId) {
+  document.getElementById('iv_teacher_id').value = teacherId;
+  nav('interviews');
+  setTimeout(() => openModal('sendIvModal'), 200);
+}
+
+// ── Recruitment ──────────────────────────────────────────────
+async function loadRecruitment() {
+  const res = await api('GET', '/employers/recruitment', undefined, token);
+  showResponse('recResp', res.data, res.ok);
+  const tbody = document.getElementById('rec_table');
+  if (!res.ok) { tbody.innerHTML = `<tr><td colspan="7">Error loading</td></tr>`; return; }
+  const recs = Array.isArray(res.data) ? res.data : [];
+  if (!recs.length) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:24px">No records yet.</td></tr>`; return; }
+  tbody.innerHTML = recs.map(r => `
+    <tr>
+      <td>#${r.id}</td>
+      <td>${r.teacher_id}</td>
+      <td>${r.position}</td>
+      <td>${r.hired_at}</td>
+      <td>${r.ended_at ?? '—'}</td>
+      <td>${badge(r.status, STATUS_COLORS)}</td>
+      <td>${r.status !== 'terminated'
+        ? `<button class="btn btn-sm" onclick="openStatusModal(${r.id}, '${r.status}')">Update</button>`
+        : '—'}</td>
+    </tr>`).join('');
+}
+
+function openStatusModal(id, currentStatus) {
+  document.getElementById('status_rec_id').value = id;
+  document.getElementById('status_rec_label').textContent = '#' + id;
+  // filter options based on current
+  const sel = document.getElementById('new_status');
+  sel.innerHTML = currentStatus === 'active'
+    ? `<option value="suspended">Suspended</option><option value="terminated">Terminated</option>`
+    : `<option value="terminated">Terminated</option>`;
+  document.getElementById('statusResp').className = 'response-box';
+  openModal('statusModal');
+}
+
+async function doHireTeacher() {
+  const body = {
+    teacher_id: parseInt(document.getElementById('hire_teacher_id').value),
+    position:   document.getElementById('hire_position').value.trim(),
+    hired_at:   document.getElementById('hire_date').value,
+  };
+  const res = await api('POST', '/employers/hire', body, token);
+  showResponse('hireResp', res.data, res.ok);
+  if (res.ok) { toast('Teacher hired!'); closeModal('hireModal'); loadRecruitment(); }
+  else toast(res.data.error ?? 'Failed', 'error');
+}
+
+async function doUpdateStatus() {
+  const id = document.getElementById('status_rec_id').value;
+  const status = document.getElementById('new_status').value;
+  const res = await api('PUT', `/employers/recruitment/${id}`, { status }, token);
+  showResponse('statusResp', res.data, res.ok);
+  if (res.ok) { toast('Status updated'); closeModal('statusModal'); loadRecruitment(); }
+  else toast(res.data.error ?? 'Failed', 'error');
+}
+
+// ── Interviews ───────────────────────────────────────────────
+async function loadInterviews() {
+  const status = document.getElementById('iv_status_filter').value;
+  const path = `/employers/interviews${status ? `?status=${status}` : ''}`;
+  const res = await api('GET', path, undefined, token);
+  showResponse('ivResp', res.data, res.ok);
+  const tbody = document.getElementById('iv_table');
+  if (!res.ok) { tbody.innerHTML = `<tr><td colspan="5">Error</td></tr>`; return; }
+  const list = Array.isArray(res.data) ? res.data : [];
+  if (!list.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:24px">No requests.</td></tr>`; return; }
+  tbody.innerHTML = list.map(r => `
+    <tr>
+      <td>#${r.id}</td>
+      <td>${r.teacher_id}</td>
+      <td>${r.contact_method}</td>
+      <td>${badge(r.status, STATUS_COLORS)}</td>
+      <td>${r.created_at?.slice(0,10) ?? '—'}</td>
+    </tr>`).join('');
+}
+
+async function doSendInterviewRequest() {
+  const body = {
+    teacher_id: parseInt(document.getElementById('iv_teacher_id').value),
+    contact_method: document.getElementById('iv_contact').value,
+  };
+  const res = await api('POST', '/employers/interviews', body, token);
+  showResponse('sendIvResp', res.data, res.ok);
+  if (res.ok) { toast('Interview request sent'); closeModal('sendIvModal'); loadInterviews(); }
+  else toast(res.data.error ?? 'Failed', 'error');
+}
+
+// ── Init ─────────────────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>

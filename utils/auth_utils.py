@@ -1,5 +1,3 @@
-# utils/auth_utils.py
-
 from functools import wraps
 
 from flask import request, g
@@ -9,14 +7,6 @@ from errors.exceptions import UnauthorizedError, ForbiddenError
 
 
 def require_role(*roles):
-    """
-    Decorator that enforces JWT authentication and role-based access.
-
-    Usage:
-        @require_role("teacher")
-        @require_role("organization", "parent")
-        @require_role("reviewer")
-    """
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
