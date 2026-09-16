@@ -37,7 +37,7 @@ def create_app():
 
     @app.get("/test")
     def test_ui():
-        return send_from_directory("static", "klasscred_test_ui.html")
+        return send_from_directory("static", "index.html")
 
 
     return app
