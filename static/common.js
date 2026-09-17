@@ -1,7 +1,7 @@
 // ── KlassCred Test UI — shared utilities ──
 var liveUrl = 'https://klasscred.pxxlspace.cv'
 var localUrl = 'http://localhost:8080' 
-const BASE = localUrl ;
+const BASE = liveUrl ;
 
 // ── Token / session ──────────────────────────────────────────
 const session = {
