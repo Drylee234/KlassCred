@@ -15,7 +15,7 @@ from flask import current_app
 from errors.exceptions import BadRequestError, ConflictError, UnauthorizedError
 
 
-def register(email, password, type, **kwargs):
+def register(email, password, type, extra = None):
     
     existing_user = User.query.filter_by(email=email).first()
 
@@ -40,7 +40,7 @@ def register(email, password, type, **kwargs):
         email=email,
         password_hash=password_hash,
         type=type,
-        **kwargs)
+        **extra)
 
     db.session.add(user)
     db.session.commit()

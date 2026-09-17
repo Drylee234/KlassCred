@@ -10,12 +10,14 @@ bp = Blueprint("auth", __name__, url_prefix="/auth")
 @bp.post("/register")
 def register():
     data = request.get_json()
+    known = {"email", "password", "type"}
+    extra = {k: v for k, v in data.items() if k not in known}
 
     user = auth_service.register(
         email=data["email"],
         password=data["password"],
         type=data["type"],
-        **data["kwargs"]
+        **extra
     )
 
     return UserSchema().dump(user), 201
