@@ -36,6 +36,9 @@ def register_error_handlers(app):
     def handle_validation_error(e):
         return jsonify({"error": e.messages}), 400
 
+
+
     @app.errorhandler(Exception)
     def handle_unexpected_error(e):
-        return jsonify({"error": "An unexpected error occurred."}), 500
+        import traceback
+        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
