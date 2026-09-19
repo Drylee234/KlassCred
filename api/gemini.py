@@ -28,7 +28,7 @@ from errors.exceptions import AIServiceError
 
 _API_KEY = os.environ.get("GEMINI_API_KEY")
 _client = genai.Client(api_key=_API_KEY) if _API_KEY else None
-_MODEL = "gemini-2.0-flash"
+_MODEL = "gemini-2.5-flash"
 
 
 def _require_client():
