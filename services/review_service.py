@@ -3,6 +3,7 @@ from datetime import datetime
 from models.video import VideoSubmission
 from models.review import Review, ReviewAssignment
 from services import reviewer_service, rating_service
+from api import gemini as ai_provider
 from extensions import db
 from errors.exceptions import NotFoundError, BadRequestError, ForbiddenError
 
@@ -21,16 +22,10 @@ def run_ai_review(video_id):
     if not scenario:
         raise NotFoundError("Teaching scenario not found")
 
-    # Cencori integration is not implemented yet.
-    pass
-
-    # Expected normalized result from the Cencori adapter:
-    # {
-    #     "score": ...,
-    #     "notes": ...,
-    #     "flagged": ...,
-    #     "flag_reason": ...
-    # }
+    result = ai_provider.review_video(
+        prompt_text=scenario.prompt_text,
+        video_url=submission.video_url,
+    )
 
     review = Review(
         video_id=video_id,

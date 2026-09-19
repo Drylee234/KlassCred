@@ -7,6 +7,7 @@ from errors.exceptions import (
     ForbiddenError,
     NotFoundError,
     ConflictError,
+    AIServiceError,
 )
 
 
@@ -35,6 +36,10 @@ def register_error_handlers(app):
     @app.errorhandler(ValidationError)
     def handle_validation_error(e):
         return jsonify({"error": e.messages}), 400
+
+    @app.errorhandler(AIServiceError)
+    def handle_ai_service_error(e):
+        return jsonify({"error": e.message}), 502
 
 
 

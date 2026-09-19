@@ -24,3 +24,10 @@ class NotFoundError(AppError):
 
 class ConflictError(AppError):
     pass
+
+
+class AIServiceError(AppError):
+    """Raised when an upstream AI provider (Gemini, Cencori, etc.) fails or
+    returns something we can't use — network error, quota exceeded, bad
+    response shape, etc. Mapped to 502 (upstream failure), not 500."""
+    pass

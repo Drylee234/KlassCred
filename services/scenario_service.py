@@ -2,7 +2,7 @@ import random
 
 from models.video import TeachingScenario, VideoSubmission
 from models.teacher import Teacher
-from api import cencori
+from api import gemini as ai_provider  # was: from api import cencori
 from extensions import db
 from errors.exceptions import BadRequestError
 
@@ -40,13 +40,10 @@ def generate_scenario(teacher):
 
     target_level = "secondary"
 
-    # Cencori integration is not implemented yet.
-    pass
-
-    # Expected normalized result from the Cencori adapter:
-    # {
-    #     "prompt_text": ...
-    # }
+    result = ai_provider.generate_scenario(
+        subject=teacher.subjects[0],
+        level=target_level,
+    )
 
     scenario = TeachingScenario(
         subject=teacher.subjects[0],

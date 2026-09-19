@@ -1,151 +1,39 @@
-from datetime import datetime
+from sqlalchemy import func
 
-from models.video import VideoSubmission
-from models.review import Review, ReviewAssignment
-from services import reviewer_service, rating_service
+from models.reviewer import Reviewer
+from models.review import ReviewAssignment
 from extensions import db
-from errors.exceptions import NotFoundError, BadRequestError, ForbiddenError
+from errors.exceptions import NotFoundError
 
 
-def run_ai_review(video_id):
-    submission = VideoSubmission.query.get(video_id)
-
-    if not submission:
-        raise NotFoundError("Video submission not found")
-
-    if submission.status != "uploaded":
-        raise BadRequestError("Video submission is not ready for AI review")
-
-    scenario = submission.scenario
-
-    if not scenario:
-        raise NotFoundError("Teaching scenario not found")
-
-    # Cencori integration is not implemented yet.
-    pass
-
-    # Expected normalized result from the Cencori adapter:
-    # {
-    #     "score": ...,
-    #     "notes": ...,
-    #     "flagged": ...,
-    #     "flag_reason": ...
-    # }
-
-    review = Review(
-        video_id=video_id,
-        reviewer_id=None,
-        reviewer_type="ai",
-        score=result["score"],
-        notes=result["notes"],
-        flagged=result["flagged"],
-        flag_reason=result.get("flag_reason"),
-    )
-
-    submission.status = "ai_reviewed"
-
-    db.session.add(review)
-    db.session.commit()
-
-    assignment = assign_human_reviewer(video_id)
-
-    return {
-        "review": review,
-        "assignment": assignment,
-    }
+# Assignments in these states count as "active load" on a reviewer.
+# Completed/cancelled assignments free up their capacity.
+_ACTIVE_STATUSES = ("assigned", "in_progress")
 
 
-def assign_human_reviewer(video_id):
-    submission = VideoSubmission.query.get(video_id)
+def get_least_loaded_reviewer():
+    """
+    Returns the vetted human reviewer with the fewest currently active
+    (assigned or in_progress) review assignments -- a simple round-robin
+    load balancer so no single reviewer gets buried while others sit idle.
 
-    if not submission:
-        raise NotFoundError("Video submission not found")
-
-    if submission.status != "ai_reviewed":
-        raise BadRequestError("Video submission is not ready for human assignment")
-
-    ai_review = (
-        Review.query
-        .filter(
-            Review.video_id == video_id,
-            Review.reviewer_type == "ai",
+    Raises NotFoundError if there are no reviewers registered at all.
+    """
+    reviewer = (
+        db.session.query(Reviewer)
+        .outerjoin(
+            ReviewAssignment,
+            db.and_(
+                ReviewAssignment.reviewer_id == Reviewer.id,
+                ReviewAssignment.status.in_(_ACTIVE_STATUSES),
+            ),
         )
+        .group_by(Reviewer.id)
+        .order_by(func.count(ReviewAssignment.id).asc())
         .first()
     )
 
-    if not ai_review:
-        raise NotFoundError("AI review not found")
+    if not reviewer:
+        raise NotFoundError("No reviewers are available to assign this video to.")
 
-    reviewer = reviewer_service.get_least_loaded_reviewer()
-
-    assignment = ReviewAssignment(
-        video_id=video_id,
-        reviewer_id=reviewer.id,
-        status="assigned",
-    )
-
-    submission.status = "assigned"
-
-    db.session.add(assignment)
-    db.session.commit()
-
-    return assignment
-
-
-def get_assignments_for_reviewer(reviewer_id, status_filter=None):
-    query = ReviewAssignment.query.filter_by(
-        reviewer_id=reviewer_id,
-    )
-
-    if status_filter is not None:
-        if status_filter not in ("assigned", "in_progress", "completed", "cancelled"):
-            raise BadRequestError("Invalid status filter")
-
-        query = query.filter(
-            ReviewAssignment.status == status_filter
-        )
-
-    return query.order_by(ReviewAssignment.assigned_at.desc()).all()
-
-
-def submit_human_review(reviewer_id, assignment_id, data):
-    assignment = ReviewAssignment.query.get(assignment_id)
-
-    if not assignment:
-        raise NotFoundError("Assignment not found")
-
-    if assignment.reviewer_id != reviewer_id:
-        raise ForbiddenError("You do not own this assignment")
-
-    if assignment.status == "completed":
-        raise BadRequestError("Assignment is already completed")
-
-    if assignment.status == "cancelled":
-        raise BadRequestError("Assignment has been cancelled")
-
-    submission = VideoSubmission.query.get(assignment.video_id)
-
-    if not submission:
-        raise NotFoundError("Video submission not found")
-
-    review = Review(
-        video_id=assignment.video_id,
-        reviewer_id=reviewer_id,
-        reviewer_type="human",
-        score=data["score"],
-        notes=data.get("notes"),
-        flagged=data["flagged"],
-        flag_reason=data.get("flag_reason"),
-    )
-
-    assignment.status = "completed"
-    assignment.completed_at = datetime.utcnow()
-
-    submission.status = "completed"
-
-    db.session.add(review)
-    db.session.commit()
-
-    rating_service.recompute_rating(submission.teacher_id)
-
-    return review
+    return reviewer
