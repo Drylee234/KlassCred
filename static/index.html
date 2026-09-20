@@ -55,7 +55,7 @@
       <!-- ── Teacher-only fields ── -->
       <div class="type-fields" id="fields_teacher" style="display:none">
         <hr class="divider">
-        <p class="hint">Teacher profile fields (set after registration via /teachers/profile)</p>
+        <p class="hint">Teacher profile — required to register</p>
         <label>Full name</label>
         <input id="t_full_name" placeholder="Jane Doe">
         <label>Subjects (comma-separated)</label>
@@ -67,7 +67,7 @@
       <!-- ── Organization-only fields ── -->
       <div class="type-fields" id="fields_organization" style="display:none">
         <hr class="divider">
-        <p class="hint">Organization profile (set after registration)</p>
+        <p class="hint">Organization profile — required to register</p>
         <label>Organization name</label>
         <input id="o_name" placeholder="Greenfield Academy">
         <label>CAC number</label>
@@ -79,7 +79,7 @@
       <!-- ── Parent-only fields ── -->
       <div class="type-fields" id="fields_parent" style="display:none">
         <hr class="divider">
-        <p class="hint">Parent profile (set after registration)</p>
+        <p class="hint">Parent profile — required to register</p>
         <label>Full name</label>
         <input id="p_name" placeholder="Mr John Doe">
       </div>
@@ -87,7 +87,9 @@
       <!-- ── Reviewer-only fields ── -->
       <div class="type-fields" id="fields_reviewer" style="display:none">
         <hr class="divider">
-        <p class="hint">Reviewer account — no extra profile fields at registration</p>
+        <p class="hint">Reviewer profile — required to register</p>
+        <label>Full name</label>
+        <input id="rv_full_name" placeholder="Jane Doe">
       </div>
 
       <button class="btn btn-primary" onclick="doRegister()">Create account</button>
@@ -164,7 +166,12 @@ async function doRegister() {
     toast('Type, email and password are required', 'error'); return;
   }
 
-  const { ok, data } = await api('POST', '/auth/register', { email, password, type });
+  const extra = getProfileFields(type);
+  if (extra === null) {
+    toast('Fill in the required profile fields', 'error'); return;
+  }
+
+  const { ok, data } = await api('POST', '/auth/register', { email, password, type, ...extra });
   showResponse('registerResp', data, ok);
 
   if (ok) {
@@ -174,12 +181,6 @@ async function doRegister() {
     if (loginRes.ok && loginRes.data.token) {
       const payload = JSON.parse(atob(loginRes.data.token.split('.')[1]));
       session.save(loginRes.data.token, payload.type);
-
-      // Auto-create profile if fields filled
-      const token = loginRes.data.token;
-      if (type === 'teacher') await tryCreateTeacherProfile(token);
-      else if (type === 'organization') await tryCreateOrgProfile(token);
-      else if (type === 'parent') await tryCreateParentProfile(token);
 
       setTimeout(() => {
         if (type === 'teacher') location.href = '/test-ui/teacher.html';
@@ -192,27 +193,39 @@ async function doRegister() {
   }
 }
 
-async function tryCreateTeacherProfile(token) {
-  const full_name       = document.getElementById('t_full_name').value.trim();
-  const subjectsRaw     = document.getElementById('t_subjects').value.trim();
-  const experience_years = parseInt(document.getElementById('t_exp').value) || 0;
-  if (!full_name || !subjectsRaw) return;
-  const subjects = subjectsRaw.split(',').map(s => s.trim()).filter(Boolean);
-  await api('POST', '/teachers/profile', { full_name, subjects, experience_years }, token);
-}
+// Collects and validates the type-specific profile fields needed at
+// registration time. Returns null if required fields are missing.
+function getProfileFields(type) {
+  if (type === 'teacher') {
+    const full_name        = document.getElementById('t_full_name').value.trim();
+    const subjectsRaw      = document.getElementById('t_subjects').value.trim();
+    const experience_years = parseInt(document.getElementById('t_exp').value);
+    if (!full_name || !subjectsRaw || isNaN(experience_years)) return null;
+    const subjects = subjectsRaw.split(',').map(s => s.trim()).filter(Boolean);
+    return { full_name, subjects, experience_years };
+  }
 
-async function tryCreateOrgProfile(token) {
-  const org_name  = document.getElementById('o_name').value.trim();
-  const cac_number = document.getElementById('o_cac').value.trim();
-  const location  = document.getElementById('o_location').value.trim();
-  if (!org_name) return;
-  await api('POST', '/employers/profile', { org_name, cac_number, location }, token);
-}
+  if (type === 'organization') {
+    const org_name   = document.getElementById('o_name').value.trim();
+    const cac_number = document.getElementById('o_cac').value.trim();
+    const location    = document.getElementById('o_location').value.trim();
+    if (!org_name || !location) return null;
+    return { org_name, cac_number: cac_number || null, location };
+  }
 
-async function tryCreateParentProfile(token) {
-  const name = document.getElementById('p_name').value.trim();
-  if (!name) return;
-  await api('POST', '/employers/profile', { name }, token);
+  if (type === 'parent') {
+    const name = document.getElementById('p_name').value.trim();
+    if (!name) return null;
+    return { name };
+  }
+
+  if (type === 'reviewer') {
+    const full_name = document.getElementById('rv_full_name').value.trim();
+    if (!full_name) return null;
+    return { full_name };
+  }
+
+  return {};
 }
 </script>
 
