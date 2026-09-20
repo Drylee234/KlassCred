@@ -1,4 +1,5 @@
 from marshmallow import Schema, fields, validate
+from schemas.user import UserSchema
 
 
 class WorkHistorySchema(Schema):
@@ -12,14 +13,14 @@ class WorkHistorySchema(Schema):
 class ReferenceSchema(Schema):
     id = fields.Int(dump_only=True)
     full_name = fields.Str(required=True)
-    organization = fields.Str(allow_none=True)   # FIX: was missing
-    role = fields.Str(allow_none=True)           # FIX: was missing
+    organization = fields.Str(allow_none=True)   
+    role = fields.Str(allow_none=True)           
     email = fields.Email(required=True)
     phone = fields.Str(required=True)
     relationship_type = fields.Str(required=True)
 
 
-class TeacherSchema(Schema):
+class TeacherSchema(UserSchema):
     id = fields.Int(dump_only=True)
 
     full_name = fields.Str(

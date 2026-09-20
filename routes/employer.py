@@ -20,7 +20,13 @@ bp = Blueprint("employer", __name__, url_prefix="/employers")
 
 
 # ─── Profile ────────────────────────────────────────────────
-
+@bp.get("/profile")
+@require_role("organization", "parent")
+def get_profile():
+    employer = employer_service.get_profile(user_id=g.current_user.id)
+    schema = OrganizationSchema() if g.current_user.type == "organization" else ParentSchema()
+    return schema.dump(employer), 200
+    
 @bp.post("/profile")
 @require_role("organization", "parent")
 def create_profile():

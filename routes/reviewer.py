@@ -2,6 +2,7 @@ from flask import Blueprint, request, g
 
 from schemas.review import ReviewAssignmentSchema, HumanReviewSubmitSchema, ReviewSchema
 from schemas.rating import RatingSchema
+from schemas.reviewer import ReviewerSchema
 
 from services import (
     reviewer_service,
@@ -13,6 +14,13 @@ from utils.auth_utils import require_role
 
 bp = Blueprint("reviewer", __name__, url_prefix="/reviewer")
 
+
+
+@bp.get("/profile")
+@require_role("reviewer")
+def get_profile():
+    reviewer = reviewer_service.get_profile(user_id=g.current_user.id)
+    return ReviewerSchema().dump(reviewer), 200
 
 # ─── Assignments ────────────────────────────────────────────
 
@@ -26,6 +34,8 @@ def get_assignments():
     )
 
     return ReviewAssignmentSchema(many=True).dump(assignments), 200
+    
+
 
 
 @bp.post("/assignments/<int:assignment_id>/review")

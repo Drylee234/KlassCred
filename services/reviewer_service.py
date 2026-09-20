@@ -10,7 +10,12 @@ from errors.exceptions import NotFoundError
 # Completed/cancelled assignments free up their capacity.
 _ACTIVE_STATUSES = ("assigned", "in_progress")
 
-
+def get_profile(user_id):
+    reviewer = Reviewer.query.filter_by(id=user_id).first()
+    if not reviewer:
+        raise NotFoundError("Reviewer profile not found.")
+    return reviewer
+    
 def get_least_loaded_reviewer():
     """
     Returns the vetted human reviewer with the fewest currently active

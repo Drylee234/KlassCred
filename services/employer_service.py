@@ -11,6 +11,11 @@ from errors.exceptions import (
     NotFoundError,
 )
 
+def get_profile(user_id):
+    employer = Employer.query.filter_by(id=user_id).first()
+    if not employer:
+        raise NotFoundError("Employer profile not found.")
+    return employer
 
 def create_profile(user_id, type, data):
     employer = Employer.query.filter_by(id=user_id).first()

@@ -19,7 +19,13 @@ bp = Blueprint("teacher", __name__, url_prefix="/teachers")
 
 
 # ─── Profile ───────────────────────────────────────────────
-
+@bp.get("/profile")
+@require_role("teacher")
+def get_profile():
+    teacher = teacher_service.get_profile(user_id=g.current_user.id)
+    return TeacherSchema().dump(teacher), 200
+    
+    
 @bp.post("/profile")
 @require_role("teacher")
 def create_profile():

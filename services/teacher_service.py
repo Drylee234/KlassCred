@@ -10,7 +10,12 @@ from errors.exceptions import (
     NotFoundError,
 )
 
-
+def get_profile(user_id):
+    teacher = Teacher.query.filter_by(id=user_id).first()
+    if not teacher:
+        raise NotFoundError("Teacher profile not found.")
+    return teacher
+    
 def create_profile(user_id, data):
     teacher = Teacher.query.filter_by(id=user_id).first()
 

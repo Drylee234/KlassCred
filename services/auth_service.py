@@ -53,18 +53,15 @@ def register(email, password, type, extra=None):
 
     schema_class = schema_classes[type]
     exclude = schema_exclusions.get(type, ())
-    validated = schema_class(exclude=exclude).load(extra)
+    payload = {"email": email, **extra}
+    validated = schema_class(exclude=exclude).load(payload)
 
     password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
 
     user = model_class(
-        email=email,
         password_hash=password_hash,
         type=type,
         **validated)
-
-    db.session.add(user)
-    db.session.commit()
 
     return user
 
