@@ -27,8 +27,6 @@ class TeacherSchema(Schema):
         validate=validate.Length(min=2, max=100)
     )
 
-    email = fields.Email(required=True)
-
     subjects = fields.List(
         fields.Str(),
         required=True
