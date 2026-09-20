@@ -14,9 +14,9 @@ const session = {
   clear() { localStorage.removeItem('kc_token'); localStorage.removeItem('kc_type'); },
   required() {
     const t = this.token();
-    if (!t) { window.location.href = '/test-ui/'; return null; }
+    if (!t) { window.location.href = '/index.html'; return null; }
     return t;
-  }
+},
 };
 
 // ── API helper ───────────────────────────────────────────────

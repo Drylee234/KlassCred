@@ -104,12 +104,7 @@
 <script src="static/common.js"></script>
 <script>
 // redirect if already logged in
-if (session.token()) {
-  const t = session.type();
-  if (t === 'teacher') location.href = '/test-ui/teacher.html';
-  else if (t === 'organization' || t === 'parent') location.href = '/test-ui/employer.html';
-  else if (t === 'reviewer') location.href = '/test-ui/reviewer.html';
-}
+
 
 function switchAuthTab(tab) {
   const tabs = document.querySelectorAll('#authTabs button');
@@ -144,11 +139,11 @@ async function doLogin() {
       session.save(data.token, type);
       toast('Logged in!');
       setTimeout(() => {
-        if (type === 'teacher') location.href = '/test-ui/teacher.html';
-        else if (type === 'organization' || type === 'parent') location.href = '/test-ui/employer.html';
-        else if (type === 'reviewer') location.href = '/test-ui/reviewer.html';
-        else location.href = '/test-ui/';
-      }, 600);
+  if (type === 'teacher') location.href = '/teacher.html';
+  else if (type === 'organization' || type === 'parent') location.href = '/employer.html';
+  else if (type === 'reviewer') location.href = '/reviewer.html';
+  else location.href = '/index.html';
+}, 600);
     } catch(e) {
       toast('Login OK but could not read token payload', 'error');
     }
@@ -183,10 +178,11 @@ async function doRegister() {
       session.save(loginRes.data.token, payload.type);
 
       setTimeout(() => {
-        if (type === 'teacher') location.href = '/test-ui/teacher.html';
-        else if (type === 'organization' || type === 'parent') location.href = '/test-ui/employer.html';
-        else if (type === 'reviewer') location.href = '/test-ui/reviewer.html';
-      }, 800);
+  if (type === 'teacher') location.href = '/teacher.html';
+  else if (type === 'organization' || type === 'parent') location.href = '/employer.html';
+  else if (type === 'reviewer') location.href = '/reviewer.html';
+  else location.href = '/index.html';
+}, 600);
     }
   } else {
     toast(data.error ?? 'Registration failed', 'error');
