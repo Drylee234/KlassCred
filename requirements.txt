@@ -12,4 +12,4 @@ cencori
 google-genai
 requests
 flask_bcrypt
-jwt
+PyJWT
