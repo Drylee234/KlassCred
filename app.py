@@ -1,6 +1,7 @@
-from flask import Flask,send_from_directory
+from flask import Flask,send_from_directory,abort
 from extensions import db, migrate, init_cloudinary
 from config import Config
+import os
 
 
 
@@ -38,6 +39,13 @@ def create_app():
     @app.get("/test")
     def test_ui():
         return send_from_directory("static", "index.html")
+
+    @app.route('/<page_name>.html')
+    def serve_html(page_name):
+        file_path = os.path.join(app.static_folder, f'{page_name}.html')
+        if not os.path.isfile(file_path):
+            abort(404)
+        return send_from_directory(app.static_folder, f'{page_name}.html')
 
 
     return app
