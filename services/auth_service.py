@@ -15,8 +15,10 @@ from flask import current_app
 from errors.exceptions import BadRequestError, ConflictError, UnauthorizedError
 
 
-def register(email, password, type, extra = None):
-    
+def register(email, password, type, extra=None):
+
+    extra = extra or {}
+
     existing_user = User.query.filter_by(email=email).first()
 
     if existing_user:
@@ -29,10 +31,20 @@ def register(email, password, type, extra = None):
         "reviewer": Reviewer,
     }
 
+    schema_classes = {
+        "teacher": TeacherSchema,
+        "organization": OrganizationSchema,
+        "parent": ParentSchema,
+        "reviewer": ReviewerSchema,
+    }
+
     model_class = user_classes.get(type)
 
     if model_class is None:
         raise BadRequestError("Invalid user type.")
+
+    schema_class = schema_classes[type]
+    validated = schema_class().load(extra)
 
     password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
 
@@ -40,7 +52,7 @@ def register(email, password, type, extra = None):
         email=email,
         password_hash=password_hash,
         type=type,
-        **extra)
+        **validated)
 
     db.session.add(user)
     db.session.commit()
