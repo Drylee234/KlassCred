@@ -17,7 +17,7 @@ def register():
         email=data["email"],
         password=data["password"],
         type=data["type"],
-        **extra
+        extra=extra
     )
 
     return UserSchema().dump(user), 201
