@@ -47,6 +47,16 @@ def create_app():
             abort(404)
         return send_from_directory(app.static_folder, f'{page_name}.html')
 
+    @app.get("/diag/gemini-reachable")
+    def diag_gemini():
+        import requests, time
+        t0 = time.time()
+        try:
+            r = requests.get("https://generativelanguage.googleapis.com", timeout=8)
+            return {"reached": True, "status": r.status_code, "elapsed": time.time() - t0}
+        except requests.RequestException as e:
+            return {"reached": False, "error": str(e), "elapsed": time.time() - t0}
+
 
     return app
 
