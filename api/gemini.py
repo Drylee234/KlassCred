@@ -210,12 +210,4 @@ def _wait_for_file_active(file_obj, timeout_seconds=120, poll_interval=3):
 
     return file_obj
 
-@app.get("/diag/gemini-reachable")
-def diag_gemini():
-    import requests, time
-    t0 = time.time()
-    try:
-        r = requests.get("https://generativelanguage.googleapis.com", timeout=8)
-        return {"reached": True, "status": r.status_code, "elapsed": time.time() - t0}
-    except requests.RequestException as e:
-        return {"reached": False, "error": str(e), "elapsed": time.time() - t0}
+
