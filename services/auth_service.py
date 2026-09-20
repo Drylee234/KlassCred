@@ -9,6 +9,10 @@ from models.user import User
 from models.teacher import Teacher
 from models.employer import Organization, Parent
 from models.reviewer import Reviewer
+from schemas.teacher import TeacherSchema
+from schemas.employer import OrganizationSchema, ParentSchema
+from schemas.reviewer import ReviewerSchema
+
 
 from flask import current_app
 
@@ -38,13 +42,18 @@ def register(email, password, type, extra=None):
         "reviewer": ReviewerSchema,
     }
 
+    schema_exclusions = {
+        "teacher": ("work_history", "references"),
+    }
+
     model_class = user_classes.get(type)
 
     if model_class is None:
         raise BadRequestError("Invalid user type.")
 
     schema_class = schema_classes[type]
-    validated = schema_class().load(extra)
+    exclude = schema_exclusions.get(type, ())
+    validated = schema_class(exclude=exclude).load(extra)
 
     password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
 
@@ -58,7 +67,6 @@ def register(email, password, type, extra=None):
     db.session.commit()
 
     return user
-
 
 def login(email, password):
 
