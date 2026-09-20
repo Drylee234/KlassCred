@@ -27,7 +27,10 @@ from google.genai.errors import APIError
 from errors.exceptions import AIServiceError
 
 _API_KEY = os.environ.get("GEMINI_API_KEY")
-_client = genai.Client(api_key=_API_KEY) if _API_KEY else None
+_client = genai.Client(
+    api_key=_API_KEY,
+    http_options=types.HttpOptions(timeout=15000),  # 15s, in ms
+) if _API_KEY else None
 _MODEL = "gemini-2.5-flash"
 
 
