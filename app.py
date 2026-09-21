@@ -57,6 +57,17 @@ def create_app():
         except requests.RequestException as e:
             return {"reached": False, "error": str(e), "elapsed": time.time() - t0}
 
+    @app.get("/diag/gemini-call")
+    def diag_gemini_call():
+        import time
+        t0 = time.time()
+        try:
+            from api import gemini as ai_provider
+            result = ai_provider.generate_scenario(subject="Mathematics", level="beginner")
+            return {"ok": True, "elapsed": time.time() - t0, "result_preview": str(result)[:200]}
+        except Exception as e:
+            return {"ok": False, "elapsed": time.time() - t0, "error": type(e).__name__, "message": str(e)}
+
 
     return app
 
