@@ -62,6 +62,8 @@ def register(email, password, type, extra=None):
         password_hash=password_hash,
         type=type,
         **validated)
+    db.session.add(user)
+    db.session.commit()
 
     return user
 
