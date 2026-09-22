@@ -24,10 +24,9 @@ class TeachingScenario(db.Model):
         nullable=False
     )
 
-    generated_by = db.Column(
-        db.Enum("ai", "bank"),
-        nullable=False
-    )
+    generated_by = db.Column(db.Enum("ai", "bank", name="scenario_generated_by"), nullable=False)
+
+
 
     video_submissions = db.relationship(
         "VideoSubmission",

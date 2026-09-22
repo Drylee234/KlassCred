@@ -1,5 +1,5 @@
 from flask import Flask,send_from_directory,abort
-from extensions import db, migrate, init_cloudinary
+from extensions import db, migrate, init_byteship
 from config import Config
 import os
 
@@ -11,7 +11,7 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
-    init_cloudinary(app)
+    init_byteship(app)
 
     import models
 

@@ -28,11 +28,7 @@ class InterviewRequest(db.Model):
         nullable=False
     )
 
-    status = db.Column(
-        db.Enum("pending", "accepted", "rejected"),
-        nullable=False,
-        default="pending"
-    )
+    status = db.Column(db.Enum("pending", "accepted", "rejected", name="interview_status"), nullable=False, default="pending")
 
     created_at = db.Column(
         db.DateTime,
