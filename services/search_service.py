@@ -10,7 +10,6 @@ def search_teachers(
 ):
     query = (
         Teacher.query
-        .join(User, Teacher.id == User.id)
         .outerjoin(Rating, Rating.teacher_id == Teacher.id)
     )
 
