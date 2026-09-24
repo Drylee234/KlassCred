@@ -6,7 +6,7 @@
   <title>KlassCred — Employer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href=" static/style.css">
 </head>
 <body>
 
@@ -37,6 +37,10 @@
       <span class="nav-icon">💬</span> Interview Requests
     </button>
 
+    <button class="nav-item" data-page="applications" onclick="nav('applications')">
+      <span class="nav-icon">📨</span> Applications
+    </button>
+
     <div class="sidebar-footer">
       <button class="nav-item" onclick="logout()" style="color:var(--red)">
         <span class="nav-icon">🚪</span> Logout
@@ -53,8 +57,6 @@
         <div><h2>Dashboard</h2><p id="dash_greeting">Welcome back</p></div>
         <span id="dash_verified" class="badge badge-gray">Unverified</span>
       </div>
-
-      <div id="verify_banner" class="card section" style="display:none;border-color:var(--yellow)"></div>
 
       <div class="stat-grid">
         <div class="stat-card"><div class="label">Active Hires</div><div class="value" id="ds_active">—</div></div>
@@ -95,31 +97,26 @@
 
     <!-- SEARCH ─────────────────────────────────────────────── -->
     <section id="sec_search" class="page-section" style="display:none">
-      <div class="page-header"><h2>Search Teachers</h2><p>Find verified, rated teachers</p></div>
+      <div class="page-header">
+        <h2>Search Teachers</h2><p>GET /employers/search</p>
+      </div>
 
       <div class="card section">
         <div class="card-title">Filters</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px">
-          <div><label>Subject</label><input id="s_subject" placeholder="Mathematics"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+          <div><label>Subject</label><select id="s_subject"></select></div>
+          <div><label>Verified</label><select id="s_verified"><option value="false">Any</option><option value="true">Verified only</option></select></div>
           <div><label>Min rating (0–100)</label><input id="s_min_rating" type="number" min="0" max="100"></div>
           <div><label>Min experience (yrs)</label><input id="s_min_exp" type="number" min="0"></div>
-          <div><label>Verified only</label>
-            <select id="s_verified"><option value="true">Yes</option><option value="false">No</option></select></div>
-          <div><label>Sort by</label>
-            <select id="s_sort" onchange="renderSearch()">
-              <option value="rating">Highest rating</option>
-              <option value="exp">Most experience</option>
-              <option value="name">Name</option>
-            </select></div>
+          <div><label>Location</label><input id="s_location" placeholder="Lagos"></div>
+          <div><label>Distance</label><select id="s_radius"><option value="">Any</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option><option value="50">50 km</option></select></div>
         </div>
-        <div class="flex-row mt-16">
-          <button class="btn btn-sm" onclick="doSearch()">Search</button>
-          <button class="btn btn-ghost" onclick="resetSearch()">Reset</button>
-          <span class="hint" id="search_count" style="margin:0"></span>
-        </div>
+        <button class="btn btn-sm mt-16" onclick="doSearch()">Search</button>
       </div>
 
-      <div id="search_results"><div class="empty-state"><div class="icon">🔍</div><p>Run a search above.</p></div></div>
+      <div id="search_results">
+        <div class="empty-state"><div class="icon">🔍</div><p>Run a search above.</p></div>
+      </div>
       <div id="searchResp" class="response-box"></div>
     </section>
 
@@ -133,12 +130,23 @@
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>ID</th><th>Teacher</th><th>Position</th><th>Hired</th><th>Ended</th><th>Status</th><th>Action</th></tr></thead>
+            <thead><tr><th>ID</th><th>Teacher ID</th><th>Position</th><th>Hired</th><th>Ended</th><th>Status</th><th>Action</th></tr></thead>
             <tbody id="rec_table"><tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:24px">Loading…</td></tr></tbody>
           </table>
         </div>
         <div id="recResp" class="response-box"></div>
       </div>
+    </section>
+
+    <!-- APPLICATIONS -->
+    <section id="sec_applications" class="page-section" style="display:none">
+      <div class="page-header"><h2>Applications</h2><p>GET /employers/applications</p></div>
+      <div class="flex-row" style="margin-bottom:16px">
+        <select id="app_status" style="width:auto;min-width:160px" onchange="loadApplications()">
+          <option value="">All statuses</option><option value="pending">Pending</option><option value="accepted">Accepted</option><option value="rejected">Rejected</option><option value="withdrawn">Withdrawn</option>
+        </select>
+      </div>
+      <div id="app_list"></div>
     </section>
 
     <!-- INTERVIEWS ──────────────────────────────────────────── -->
@@ -161,7 +169,7 @@
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>ID</th><th>Teacher</th><th>Contact</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
+            <thead><tr><th>ID</th><th>Teacher ID</th><th>Contact</th><th>Status</th><th>Created</th></tr></thead>
             <tbody id="iv_table"><tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:24px">Click Load to fetch.</td></tr></tbody>
           </table>
         </div>
@@ -176,7 +184,7 @@
 <div class="modal-overlay" id="editProfileModal">
   <div class="modal">
     <div class="modal-header">
-      <h3 id="ep_title">Edit Profile</h3>
+      <h3>Edit Profile</h3>
       <button class="modal-close" onclick="closeModal('editProfileModal')">✕</button>
     </div>
     <!-- org fields -->
@@ -188,11 +196,6 @@
     <!-- parent fields -->
     <div id="ep_parent_fields" style="display:none">
       <label>Full name</label><input id="ep_p_name">
-      <label>ID card</label>
-      <div class="input-row"><input id="ep_id_card" placeholder="https://…"><button class="btn btn-sm" type="button" onclick="uploadTo('ep_id_card','id_card')">Upload file</button></div>
-      <label>Picture</label>
-      <div class="input-row"><input id="ep_picture" placeholder="https://…"><button class="btn btn-sm" type="button" onclick="uploadTo('ep_picture','picture')">Upload file</button></div>
-      <div class="progress mt-16" id="ep_prog_wrap" style="display:none"><div id="ep_prog"></div></div>
     </div>
     <button class="btn btn-primary" onclick="doUpdateProfile()">Save</button>
     <div id="editProfileResp" class="response-box"></div>
@@ -206,8 +209,10 @@
       <h3>Hire a Teacher</h3>
       <button class="modal-close" onclick="closeModal('hireModal')">✕</button>
     </div>
-    <label>Teacher ID</label>
-    <input id="hire_teacher_id" type="number" placeholder="e.g. 42">
+    <label>Teacher</label>
+    <div id="hire_picker"></div>
+    <div id="hire_picked" class="picked"></div>
+    <input id="hire_teacher_id" type="hidden">
     <label>Position</label>
     <input id="hire_position" placeholder="Mathematics Teacher">
     <label>Hire date</label>
@@ -231,8 +236,6 @@
       <option value="suspended">Suspended</option>
       <option value="terminated">Terminated</option>
     </select>
-    <label>End date (optional)</label>
-    <input id="status_ended_at" type="date">
     <button class="btn btn-primary" onclick="doUpdateStatus()">Update</button>
     <div id="statusResp" class="response-box"></div>
   </div>
@@ -245,8 +248,10 @@
       <h3>Send Interview Request</h3>
       <button class="modal-close" onclick="closeModal('sendIvModal')">✕</button>
     </div>
-    <label>Teacher ID</label>
-    <input id="iv_teacher_id" type="number">
+    <label>Teacher</label>
+    <div id="iv_picker"></div>
+    <div id="iv_picked" class="picked"></div>
+    <input id="iv_teacher_id" type="hidden">
     <label>Contact method</label>
     <select id="iv_contact">
       <option value="whatsapp">WhatsApp</option>
@@ -257,35 +262,9 @@
   </div>
 </div>
 
-<!-- ── Teacher detail modal ──────────────────────────────── -->
-<div class="modal-overlay" id="teacherModal">
-  <div class="modal wide">
-    <div class="modal-header"><h3 id="tm_title">Teacher</h3><button class="modal-close" onclick="closeModal('teacherModal')">✕</button></div>
-    <div id="tm_body"></div>
-    <div class="flex-row mt-16">
-      <button class="btn btn-sm" id="tm_hire">Hire</button>
-      <button class="btn btn-sm" id="tm_interview">Request interview</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── Feedback modal ────────────────────────────────────── -->
-<div class="modal-overlay" id="feedbackModal">
-  <div class="modal">
-    <div class="modal-header"><h3>Rate this hire</h3><button class="modal-close" onclick="closeModal('feedbackModal')">✕</button></div>
-    <input type="hidden" id="fb_rec_id">
-    <label>Rating (1–5)</label>
-    <select id="fb_rating"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select>
-    <label>Comment</label>
-    <textarea id="fb_comment" placeholder="How did it go?"></textarea>
-    <button class="btn btn-primary" onclick="doFeedback()">Send feedback</button>
-    <div id="fbResp" class="response-box"></div>
-  </div>
-</div>
-
 <div id="toast"></div>
 
-<script src="/static/common.js"></script>
+<script src=" static/common.js"></script>
 <script>
 const token = session.required();
 const userType = session.type();
@@ -303,7 +282,7 @@ function nav(page) {
   if (page === 'profile')     loadProfile();
   if (page === 'recruitment') loadRecruitment();
   if (page === 'interviews')  loadInterviews();
-  if (page === 'search' && !searchCache.length) doSearch();
+  if (page === 'applications') loadApplications();
 }
 
 // ── Dashboard ────────────────────────────────────────────────
@@ -318,7 +297,6 @@ async function loadDashboard() {
 
   if (profRes?.ok) {
     const p = profRes.data;
-    renderVerifyBanner(p);
     const name = p.org_name ?? p.name ?? p.email ?? 'Employer';
     document.getElementById('dash_greeting').textContent = `Welcome, ${name}`;
     if (p.id_verified) {
@@ -361,345 +339,232 @@ async function loadDashboard() {
 }
 
 // ── Profile ──────────────────────────────────────────────────
-let profileExists = true;
-const teacherCache = {};      // id → teacher object (from search or detail endpoint; null = unknown)
-
-function renderVerifyBanner(p) {
-  const b = document.getElementById('verify_banner');
-  if (p.id_verified) { b.style.display = 'none'; return; }
-  const need = userType === 'organization'
-    ? (p.cac_number ? 'A reviewer still needs to check your CAC number.' : 'Add your CAC number in Profile so a reviewer can verify you.')
-    : (p.id_card ? 'A reviewer still needs to check your ID card.' : 'Upload your ID card in Profile so a reviewer can verify you.');
-  b.style.display = 'block';
-  b.innerHTML = `<strong>Not verified yet</strong><div class="hint">${esc(need)}</div>
-    <button class="btn btn-sm mt-16" onclick="nav('profile')">Go to profile</button>`;
-}
-
-const fileLink = u => !u ? '—' : isImageUrl(u)
-  ? `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" class="thumb" alt=""></a>`
-  : `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--accent)">Open file</a>`;
-
-function setEditFields(p) {
-  if (userType === 'organization') {
-    $('ep_org_name').value = p.org_name ?? '';
-    $('ep_cac').value      = p.cac_number ?? '';
-    $('ep_location').value = p.location ?? '';
-    $('ep_org_fields').style.display = 'block';
-    $('ep_parent_fields').style.display = 'none';
-  } else {
-    $('ep_p_name').value  = p.name ?? '';
-    $('ep_id_card').value = p.id_card ?? '';
-    $('ep_picture').value = p.picture_upload ?? '';
-    $('ep_org_fields').style.display = 'none';
-    $('ep_parent_fields').style.display = 'block';
-  }
-  $('ep_title').textContent = profileExists ? 'Edit Profile' : 'Create Profile';
-}
-
 async function loadProfile() {
   const res = await api('GET', '/employers/profile', undefined, token);
-  const view = $('profile_view');
-  if (res.status === 404) {
-    profileExists = false; setEditFields({});
-    view.innerHTML = `<div class="empty-state"><div class="icon">👤</div><p>You haven't created a profile yet.</p>
-      <button class="btn btn-sm mt-16" onclick="openModal('editProfileModal')">Create profile</button></div>`;
-    return;
-  }
-  if (!res.ok) { view.innerHTML = `<div class="empty-state"><p>${esc(res.data.error ?? 'Error loading profile')}</p></div>`; return; }
-  profileExists = true;
+  const view = document.getElementById('profile_view');
+  if (!res.ok) { view.innerHTML = `<div class="empty-state"><p>${res.data.error ?? 'Error loading profile'}</p></div>`; return; }
   const p = res.data;
-  renderVerifyBanner(p);
-  setEditFields(p);
 
-  const rows = userType === 'organization'
-    ? `<div class="profile-field"><div class="label">Org name</div><div class="val">${esc(p.org_name ?? '—')}</div></div>
-       <div class="profile-field"><div class="label">CAC number</div><div class="val">${esc(p.cac_number ?? '—')}</div></div>
-       <div class="profile-field"><div class="label">Location</div><div class="val">${esc(p.location ?? '—')}</div></div>`
-    : `<div class="profile-field"><div class="label">Name</div><div class="val">${esc(p.name ?? '—')}</div></div>
-       <div class="profile-field"><div class="label">ID card</div><div class="val">${fileLink(p.id_card)}</div></div>
-       <div class="profile-field"><div class="label">Picture</div><div class="val">${fileLink(p.picture_upload)}</div></div>`;
+  let rows = '';
+  if (userType === 'organization') {
+    rows = `
+      <div class="profile-field"><div class="label">Org name</div><div class="val">${p.org_name ?? '—'}</div></div>
+      <div class="profile-field"><div class="label">CAC number</div><div class="val">${p.cac_number ?? '—'}</div></div>
+      <div class="profile-field"><div class="label">Location</div><div class="val">${p.location ?? '—'}</div></div>`;
+    document.getElementById('ep_org_name').value = p.org_name ?? '';
+    document.getElementById('ep_cac').value      = p.cac_number ?? '';
+    document.getElementById('ep_location').value = p.location ?? '';
+    document.getElementById('ep_org_fields').style.display    = 'block';
+    document.getElementById('ep_parent_fields').style.display = 'none';
+  } else {
+    rows = `<div class="profile-field"><div class="label">Name</div><div class="val">${p.name ?? '—'}</div></div>`;
+    document.getElementById('ep_p_name').value = p.name ?? '';
+    document.getElementById('ep_org_fields').style.display    = 'none';
+    document.getElementById('ep_parent_fields').style.display = 'block';
+  }
 
   view.innerHTML = `
     <div class="profile-grid">
-      <div class="profile-field"><div class="label">Email</div><div class="val">${esc(p.email ?? '—')}</div></div>
-      <div class="profile-field"><div class="label">Type</div><div class="val">${esc(p.type ?? userType)}</div></div>
-      <div class="profile-field"><div class="label">Verified</div><div class="val">${badge(p.id_verified ? 'verified' : 'unverified', {verified:'badge-green', unverified:'badge-red'})}</div></div>
-      <div class="profile-field"><div class="label">Member since</div><div class="val">${esc(p.created_at?.slice(0,10) ?? '—')}</div></div>
+      <div class="profile-field"><div class="label">Email</div><div class="val">${p.email ?? '—'}</div></div>
+      <div class="profile-field"><div class="label">Type</div><div class="val">${p.type ?? userType}</div></div>
+      <div class="profile-field"><div class="label">Verified</div><div class="val">${badge(p.id_verified ? 'verified' : 'unverified', {'verified':'badge-green','unverified':'badge-red'})}</div></div>
+      <div class="profile-field"><div class="label">Member since</div><div class="val">${p.created_at?.slice(0,10) ?? '—'}</div></div>
       ${rows}
     </div>`;
 }
 
-function uploadTo(inputId, kind) {
-  pickAndUpload({
-    endpoint: '/employers/documents/upload-url', kind, token,
-    onProgress: pct => { $('ep_prog_wrap').style.display = 'block'; $('ep_prog').style.width = pct + '%'; },
-    onDone: url => { $(inputId).value = url; $('ep_prog_wrap').style.display = 'none'; },
-  });
-}
-
 async function doUpdateProfile() {
-  let body;
+  let body = {};
   if (userType === 'organization') {
     body = {
-      org_name: $('ep_org_name').value.trim(),
-      cac_number: $('ep_cac').value.trim() || null,
-      location: $('ep_location').value.trim() || null,
+      org_name: document.getElementById('ep_org_name').value.trim(),
+      cac_number: document.getElementById('ep_cac').value.trim() || null,
+      location: document.getElementById('ep_location').value.trim() || null,
     };
   } else {
-    body = {
-      name: $('ep_p_name').value.trim(),
-      id_card: $('ep_id_card').value.trim() || null,
-      picture_upload: $('ep_picture').value.trim() || null,
-    };
+    body = { name: document.getElementById('ep_p_name').value.trim() };
   }
-  const res = await api(profileExists ? 'PUT' : 'POST', '/employers/profile', body, token);
+  const res = await api('PUT', '/employers/profile', body, token);
   showResponse('editProfileResp', res.data, res.ok);
-  if (res.ok) { toast(profileExists ? 'Profile updated' : 'Profile created'); closeModal('editProfileModal'); loadProfile(); }
+  if (res.ok) { toast('Profile updated'); closeModal('editProfileModal'); loadProfile(); }
   else toast(res.data.error ?? 'Update failed', 'error');
 }
 
 async function doChangePassword() {
   const res = await api('POST', '/auth/change-password', {
-    old_password: $('cp_old').value,
-    new_password: $('cp_new').value,
+    old_password: document.getElementById('cp_old').value,
+    new_password: document.getElementById('cp_new').value,
   }, token);
   showResponse('cpResp', res.data, res.ok);
-  if (res.ok) toast('Password changed'); else toast(res.data.error ?? 'Failed', 'error');
-}
-
-// ── Teacher lookup (names + detail) ──────────────────────────
-const nameOf = (id, inline) => inline ?? teacherCache[id]?.full_name ?? `Teacher #${id}`;
-const teacherLink = (id, inline) =>
-  `<a href="#" onclick="viewTeacher(${id}); return false" style="color:var(--accent)">${esc(nameOf(id, inline))}</a>`;
-
-async function fetchTeacher(id) {
-  if (teacherCache[id]) return teacherCache[id];
-  const r = await api('GET', `/employers/teachers/${id}`, undefined, token);
-  if (r.ok) teacherCache[id] = r.data;
-  return teacherCache[id] ?? null;
-}
-async function hydrateNames(ids, rerender) {
-  const need = [...new Set(ids)].filter(i => !teacherCache[i]);
-  if (!need.length) return;
-  await Promise.all(need.map(fetchTeacher));
-  rerender();
-}
-
-async function viewTeacher(id) {
-  $('tm_title').textContent = nameOf(id);
-  $('tm_body').innerHTML = '<div class="empty-state"><p>Loading…</p></div>';
-  $('tm_hire').onclick = () => { closeModal('teacherModal'); prefillHire(id); };
-  $('tm_interview').onclick = () => { closeModal('teacherModal'); prefillInterview(id); };
-  openModal('teacherModal');
-  const t = await fetchTeacher(id);
-  if (!t) { $('tm_body').innerHTML = `<div class="empty-state"><p>No details available for teacher #${id}.</p></div>`; return; }
-  $('tm_title').textContent = t.full_name ?? nameOf(id);
-  const r = t.rating ?? {};
-  const bars = [['Exam', r.exam_score], ['Video', r.video_score], ['References', r.reference_score], ['Profile', r.profile_score]]
-    .filter(([, v]) => v != null)
-    .map(([l, v]) => `<div class="bar-row"><div class="flex-between"><span>${l}</span><strong>${v}/100</strong></div><div class="progress"><div style="width:${Math.min(100, v)}%"></div></div></div>`).join('');
-  const wh = (t.work_history ?? []).map(w => `<li>${esc(w.role)} — ${esc(w.organization)} (${esc(w.start_date)} → ${esc(w.end_date ?? 'present')})</li>`).join('');
-  $('tm_body').innerHTML = `
-    <div class="flex-row" style="flex-wrap:wrap">
-      ${t.id_verified ? '<span class="badge badge-green">Verified</span>' : '<span class="badge badge-gray">Unverified</span>'}
-      ${r.composite != null ? `<span class="badge badge-blue">★ ${Number(r.composite).toFixed(1)}</span>` : ''}
-      <span class="hint" style="margin:0">${esc(t.experience_years ?? '—')} yrs experience</span>
-    </div>
-    <div class="chip-list">${(t.subjects ?? []).map(s => `<span class="chip">${esc(s)}</span>`).join('')}</div>
-    ${bars ? `<div class="mt-16">${bars}</div>` : ''}
-    ${wh ? `<div class="card-title mt-16">Work history</div><ul style="padding-left:18px;line-height:1.7">${wh}</ul>` : ''}
-    ${t.references_count != null ? `<div class="hint">${t.references_count} references on file</div>` : ''}`;
+  if (res.ok) toast('Password changed');
+  else toast(res.data.error ?? 'Failed', 'error');
 }
 
 // ── Search ───────────────────────────────────────────────────
-let searchCache = [];
-
 async function doSearch() {
   const params = new URLSearchParams();
-  const sub = $('s_subject').value.trim(), min = $('s_min_rating').value.trim();
+  const sub = document.getElementById('s_subject').value.trim();
+  const min = document.getElementById('s_min_rating').value.trim();
+  const ver = document.getElementById('s_verified').value;
   if (sub) params.set('subject', sub);
   if (min) params.set('min_rating', min);
-  params.set('verified_only', $('s_verified').value);
+  params.set('verified_only', ver);
+  [['min_experience', 's_min_exp'], ['location', 's_location'], ['radius_km', 's_radius']].forEach(([k, id]) => { const v = document.getElementById(id).value.trim(); if (v) params.set(k, v); });
   const res = await api('GET', `/employers/search?${params}`, undefined, token);
   showResponse('searchResp', res.data, res.ok);
-  if (!res.ok) {
-    searchCache = [];
-    $('search_results').innerHTML = `<div class="empty-state"><p>${esc(res.data.error ?? 'Search failed')}</p></div>`; return;
-  }
-  searchCache = Array.isArray(res.data) ? res.data : [];
-  searchCache.forEach(t => { teacherCache[t.id] = t; });
-  renderSearch();
-}
-
-function resetSearch() {
-  ['s_subject', 's_min_rating', 's_min_exp'].forEach(i => $(i).value = '');
-  $('s_verified').value = 'true'; $('s_sort').value = 'rating';
-  doSearch();
-}
-
-function renderSearch() {
-  const minExp = parseFloat($('s_min_exp').value);
-  let list = searchCache.filter(t => isNaN(minExp) || (t.experience_years ?? 0) >= minExp);
-  const sort = $('s_sort').value;
-  list = [...list].sort((a, b) =>
-    sort === 'exp' ? (b.experience_years ?? 0) - (a.experience_years ?? 0)
-    : sort === 'name' ? String(a.full_name ?? '').localeCompare(String(b.full_name ?? ''))
-    : (b.rating?.composite ?? -1) - (a.rating?.composite ?? -1));
-  $('search_count').textContent = searchCache.length ? `${list.length} teacher${list.length === 1 ? '' : 's'}` : '';
-  const box = $('search_results');
-  if (!list.length) { box.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>No teachers found.</p></div>`; return; }
-  box.innerHTML = list.map(t => `
+  const container = document.getElementById('search_results');
+  if (!res.ok) { container.innerHTML = `<div class="empty-state"><p>${res.data.error ?? 'Search failed'}</p></div>`; return; }
+  const teachers = Array.isArray(res.data) ? res.data : [];
+  found = {}; teachers.forEach(t => found[t.id] = t);
+  if (!teachers.length) { container.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>No teachers found.</p></div>`; return; }
+  container.innerHTML = teachers.map(t => `
     <div class="card" style="margin-bottom:12px">
       <div class="flex-between">
         <div>
-          <strong>${esc(t.full_name ?? '—')}</strong>
-          <span class="hint" style="margin-left:8px">#${t.id}</span>
-          ${t.id_verified ? '<span class="badge badge-green" style="margin-left:8px">Verified</span>' : ''}
+          <strong>${t.full_name ?? '—'}</strong>
+          <span style="color:var(--text-dim);font-size:12px;margin-left:8px">#${t.id}</span>
+          ${t.id_verified ? `<span class="badge badge-green" style="margin-left:8px">Verified</span>` : ''}
         </div>
         <div class="flex-row">
-          ${t.rating?.composite != null ? `<span class="badge badge-blue">★ ${Number(t.rating.composite).toFixed(1)}</span>` : ''}
-          <button class="btn btn-ghost" onclick="viewTeacher(${t.id})">View</button>
+          ${t.rating?.composite != null ? `<span class="badge badge-blue">★ ${t.rating.composite.toFixed(1)}</span>` : ''}
           <button class="btn btn-sm" onclick="prefillHire(${t.id})">Hire</button>
           <button class="btn btn-sm" onclick="prefillInterview(${t.id})">Interview</button>
         </div>
       </div>
-      <div class="chip-list">${(t.subjects ?? []).map(s => `<span class="chip">${esc(s)}</span>`).join('')}</div>
-      <div class="hint">${esc(t.experience_years ?? '—')} yrs experience</div>
+      <div class="chip-list" style="margin-top:8px">
+        ${(t.subjects ?? []).map(s => `<span class="chip">${s}</span>`).join('')}
+      </div>
+      <div style="font-size:12px;color:var(--text-dim);margin-top:6px">${t.experience_years ?? '—'} yrs experience</div>
     </div>`).join('');
 }
 
 function prefillHire(teacherId) {
-  $('hire_teacher_id').value = teacherId;
-  if (!$('hire_date').value) $('hire_date').value = new Date().toISOString().slice(0, 10);
+  pickTeacher('hire', found[teacherId]);
   openModal('hireModal');
 }
+
 function prefillInterview(teacherId) {
-  $('iv_teacher_id').value = teacherId;
+  pickTeacher('iv', found[teacherId]);
   nav('interviews');
   setTimeout(() => openModal('sendIvModal'), 200);
 }
 
 // ── Recruitment ──────────────────────────────────────────────
-let recList = [];
-
 async function loadRecruitment() {
   const res = await api('GET', '/employers/recruitment', undefined, token);
   showResponse('recResp', res.data, res.ok);
-  if (!res.ok) { $('rec_table').innerHTML = `<tr><td colspan="7" style="padding:24px;text-align:center">${esc(res.data.error ?? 'Error loading')}</td></tr>`; return; }
-  recList = Array.isArray(res.data) ? res.data : [];
-  renderRecruitment();
-  hydrateNames(recList.map(r => r.teacher_id), renderRecruitment);
-}
-
-function renderRecruitment() {
-  const tbody = $('rec_table');
-  if (!recList.length) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:24px">No records yet.</td></tr>`; return; }
-  tbody.innerHTML = recList.map(r => `
+  const tbody = document.getElementById('rec_table');
+  if (!res.ok) { tbody.innerHTML = `<tr><td colspan="7">Error loading</td></tr>`; return; }
+  const recs = Array.isArray(res.data) ? res.data : [];
+  if (!recs.length) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:24px">No records yet.</td></tr>`; return; }
+  tbody.innerHTML = recs.map(r => `
     <tr>
       <td>#${r.id}</td>
-      <td>${teacherLink(r.teacher_id, r.teacher_name)}</td>
-      <td>${esc(r.position)}</td>
-      <td>${esc(r.hired_at)}</td>
-      <td>${esc(r.ended_at ?? '—')}</td>
+      <td>${r.teacher_id}</td>
+      <td>${r.position}</td>
+      <td>${r.hired_at}</td>
+      <td>${r.ended_at ?? '—'}</td>
       <td>${badge(r.status, STATUS_COLORS)}</td>
-      <td><div class="flex-row">
-        ${r.status !== 'terminated' ? `<button class="btn btn-sm" onclick="openStatusModal(${r.id}, '${r.status}')">Update</button>` : ''}
-        <button class="btn btn-ghost" onclick="openFeedback(${r.id})">Rate</button>
-      </div></td>
+      <td>${r.status !== 'terminated'
+        ? `<button class="btn btn-sm" onclick="openStatusModal(${r.id}, '${r.status}')">Update</button>`
+        : '—'}</td>
     </tr>`).join('');
 }
 
 function openStatusModal(id, currentStatus) {
-  $('status_rec_id').value = id;
-  $('status_rec_label').textContent = '#' + id;
-  $('status_ended_at').value = '';
-  $('new_status').innerHTML = currentStatus === 'active'
+  document.getElementById('status_rec_id').value = id;
+  document.getElementById('status_rec_label').textContent = '#' + id;
+  // filter options based on current
+  const sel = document.getElementById('new_status');
+  sel.innerHTML = currentStatus === 'active'
     ? `<option value="suspended">Suspended</option><option value="terminated">Terminated</option>`
     : `<option value="terminated">Terminated</option>`;
-  $('statusResp').className = 'response-box';
+  document.getElementById('statusResp').className = 'response-box';
   openModal('statusModal');
 }
 
 async function doHireTeacher() {
   const body = {
-    teacher_id: parseInt($('hire_teacher_id').value),
-    position:   $('hire_position').value.trim(),
-    hired_at:   $('hire_date').value,
+    teacher_id: parseInt(document.getElementById('hire_teacher_id').value),
+    position:   document.getElementById('hire_position').value.trim(),
+    hired_at:   document.getElementById('hire_date').value,
   };
-  if (!body.teacher_id || !body.position || !body.hired_at) { toast('Teacher ID, position and date are required', 'error'); return; }
   const res = await api('POST', '/employers/hire', body, token);
   showResponse('hireResp', res.data, res.ok);
-  if (res.ok) { toast('Teacher hired'); closeModal('hireModal'); loadRecruitment(); }
+  if (res.ok) { toast('Teacher hired!'); closeModal('hireModal'); loadRecruitment(); }
   else toast(res.data.error ?? 'Failed', 'error');
 }
 
 async function doUpdateStatus() {
-  const id = $('status_rec_id').value;
-  const body = { status: $('new_status').value };
-  const end = $('status_ended_at').value;
-  if (end) body.ended_at = end;
-  const res = await api('PUT', `/employers/recruitment/${id}`, body, token);
+  const id = document.getElementById('status_rec_id').value;
+  const status = document.getElementById('new_status').value;
+  const res = await api('PUT', `/employers/recruitment/${id}`, { status }, token);
   showResponse('statusResp', res.data, res.ok);
   if (res.ok) { toast('Status updated'); closeModal('statusModal'); loadRecruitment(); }
   else toast(res.data.error ?? 'Failed', 'error');
 }
 
-function openFeedback(id) {
-  $('fb_rec_id').value = id; $('fb_comment').value = '';
-  $('fbResp').className = 'response-box';
-  openModal('feedbackModal');
-}
-async function doFeedback() {
-  const id = $('fb_rec_id').value;
-  const res = await api('POST', `/employers/recruitment/${id}/feedback`,
-    { rating: parseInt($('fb_rating').value), comment: $('fb_comment').value.trim() || null }, token);
-  showResponse('fbResp', res.data, res.ok);
-  if (res.ok) { toast('Feedback sent'); closeModal('feedbackModal'); }
-  else toast(res.data.error ?? 'Failed', 'error');
-}
-
 // ── Interviews ───────────────────────────────────────────────
-let ivList = [];
-
 async function loadInterviews() {
-  const status = $('iv_status_filter').value;
-  const res = await api('GET', `/employers/interviews${status ? `?status=${status}` : ''}`, undefined, token);
+  const status = document.getElementById('iv_status_filter').value;
+  const path = `/employers/interviews${status ? `?status=${status}` : ''}`;
+  const res = await api('GET', path, undefined, token);
   showResponse('ivResp', res.data, res.ok);
-  if (!res.ok) { $('iv_table').innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center">${esc(res.data.error ?? 'Error')}</td></tr>`; return; }
-  ivList = Array.isArray(res.data) ? res.data : [];
-  renderInterviews();
-  hydrateNames(ivList.map(r => r.teacher_id), renderInterviews);
-}
-
-function renderInterviews() {
-  const tbody = $('iv_table');
-  if (!ivList.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:24px">No requests.</td></tr>`; return; }
-  tbody.innerHTML = ivList.map(r => `
+  const tbody = document.getElementById('iv_table');
+  if (!res.ok) { tbody.innerHTML = `<tr><td colspan="5">Error</td></tr>`; return; }
+  const list = Array.isArray(res.data) ? res.data : [];
+  if (!list.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:24px">No requests.</td></tr>`; return; }
+  tbody.innerHTML = list.map(r => `
     <tr>
       <td>#${r.id}</td>
-      <td>${teacherLink(r.teacher_id, r.teacher_name)}</td>
-      <td>${esc(r.contact_method)}</td>
+      <td>${r.teacher_id}</td>
+      <td>${r.contact_method}</td>
       <td>${badge(r.status, STATUS_COLORS)}</td>
-      <td>${esc(r.created_at?.slice(0, 10) ?? '—')}</td>
-      <td>${r.status === 'pending' ? `<button class="btn btn-danger-sm" onclick="cancelInterview(${r.id})">Cancel</button>` : ''}
-          ${r.status === 'accepted' ? `<button class="btn btn-sm" onclick="prefillHire(${r.teacher_id})">Hire</button>` : ''}</td>
+      <td>${r.created_at?.slice(0,10) ?? '—'}</td>
     </tr>`).join('');
 }
 
 async function doSendInterviewRequest() {
-  const body = { teacher_id: parseInt($('iv_teacher_id').value), contact_method: $('iv_contact').value };
-  if (!body.teacher_id) { toast('Enter a teacher ID', 'error'); return; }
+  const body = {
+    teacher_id: parseInt(document.getElementById('iv_teacher_id').value),
+    contact_method: document.getElementById('iv_contact').value,
+  };
   const res = await api('POST', '/employers/interviews', body, token);
   showResponse('sendIvResp', res.data, res.ok);
   if (res.ok) { toast('Interview request sent'); closeModal('sendIvModal'); loadInterviews(); }
   else toast(res.data.error ?? 'Failed', 'error');
 }
 
-async function cancelInterview(id) {
-  if (!confirm('Cancel this interview request?')) return;
-  const res = await api('DELETE', `/employers/interviews/${id}`, undefined, token);
-  if (res.ok || res.status === 204) { toast('Request cancelled'); loadInterviews(); }
-  else toast(res.data.error ?? 'Failed', 'error');
+let found = {};
+document.getElementById('s_subject').innerHTML = subjectOptions();
+function pickTeacher(kind, tc) {
+  found[tc.id] = tc;
+  document.getElementById(kind === 'hire' ? 'hire_teacher_id' : 'iv_teacher_id').value = tc.id;
+  const box = document.getElementById(kind + '_picked');
+  box.style.display = 'block';
+  box.innerHTML = `<strong>${tc.full_name}</strong> · ${(tc.subjects ?? []).join(' · ')}<div class="hint">${tc.rating?.composite != null ? '★ ' + tc.rating.composite.toFixed(1) + ' · ' : ''}${tc.id_verified ? 'Verified' : 'Unverified'}</div>`;
+}
+['hire', 'iv'].forEach(k => teacherPicker(k + '_picker', { path: '/employers/search', token, actions: [{ label: 'Select', fn: tc => pickTeacher(k, tc) }] }));
+
+async function loadApplications() {
+  const st = document.getElementById('app_status').value;
+  const res = await api('GET', `/employers/applications${st ? `?status=${st}` : ''}`, undefined, token);
+  const list = res.ok && Array.isArray(res.data) ? res.data : [];
+  document.getElementById('app_list').innerHTML = list.length ? list.map(a => `
+    <div class="card" style="margin-bottom:12px">
+      <div class="flex-between">
+        <div><strong>${a.teacher?.full_name ?? a.teacher_name ?? 'Teacher #' + a.teacher_id}</strong><div class="hint">${a.position ?? ''}</div></div>
+        ${badge(a.status, STATUS_COLORS)}
+      </div>
+      ${a.message ? `<p style="margin-top:8px;font-size:13px;color:var(--text-dim)">${a.message}</p>` : ''}
+      <div class="flex-between" style="margin-top:10px"><span class="hint">Applied: ${a.created_at?.slice(0, 10) ?? '—'}</span>
+        ${a.status === 'pending' ? `<div class="flex-row"><button class="btn btn-sm" onclick="setApp(${a.id},'accepted')">Accept</button><button class="btn btn-danger-sm" onclick="setApp(${a.id},'rejected')">Reject</button></div>` : ''}</div>
+    </div>`).join('') : '<div class="empty-state"><div class="icon">📭</div><p>No applications.</p></div>';
+}
+async function setApp(id, status) {
+  const res = await api('PUT', `/employers/applications/${id}`, { status }, token);
+  toast(res.ok ? `Application ${status}` : (res.data.error ?? 'Failed'), res.ok ? 'success' : 'error');
+  if (res.ok) loadApplications();
 }
 
 // ── Init ─────────────────────────────────────────────────────

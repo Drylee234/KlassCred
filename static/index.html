@@ -58,8 +58,8 @@
         <p class="hint">Teacher profile — required to register</p>
         <label>Full name</label>
         <input id="t_full_name" placeholder="Jane Doe">
-        <label>Subjects (comma-separated)</label>
-        <input id="t_subjects" placeholder="Mathematics, Physics">
+        <label>Subjects</label>
+        <div id="t_subjects_mount"></div>
         <label>Years of experience</label>
         <input id="t_exp" type="number" min="0" placeholder="3">
       </div>
@@ -103,8 +103,14 @@
 
 <script src="static/common.js"></script>
 <script>
+document.getElementById('t_subjects_mount').innerHTML = subjectChecks('t_subjects');
 // redirect if already logged in
-
+if (session.token()) {
+  const t = session.type();
+  if (t === 'teacher') location.href = '/test-ui/teacher.html';
+  else if (t === 'organization' || t === 'parent') location.href = '/test-ui/employer.html';
+  else if (t === 'reviewer') location.href = '/test-ui/reviewer.html';
+}
 
 function switchAuthTab(tab) {
   const tabs = document.querySelectorAll('#authTabs button');
@@ -139,11 +145,11 @@ async function doLogin() {
       session.save(data.token, type);
       toast('Logged in!');
       setTimeout(() => {
-  if (type === 'teacher') location.href = '/teacher.html';
-  else if (type === 'organization' || type === 'parent') location.href = '/employer.html';
-  else if (type === 'reviewer') location.href = '/reviewer.html';
-  else location.href = '/index.html';
-}, 600);
+        if (type === 'teacher') location.href = '/test-ui/teacher.html';
+        else if (type === 'organization' || type === 'parent') location.href = '/test-ui/employer.html';
+        else if (type === 'reviewer') location.href = '/test-ui/reviewer.html';
+        else location.href = '/test-ui/';
+      }, 600);
     } catch(e) {
       toast('Login OK but could not read token payload', 'error');
     }
@@ -178,11 +184,10 @@ async function doRegister() {
       session.save(loginRes.data.token, payload.type);
 
       setTimeout(() => {
-  if (type === 'teacher') location.href = '/teacher.html';
-  else if (type === 'organization' || type === 'parent') location.href = '/employer.html';
-  else if (type === 'reviewer') location.href = '/reviewer.html';
-  else location.href = '/index.html';
-}, 600);
+        if (type === 'teacher') location.href = '/test-ui/teacher.html';
+        else if (type === 'organization' || type === 'parent') location.href = '/test-ui/employer.html';
+        else if (type === 'reviewer') location.href = '/test-ui/reviewer.html';
+      }, 800);
     }
   } else {
     toast(data.error ?? 'Registration failed', 'error');
@@ -194,10 +199,9 @@ async function doRegister() {
 function getProfileFields(type) {
   if (type === 'teacher') {
     const full_name        = document.getElementById('t_full_name').value.trim();
-    const subjectsRaw      = document.getElementById('t_subjects').value.trim();
+    const subjects         = checkedSubjects('t_subjects');
     const experience_years = parseInt(document.getElementById('t_exp').value);
-    if (!full_name || !subjectsRaw || isNaN(experience_years)) return null;
-    const subjects = subjectsRaw.split(',').map(s => s.trim()).filter(Boolean);
+    if (!full_name || !subjects.length || isNaN(experience_years)) return null;
     return { full_name, subjects, experience_years };
   }
 
