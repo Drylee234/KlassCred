@@ -25,7 +25,7 @@ def search_teachers(
             if teacher.subjects and subject in teacher.subjects
         ]
 
-       if min_rating is not None:
+    if min_rating is not None:
         teachers = [
             teacher
             for teacher in teachers
