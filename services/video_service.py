@@ -111,3 +111,14 @@ def handle_byteship_webhook(body, timestamp, signature, payload):
         scenario_id,
         video_url,
     )
+
+def get_submissions(teacher_id):
+    """
+    Return all video submissions belonging to the authenticated teacher.
+    """
+    return (
+        VideoSubmission.query
+        .filter_by(teacher_id=teacher_id)
+        .order_by(VideoSubmission.uploaded_at.desc())
+        .all()
+    )

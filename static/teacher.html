@@ -6,7 +6,7 @@
   <title>KlassCred — Teacher</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="static/style.css">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
@@ -60,23 +60,28 @@
     <section id="sec_dashboard" class="page-section">
       <div class="page-header flex-between">
         <div><h2>Dashboard</h2><p id="dash_greeting">Welcome back</p></div>
-        <div class="flex-row">
-          <span id="dash_verified" class="badge badge-gray">Unverified</span>
-        </div>
+        <div class="flex-row"><span id="dash_verified" class="badge badge-gray">Unverified</span></div>
       </div>
 
       <div class="stat-grid" id="dash_stats">
         <div class="stat-card"><div class="label">Composite Rating</div><div class="value" id="ds_rating">—</div><div class="sub">out of 100</div></div>
-        <div class="stat-card"><div class="label">Exam Attempts</div><div class="value" id="ds_exams">—</div></div>
+        <div class="stat-card"><div class="label">Exams</div><div class="value" id="ds_exams">—</div></div>
         <div class="stat-card"><div class="label">Interview Requests</div><div class="value" id="ds_interviews">—</div></div>
         <div class="stat-card"><div class="label">Profile</div><div class="value" id="ds_profile">—</div><div class="sub" id="ds_profile_sub"></div></div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Rating Breakdown</div>
-        <div id="dash_breakdown">
-          <div class="empty-state"><div class="icon">📊</div><p>No rating yet — complete your profile and take an exam.</p></div>
+      <div class="card section">
+        <div class="flex-between">
+          <div class="card-title" style="margin:0">Verification &amp; Rating</div>
+          <button class="btn btn-sm" onclick="loadRating()">Refresh</button>
         </div>
+        <div id="rating_panel" class="mt-16"><div class="empty-state"><div class="icon">📊</div><p>Loading rating…</p></div></div>
+        <div id="ratingResp" class="response-box"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Getting verified</div>
+        <div id="dash_checklist"></div>
       </div>
     </section>
 
@@ -109,25 +114,26 @@
     <section id="sec_docs" class="page-section" style="display:none">
       <div class="page-header">
         <h2>Documents</h2>
-        <p>Identity and certification documents (stored in <code>teacher.documents</code> JSON field)</p>
+        <p>ID and certification documents</p>
       </div>
 
       <div class="card">
         <div class="card-title">Current Documents</div>
-        <div id="docs_view">
-          <div class="empty-state"><div class="icon">📄</div><p>Loading…</p></div>
-        </div>
+        <div id="docs_view"><div class="empty-state"><div class="icon">📄</div><p>Loading…</p></div></div>
       </div>
 
       <div class="card mt-24">
         <div class="card-title">Upload / Update Documents</div>
-        <p class="hint">Provide URLs (Cloudinary or direct link). Mandatory: id_card_front, id_card_back.</p>
-        <label>ID Card Front URL</label>
-        <input id="doc_front" placeholder="https://res.cloudinary.com/…">
-        <label>ID Card Back URL</label>
-        <input id="doc_back" placeholder="https://res.cloudinary.com/…">
-        <label>Certificate URL (optional)</label>
-        <input id="doc_cert" placeholder="https://…">
+        <p class="hint">Upload a file or paste a link. ID card front and back are required.</p>
+
+        <label>ID Card Front</label>
+        <div class="input-row"><input id="doc_front" placeholder="https://res.cloudinary.com/…"><button class="btn btn-sm" onclick="uploadDoc('doc_front','id_card_front')">Upload file</button></div>
+        <label>ID Card Back</label>
+        <div class="input-row"><input id="doc_back" placeholder="https://res.cloudinary.com/…"><button class="btn btn-sm" onclick="uploadDoc('doc_back','id_card_back')">Upload file</button></div>
+        <label>Certificate (optional)</label>
+        <div class="input-row"><input id="doc_cert" placeholder="https://…"><button class="btn btn-sm" onclick="uploadDoc('doc_cert','certificate')">Upload file</button></div>
+
+        <div class="progress mt-16" id="doc_prog_wrap" style="display:none"><div id="doc_prog"></div></div>
         <button class="btn btn-sm mt-16" onclick="doUpdateDocs()">Save documents</button>
         <div id="docsResp" class="response-box"></div>
       </div>
@@ -169,28 +175,50 @@
 
     <!-- EXAMS ───────────────────────────────────────────────── -->
     <section id="sec_exams" class="page-section" style="display:none">
-      <div class="page-header">
-        <h2>Exams</h2><p>Available exams &amp; your attempt history</p>
+      <div class="page-header"><h2>Exams</h2><p>Take an exam and review your attempts</p></div>
+
+      <div id="resume_banner" class="card section" style="display:none;border-color:var(--yellow)">
+        <div class="flex-between">
+          <div><strong>Exam in progress</strong><div class="hint" id="resume_info"></div></div>
+          <div class="flex-row">
+            <button class="btn btn-sm" onclick="resumeExam()">Resume</button>
+            <button class="btn btn-danger-sm" onclick="discardRun()">Discard</button>
+          </div>
+        </div>
       </div>
 
       <div class="card section">
-        <div class="card-title">Available Exams — GET /teachers/exams</div>
-        <button class="btn btn-sm" onclick="loadExams()">Refresh</button>
-        <div id="exam_list" class="mt-16">
-          <div class="empty-state"><div class="icon">📝</div><p>Click Refresh to load exams.</p></div>
+        <div class="flex-between">
+          <div class="card-title" style="margin:0">Available Exams</div>
+          <button class="btn btn-sm" onclick="loadExams()">Refresh</button>
         </div>
+        <div id="exam_list" class="mt-16"><div class="empty-state"><div class="icon">📝</div><p>Loading exams…</p></div></div>
         <div id="examListResp" class="response-box"></div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Submit Exam Answers — POST /teachers/exams/submit</div>
+      <div class="card section">
+        <div class="flex-between">
+          <div class="card-title" style="margin:0">My Attempts</div>
+          <button class="btn btn-sm" onclick="loadAttempts()">Refresh</button>
+        </div>
+        <div class="table-wrap mt-16">
+          <table>
+            <thead><tr><th>Attempt</th><th>Exam</th><th>Status</th><th>Score</th><th>Started</th><th>Submitted</th></tr></thead>
+            <tbody id="attempt_table"><tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:24px">Loading…</td></tr></tbody>
+          </table>
+        </div>
+        <div id="attemptsResp" class="response-box"></div>
+      </div>
+
+      <details class="card">
+        <summary>Manual submit (advanced)</summary>
         <label>Attempt ID</label>
-        <input id="submit_attempt_id" type="number" placeholder="From start response">
+        <input id="submit_attempt_id" type="number">
         <label>Answers JSON (e.g. {"1":"A","2":"B"})</label>
         <textarea id="submit_answers" placeholder='{"1":"A","2":"B"}'></textarea>
-        <button class="btn btn-sm mt-16" onclick="doSubmitExam()">Submit Answers</button>
+        <button class="btn btn-sm mt-16" onclick="doManualSubmit()">Submit answers</button>
         <div id="submitExamResp" class="response-box"></div>
-      </div>
+      </details>
     </section>
 
     <!-- INTERVIEWS ──────────────────────────────────────────── -->
@@ -222,34 +250,72 @@
 
     <!-- SCENARIO / VIDEO ───────────────────────────────────── -->
     <section id="sec_scenario" class="page-section" style="display:none">
-      <div class="page-header">
-        <h2>Teaching Scenario &amp; Video</h2>
-        <p>Get a scenario, then request an upload URL</p>
-      </div>
+      <div class="page-header"><h2>Teaching Scenario &amp; Video</h2><p>Get a scenario, record or choose your video, upload it</p></div>
 
       <div class="card section">
-        <div class="card-title">Fetch Scenario — GET /teachers/scenario</div>
-        <button class="btn btn-sm" onclick="loadScenario()">Get Scenario</button>
-        <div id="scenario_view" class="mt-16"></div>
+        <div class="flex-between">
+          <div class="card-title" style="margin:0">1. Your scenario</div>
+          <button class="btn btn-sm" onclick="loadScenario()">Get scenario</button>
+        </div>
+        <div id="scenario_view" class="mt-16"><p class="hint">Fetch a scenario to see what you should teach.</p></div>
         <div id="scenarioResp" class="response-box"></div>
       </div>
 
       <div class="card section">
-        <div class="card-title">Request Upload URL — POST /teachers/video/upload-url</div>
+        <div class="card-title">2. Your video</div>
         <label>Scenario ID</label>
-        <input id="vid_scenario_id" type="number" placeholder="From scenario above">
-        <button class="btn btn-sm mt-16" onclick="doRequestUploadUrl()">Get Upload URL</button>
+        <input id="vid_scenario_id" type="number" placeholder="Filled in from the scenario above">
+
+        <div class="flex-row mt-16" style="flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="$('vid_file').click()">📁 Choose video file</button>
+          <button class="btn btn-sm" onclick="startCamera()">🎥 Record with camera</button>
+          <input id="vid_file" type="file" accept="video/*" style="display:none" onchange="onFilePicked(this.files[0]); this.value=''">
+        </div>
+
+        <div id="rec_panel" style="display:none" class="mt-16">
+          <video id="rec_live" class="preview" muted playsinline></video>
+          <div class="flex-row mt-16">
+            <button class="btn btn-sm" id="rec_start" onclick="startRec()">● Start recording</button>
+            <button class="btn btn-danger-sm" id="rec_stop" onclick="stopRec()" style="display:none">■ Stop</button>
+            <span id="rec_time" class="timer" style="display:none">00:00</span>
+            <button class="btn btn-ghost" onclick="stopCamera()">Close camera</button>
+          </div>
+        </div>
+
+        <div id="vid_picked" style="display:none" class="mt-16">
+          <video id="vid_preview" class="preview" controls playsinline></video>
+          <div class="hint" id="vid_meta"></div>
+          <label class="check-row"><input type="checkbox" id="auto_confirm" checked> Confirm automatically after upload</label>
+          <div class="flex-row mt-16">
+            <button class="btn btn-sm" id="btn_upload" onclick="doUpload()">⬆ Upload video</button>
+            <button class="btn btn-danger-sm" id="btn_cancel_up" onclick="cancelUpload()" style="display:none">Cancel upload</button>
+            <button class="btn btn-ghost" onclick="clearPicked()">Remove</button>
+          </div>
+          <div class="progress mt-16" id="up_prog_wrap" style="display:none"><div id="up_prog"></div></div>
+          <div class="hint" id="up_status"></div>
+        </div>
         <div id="uploadUrlResp" class="response-box"></div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Confirm Upload — POST /teachers/video/confirm</div>
-        <label>Scenario ID</label>
-        <input id="confirm_scenario_id" type="number">
-        <label>Video URL (from Cloudinary)</label>
+      <div class="card section">
+        <div class="card-title">3. Confirm upload</div>
+        <p class="hint">Fills in automatically after an upload. You can also paste a Cloudinary link yourself.</p>
+        <label>Video URL</label>
         <input id="confirm_video_url" placeholder="https://res.cloudinary.com/…">
-        <button class="btn btn-sm mt-16" onclick="doConfirmUpload()">Confirm Upload</button>
+        <div class="flex-row mt-16">
+          <button class="btn btn-sm" onclick="doConfirmUpload()">Confirm upload</button>
+          <button class="btn btn-ghost" onclick="doRequestUploadUrl()">Request upload URL only</button>
+        </div>
         <div id="confirmResp" class="response-box"></div>
+      </div>
+
+      <div class="card">
+        <div class="flex-between">
+          <div class="card-title" style="margin:0">My videos</div>
+          <button class="btn btn-sm" onclick="loadVideos()">Refresh</button>
+        </div>
+        <div id="video_list" class="mt-16"><div class="empty-state"><div class="icon">🎬</div><p>Loading…</p></div></div>
+        <div id="videosResp" class="response-box"></div>
       </div>
     </section>
 
@@ -335,9 +401,69 @@
   </div>
 </div>
 
+<!-- ── Exam runner ────────────────────────────────────────── -->
+<div class="runner" id="examRunner">
+  <div class="runner-bar">
+    <div><strong id="run_title">Exam</strong><div class="hint" id="run_sub"></div></div>
+    <div class="flex-row">
+      <span id="run_timer" class="timer" style="display:none">--:--</span>
+      <button class="btn btn-sm" onclick="confirmSubmit()">Submit exam</button>
+      <button class="btn btn-ghost" onclick="leaveExam()">Save &amp; exit</button>
+    </div>
+  </div>
+  <div class="progress" style="border-radius:0"><div id="run_prog"></div></div>
+  <div class="runner-body">
+    <div class="runner-main"><div class="runner-inner">
+      <div class="hint" id="run_qnum"></div>
+      <h3 id="run_qtext" style="margin:8px 0 22px;line-height:1.5;font-weight:600"></h3>
+      <div id="run_opts"></div>
+      <div class="flex-between mt-24">
+        <button class="btn btn-ghost" onclick="stepQ(-1)">← Previous</button>
+        <div class="flex-row">
+          <button class="btn btn-ghost" onclick="clearAnswer()">Clear</button>
+          <button class="btn btn-ghost" id="run_flag_btn" onclick="toggleFlag()">⚑ Flag</button>
+        </div>
+        <button class="btn btn-sm" onclick="stepQ(1)">Next →</button>
+      </div>
+    </div></div>
+    <aside class="runner-side">
+      <div class="card-title">Questions</div>
+      <div class="q-grid" id="run_grid"></div>
+      <div class="hint" id="run_summary" style="margin-top:14px"></div>
+    </aside>
+  </div>
+</div>
+
+<div class="modal-overlay" id="submitConfirmModal" style="z-index:160">
+  <div class="modal">
+    <div class="modal-header"><h3>Submit exam?</h3><button class="modal-close" onclick="closeModal('submitConfirmModal')">✕</button></div>
+    <p id="submit_confirm_text" style="line-height:1.6"></p>
+    <div class="flex-row mt-16">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('submitConfirmModal')">Keep working</button>
+      <button class="btn btn-sm" style="flex:1" onclick="closeModal('submitConfirmModal'); doSubmit(false)">Submit now</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="resultModal" style="z-index:160">
+  <div class="modal">
+    <div class="modal-header"><h3>Exam submitted</h3><button class="modal-close" onclick="closeModal('resultModal')">✕</button></div>
+    <div id="result_body" style="text-align:center"></div>
+    <div id="resultResp" class="response-box"></div>
+    <button class="btn btn-primary" onclick="closeModal('resultModal')">Done</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="playModal">
+  <div class="modal wide">
+    <div class="modal-header"><h3>Video</h3><button class="modal-close" onclick="$('play_video').pause(); closeModal('playModal')">✕</button></div>
+    <video id="play_video" class="preview" controls playsinline></video>
+  </div>
+</div>
+
 <div id="toast"></div>
 
-<script src="static/common.js"></script>
+<script src="/static/common.js"></script>
 <script>
 const token = session.required();
 let profileData = null;
@@ -354,64 +480,81 @@ function nav(page) {
   if (page === 'docs')         loadDocs();
   if (page === 'work_history') loadWorkHistory();
   if (page === 'references')   loadReferences();
+  if (page === 'exams')        { loadExams(); loadAttempts(); refreshResumeBanner(); }
+  if (page === 'scenario')     loadVideos();
 }
 
 // ── Dashboard ────────────────────────────────────────────────
 async function loadDashboard() {
-  // fetch profile, rating, exams, interviews in parallel
-  const [profRes, ivRes] = await Promise.all([
+  const [profRes, ivRes, examRes] = await Promise.all([
     api('GET', '/teachers/profile', undefined, token).catch(() => null),
     api('GET', '/teachers/interviews', undefined, token).catch(() => null),
+    api('GET', '/teachers/exams', undefined, token).catch(() => null),
   ]);
 
   if (profRes?.ok) {
     profileData = profRes.data;
-    document.getElementById('dash_greeting').textContent = `Welcome, ${profileData.full_name ?? profileData.email}`;
-    document.getElementById('ds_profile').textContent = profileData.profile_complete ? '✓' : '✗';
-    document.getElementById('ds_profile_sub').textContent = profileData.profile_complete ? 'Complete' : 'Incomplete';
+    $('dash_greeting').textContent = `Welcome, ${profileData.full_name ?? profileData.email}`;
+    $('ds_profile').textContent = profileData.profile_complete ? '✓' : '✗';
+    $('ds_profile_sub').textContent = profileData.profile_complete ? 'Complete' : 'Incomplete';
     if (profileData.id_verified) {
-      document.getElementById('dash_verified').textContent = 'Verified';
-      document.getElementById('dash_verified').className = 'badge badge-green';
-    }
-    if (profileData.rating) {
-      const r = profileData.rating;
-      document.getElementById('ds_rating').textContent = r.composite != null ? r.composite.toFixed(1) : '—';
-      renderBreakdown(r.breakdown);
+      $('dash_verified').textContent = 'Verified';
+      $('dash_verified').className = 'badge badge-green';
     }
   }
-
-  if (ivRes?.ok) {
-    const total = Array.isArray(ivRes.data) ? ivRes.data.length : 0;
-    document.getElementById('ds_interviews').textContent = total;
-    const pending = Array.isArray(ivRes.data) ? ivRes.data.filter(r => r.status === 'pending').length : 0;
-    if (pending) document.getElementById('ds_interviews').textContent = `${total} (${pending} pending)`;
+  if (ivRes?.ok && Array.isArray(ivRes.data)) {
+    const total = ivRes.data.length;
+    const pending = ivRes.data.filter(r => r.status === 'pending').length;
+    $('ds_interviews').textContent = pending ? `${total} (${pending} pending)` : total;
   }
+  if (examRes?.ok && Array.isArray(examRes.data)) $('ds_exams').textContent = examRes.data.length + ' available';
 
-  // exams
-  const examRes = await api('GET', '/teachers/exams', undefined, token);
-  if (examRes?.ok && Array.isArray(examRes.data)) {
-    document.getElementById('ds_exams').textContent = examRes.data.length + ' available';
-  }
+  await loadRating();
+  renderChecklist();
 }
 
-function renderBreakdown(breakdown) {
-  if (!breakdown || !Object.keys(breakdown).length) return;
-  const box = document.getElementById('dash_breakdown');
-  const rows = Object.entries(breakdown).map(([k, v]) =>
-    `<tr>
-      <td style="text-transform:capitalize">${k}</td>
-      <td>${v.score?.toFixed(1) ?? '—'}</td>
-      <td>${(v.weight)}%</td>
-      <td>${(v.effective_weight * 100).toFixed(1)}%</td>
-    </tr>`
-  ).join('');
-  box.innerHTML = `
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Component</th><th>Score</th><th>Weight</th><th>Effective</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
+let ratingData = null;
+async function loadRating() {
+  const res = await api('GET', '/teachers/rating', undefined, token);
+  showResponse('ratingResp', res.data, res.ok);
+  const panel = $('rating_panel');
+  if (!res.ok) {
+    panel.innerHTML = `<div class="empty-state"><div class="icon">📊</div><p>${esc(res.data.error ?? 'Rating unavailable')}</p></div>`;
+    return;
+  }
+  const r = ratingData = res.data;
+  $('ds_rating').textContent = r.composite == null ? '—' : Number(r.composite).toFixed(1);
+  const bar = (label, score) => `
+    <div class="bar-row">
+      <div class="flex-between"><span>${label}</span><strong>${score == null ? 'Not available' : score + '/100'}</strong></div>
+      <div class="progress"><div style="width:${score == null ? 0 : Math.min(100, score)}%"></div></div>
     </div>`;
+  panel.innerHTML = `
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:42px;font-weight:700">${r.composite == null ? '—' : esc(r.composite)}</div>
+      <div class="hint">Composite rating</div>
+      ${r.overridden ? '<span class="badge badge-yellow">Manually overridden</span>' : ''}
+    </div>
+    ${bar('Exam', r.exam_score)}${bar('Video', r.video_score)}${bar('References', r.reference_score)}${bar('Profile', r.profile_score)}
+    ${r.override_reason ? `<div class="card mt-16" style="background:var(--surface2)"><strong>Override reason</strong><p>${esc(r.override_reason)}</p></div>` : ''}`;
+  renderChecklist();
+}
+
+function renderChecklist() {
+  const p = profileData; if (!p) return;
+  const d = p.documents ?? {}, r = ratingData ?? {};
+  const refs = (p.references ?? []).length, wh = (p.work_history ?? []).length;
+  const items = [
+    ['Profile complete', !!p.profile_complete],
+    ['ID card front & back uploaded', !!(d.id_card_front && d.id_card_back)],
+    [`References added (${refs})`, refs > 0],
+    [`Work history added (${wh})`, wh > 0],
+    ['Exam taken', r.exam_score != null],
+    ['Teaching video reviewed', r.video_score != null],
+    ['Verified by a reviewer', !!p.id_verified],
+  ];
+  $('dash_checklist').innerHTML = items.map(([l, ok]) =>
+    `<div class="flex-row" style="padding:6px 0"><span>${ok ? '✅' : '⬜'}</span><span>${esc(l)}</span></div>`).join('');
 }
 
 // ── Profile ──────────────────────────────────────────────────
@@ -476,28 +619,26 @@ async function loadDocs() {
   const res = await api('GET', '/teachers/profile', undefined, token);
   if (!res.ok) return;
   const docs = res.data.documents ?? {};
-  if (!Object.keys(docs).length) {
-    document.getElementById('docs_view').innerHTML =
-      `<div class="empty-state"><div class="icon">📄</div><p>No documents uploaded yet.</p></div>`;
-    return;
-  }
-  document.getElementById('docs_view').innerHTML =
-    Object.entries(docs).map(([k,v]) =>
-      `<div class="profile-field" style="margin-bottom:12px">
-         <div class="label">${k.replace(/_/g,' ')}</div>
-         <div class="val"><a href="${v}" target="_blank" style="color:var(--accent)">${v}</a></div>
-       </div>`
-    ).join('');
+  $('doc_front').value = docs.id_card_front ?? '';
+  $('doc_back').value  = docs.id_card_back ?? '';
+  $('doc_cert').value  = docs.certificate ?? '';
+  $('docs_view').innerHTML = Object.keys(docs).length
+    ? kv(docs)
+    : `<div class="empty-state"><div class="icon">📄</div><p>No documents uploaded yet.</p></div>`;
+}
+
+function uploadDoc(inputId, kind) {
+  pickAndUpload({
+    endpoint: '/teachers/documents/upload-url', kind, token,
+    onProgress: pct => { $('doc_prog_wrap').style.display = 'block'; $('doc_prog').style.width = pct + '%'; },
+    onDone: url => { $(inputId).value = url; $('doc_prog_wrap').style.display = 'none'; },
+  });
 }
 
 async function doUpdateDocs() {
-  const docs = {};
-  const front = document.getElementById('doc_front').value.trim();
-  const back  = document.getElementById('doc_back').value.trim();
-  const cert  = document.getElementById('doc_cert').value.trim();
-  if (!front || !back) { toast('Front and back ID card URLs required', 'error'); return; }
-  docs.id_card_front = front;
-  docs.id_card_back  = back;
+  const front = $('doc_front').value.trim(), back = $('doc_back').value.trim(), cert = $('doc_cert').value.trim();
+  if (!front || !back) { toast('Front and back ID card are required', 'error'); return; }
+  const docs = { id_card_front: front, id_card_back: back };
   if (cert) docs.certificate = cert;
   const res = await api('PUT', '/teachers/profile', { documents: docs }, token);
   showResponse('docsResp', res.data, res.ok);
@@ -584,57 +725,246 @@ async function deleteRef(id) {
 }
 
 // ── Exams ────────────────────────────────────────────────────
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+// What gets sent as each answer: 'letter' → "A"/"B"… ; 'text' → the option's full text
+const ANSWER_MODE = 'letter';
+const RUN_KEY = 'kc_exam_run';
+const examCache = {};
+let run = null, tickId = null, submitting = false;
+
 async function loadExams() {
   const res = await api('GET', '/teachers/exams', undefined, token);
   showResponse('examListResp', res.data, res.ok);
-  if (!res.ok) { toast(res.data.error ?? 'Failed', 'error'); return; }
-  const list = document.getElementById('exam_list');
-  if (!res.data.length) {
-    list.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No exams available.</p></div>`;
-    return;
+  const list = $('exam_list');
+  if (!res.ok) { list.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>${esc(res.data.error ?? 'Could not load exams')}</p></div>`; return; }
+  if (!Array.isArray(res.data) || !res.data.length) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No exams available.</p></div>`; return;
   }
   list.innerHTML = res.data.map(item => {
-    const e = item.exam;
+    const e = item.exam; examCache[e.id] = item;
     const left = item.attempts_left;
+    const unlimited = left == null || left === Infinity;
+    const can = unlimited || left > 0;
     return `
       <div class="card" style="margin-bottom:12px">
         <div class="flex-between">
           <div>
-            <strong>${e.subject}</strong>
-            <span class="badge badge-blue" style="margin-left:8px">${e.questions?.length ?? 0} questions</span>
+            <strong>${esc(e.subject)}</strong>
+            <span class="badge badge-blue" style="margin-left:8px">${e.questions?.length ?? '?'} questions</span>
           </div>
           <div class="flex-row">
-            <span style="font-size:12px;color:var(--text-dim)">${left === Infinity ? '∞' : left} attempts left</span>
-            ${left > 0
-              ? `<button class="btn btn-sm" onclick="startExam(${e.id})">Start</button>`
-              : `<span class="badge badge-red">No attempts left</span>`}
+            <span class="hint" style="margin:0">${unlimited ? '∞' : left} attempts left</span>
+            ${can ? `<button class="btn btn-sm" onclick="startExam(${e.id})">Start</button>` : `<span class="badge badge-red">No attempts left</span>`}
           </div>
         </div>
-        <div style="margin-top:8px;font-size:12px;color:var(--text-dim)">Time limit: ${e.time_limit} min &nbsp;·&nbsp; Max attempts: ${e.max_attempts ?? '∞'}</div>
+        <div class="hint">${e.time_limit ? `Time limit: ${e.time_limit} min` : 'No time limit'} &nbsp;·&nbsp; Max attempts: ${e.max_attempts ?? '∞'}</div>
       </div>`;
   }).join('');
 }
 
+async function loadAttempts() {
+  const res = await api('GET', '/teachers/exams/attempts', undefined, token);
+  showResponse('attemptsResp', res.data, res.ok);
+  const tb = $('attempt_table');
+  if (!res.ok) { tb.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-dim)">${esc(res.data.error ?? 'Could not load attempts')}</td></tr>`; return; }
+  const list = Array.isArray(res.data) ? res.data : [];
+  if (!list.length) { tb.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-dim)">No attempts yet.</td></tr>`; return; }
+  tb.innerHTML = list.map(a => `
+    <tr>
+      <td>#${a.id}</td>
+      <td>${esc(a.exam?.subject ?? a.subject ?? a.exam_id ?? '—')}</td>
+      <td>${badge(a.status ?? (a.submitted_at ? 'completed' : 'in_progress'), STATUS_COLORS)}</td>
+      <td>${a.score != null ? Number(a.score).toFixed(1) + '%' : '—'}</td>
+      <td>${esc((a.started_at ?? '').slice(0, 16).replace('T', ' ') || '—')}</td>
+      <td>${esc((a.submitted_at ?? '').slice(0, 16).replace('T', ' ') || '—')}</td>
+    </tr>`).join('');
+}
+
+// ── question helpers (tolerant of a few backend shapes) ──
+const qText = q => q.question ?? q.text ?? q.prompt ?? q.body ?? '';
+function qOptions(q) {
+  const o = q.options ?? q.choices ?? q.answers ?? [];
+  if (Array.isArray(o)) return o.map((x, i) => {
+    const obj = x && typeof x === 'object';
+    return { key: String(obj ? (x.key ?? x.id ?? x.value ?? LETTERS[i]) : LETTERS[i]), label: obj ? (x.text ?? x.label ?? JSON.stringify(x)) : String(x) };
+  });
+  return Object.entries(o).map(([k, v]) => ({ key: k, label: String(v) }));
+}
+const answerValue = o => ANSWER_MODE === 'text' ? o.label : o.key;
+
+function computeDeadline(attempt, exam) {
+  const limit = Number(exam.time_limit ?? attempt.time_limit);
+  if (!limit || limit <= 0) return null;                       // no limit → no timer
+  const cap = Date.now() + limit * 60000;
+  if (attempt.expires_at) return parseUTC(attempt.expires_at);
+  const start = parseUTC(attempt.started_at);
+  return start ? Math.min(start + limit * 60000, cap) : cap;
+}
+
 async function startExam(examId) {
+  const item = examCache[examId];
+  const limit = item?.exam?.time_limit;
+  const msg = limit ? `Start now? You have ${limit} minutes and the clock won't stop if you leave.` : 'Start this exam now?';
+  if (!confirm(msg)) return;
   const res = await api('POST', '/teachers/exams/start', { exam_id: examId }, token);
   showResponse('examListResp', res.data, res.ok);
-  if (res.ok) {
-    toast(`Exam started — attempt ID: ${res.data.attempt?.id}`);
-    document.getElementById('submit_attempt_id').value = res.data.attempt?.id ?? '';
-  } else {
-    toast(res.data.error ?? 'Failed', 'error');
+  if (!res.ok) { toast(res.data.error ?? 'Could not start exam', 'error'); return; }
+  beginRun(res.data, item);
+}
+
+function beginRun(data, item) {
+  const attempt = data.attempt ?? data;
+  const exam = { ...(item?.exam ?? {}), ...(data.exam ?? {}) };
+  const questions = data.questions ?? exam.questions ?? [];
+  if (!questions.length) { toast('The exam has no questions', 'error'); return; }
+  run = { attemptId: attempt.id, subject: exam.subject ?? 'Exam', questions, answers: {}, flags: [], idx: 0,
+          deadline: computeDeadline(attempt, exam), limit: exam.time_limit || null };
+  persistRun();
+  openRunner();
+}
+
+const persistRun = () => { try { localStorage.setItem(RUN_KEY, JSON.stringify(run)); } catch {} };
+
+function openRunner() {
+  $('run_title').textContent = run.subject;
+  $('run_timer').style.display = run.deadline ? '' : 'none';
+  $('examRunner').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  clearInterval(tickId);
+  if (run.deadline) { tickTimer(); tickId = setInterval(tickTimer, 500); }
+  renderQ();
+}
+
+function closeRunner() {
+  $('examRunner').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function tickTimer() {
+  if (!run?.deadline) return;
+  const left = run.deadline - Date.now();
+  const t = $('run_timer');
+  t.textContent = fmtTime(left);
+  t.className = 'timer' + (left < 60000 ? ' danger' : left < 300000 ? ' warn' : '');
+  if (left <= 0 && !run.autoTried) {
+    run.autoTried = true;
+    toast("Time's up — submitting your answers…", 'error');
+    doSubmit(true);
   }
 }
 
-async function doSubmitExam() {
-  const attempt_id = parseInt(document.getElementById('submit_attempt_id').value);
+function renderQ() {
+  const q = run.questions[run.idx], n = run.questions.length, no = run.idx + 1;
+  $('run_qnum').textContent = `Question ${no} of ${n}`;
+  $('run_qtext').textContent = qText(q);
+  const opts = qOptions(q), cur = run.answers[no];
+  $('run_opts').innerHTML = opts.length
+    ? opts.map((o, i) => {
+        const sel = cur === answerValue(o);
+        return `<label class="opt ${sel ? 'sel' : ''}"><input type="radio" name="opt" ${sel ? 'checked' : ''} onchange="pick(${i})"><span><strong>${esc(o.key)}.</strong> ${esc(o.label)}</span></label>`;
+      }).join('')
+    : `<textarea id="run_free" placeholder="Type your answer…" oninput="pickText(this.value)">${esc(cur ?? '')}</textarea>`;
+  $('run_flag_btn').textContent = run.flags.includes(no) ? '⚑ Unflag' : '⚑ Flag';
+  const answered = Object.keys(run.answers).length;
+  $('run_prog').style.width = (answered / n * 100) + '%';
+  $('run_summary').textContent = `${answered} of ${n} answered` + (run.flags.length ? ` · ${run.flags.length} flagged` : '');
+  $('run_sub').textContent = run.limit ? `${run.limit} minute limit` : 'No time limit';
+  $('run_grid').innerHTML = run.questions.map((_, i) => {
+    const k = i + 1;
+    return `<button class="q-dot ${run.answers[k] !== undefined ? 'answered' : ''} ${run.flags.includes(k) ? 'flagged' : ''} ${i === run.idx ? 'current' : ''}" onclick="goQ(${i})">${k}</button>`;
+  }).join('');
+}
+
+function pick(i) {
+  const o = qOptions(run.questions[run.idx])[i];
+  run.answers[run.idx + 1] = answerValue(o);
+  persistRun(); renderQ();
+}
+function pickText(v) {
+  const k = run.idx + 1;
+  if (v.trim()) run.answers[k] = v; else delete run.answers[k];
+  persistRun();
+  $('run_prog').style.width = (Object.keys(run.answers).length / run.questions.length * 100) + '%';
+}
+function clearAnswer() { delete run.answers[run.idx + 1]; persistRun(); renderQ(); }
+function toggleFlag() {
+  const k = run.idx + 1, i = run.flags.indexOf(k);
+  if (i >= 0) run.flags.splice(i, 1); else run.flags.push(k);
+  persistRun(); renderQ();
+}
+function goQ(i) { run.idx = i; persistRun(); renderQ(); }
+function stepQ(d) { const n = run.questions.length; goQ(Math.min(n - 1, Math.max(0, run.idx + d))); }
+
+function confirmSubmit() {
+  const n = run.questions.length, un = n - Object.keys(run.answers).length;
+  $('submit_confirm_text').textContent = un
+    ? `${un} question${un > 1 ? 's are' : ' is'} unanswered${run.flags.length ? ` and ${run.flags.length} flagged` : ''}. You can't change answers after submitting.`
+    : 'All questions answered. You can’t change answers after submitting.';
+  openModal('submitConfirmModal');
+}
+
+async function doSubmit(auto) {
+  if (submitting || !run) return;
+  submitting = true;
+  const res = await api('POST', '/teachers/exams/submit', { attempt_id: run.attemptId, answers: run.answers }, token);
+  submitting = false;
+  if (!res.ok) {
+    toast(res.data.error ?? 'Submit failed — try again', 'error');
+    if (auto) run.autoTried = true;      // keep the runner open so the manual button can retry
+    return;
+  }
+  finishRun(res.data);
+}
+
+function finishRun(data) {
+  clearInterval(tickId);
+  try { localStorage.removeItem(RUN_KEY); } catch {}
+  run = null;
+  closeRunner();
+  const score = data.score ?? data.attempt?.score;
+  $('result_body').innerHTML = `
+    <div style="font-size:44px;font-weight:800;margin:8px 0">${score != null ? Number(score).toFixed(1) + '%' : '✓'}</div>
+    <p class="hint">${score != null ? 'Your score' : 'Answers received'}</p>
+    ${data.passed != null ? `<span class="badge ${data.passed ? 'badge-green' : 'badge-red'}">${data.passed ? 'Passed' : 'Not passed'}</span>` : ''}`;
+  showResponse('resultResp', data, true);
+  openModal('resultModal');
+  refreshResumeBanner(); loadExams(); loadAttempts(); loadDashboard();
+}
+
+function leaveExam() {
+  closeRunner();
+  refreshResumeBanner();
+  toast(run?.deadline ? 'Saved — the timer keeps running' : 'Progress saved');
+}
+
+function stored() { try { return JSON.parse(localStorage.getItem(RUN_KEY)); } catch { return null; } }
+function refreshResumeBanner() {
+  const s = run ?? stored(), b = $('resume_banner');
+  if (!s || $('examRunner').classList.contains('open')) { b.style.display = 'none'; return; }
+  b.style.display = 'block';
+  $('resume_info').textContent = `${s.subject} · attempt #${s.attemptId}` + (s.deadline ? ` · ends ${new Date(s.deadline).toLocaleTimeString()}` : '');
+}
+function resumeExam() { run = run ?? stored(); if (run) openRunner(); }
+function discardRun() {
+  if (!confirm('Discard this saved exam? Your answers on this device will be lost (the attempt itself stays on your record).')) return;
+  clearInterval(tickId); run = null;
+  try { localStorage.removeItem(RUN_KEY); } catch {}
+  refreshResumeBanner();
+}
+function resumeExamIfAny() {
+  const s = stored(); if (!s) return;
+  run = s;
+  if (run.deadline && Date.now() >= run.deadline) { run.autoTried = true; openRunner(); toast("Time ran out while you were away — submitting…", 'error'); doSubmit(true); }
+  else refreshResumeBanner();
+}
+window.addEventListener('beforeunload', e => { if ($('examRunner').classList.contains('open')) { e.preventDefault(); e.returnValue = ''; } });
+
+async function doManualSubmit() {
   let answers;
-  try { answers = JSON.parse(document.getElementById('submit_answers').value); }
-  catch { toast('Invalid JSON in answers', 'error'); return; }
-  const res = await api('POST', '/teachers/exams/submit', { attempt_id, answers }, token);
+  try { answers = JSON.parse($('submit_answers').value); } catch { toast('Invalid JSON in answers', 'error'); return; }
+  const res = await api('POST', '/teachers/exams/submit', { attempt_id: parseInt($('submit_attempt_id').value), answers }, token);
   showResponse('submitExamResp', res.data, res.ok);
-  if (res.ok) toast(`Score: ${res.data.score?.toFixed(1) ?? '—'}%`);
-  else toast(res.data.error ?? 'Submit failed', 'error');
+  if (res.ok) toast(`Score: ${res.data.score?.toFixed?.(1) ?? '—'}%`); else toast(res.data.error ?? 'Submit failed', 'error');
 }
 
 // ── Interviews ───────────────────────────────────────────────
@@ -673,47 +1003,153 @@ async function doRespond(action) {
   else toast(res.data.error ?? 'Failed', 'error');
 }
 
-// ── Scenario ─────────────────────────────────────────────────
+// ── Scenario & Video ─────────────────────────────────────────
+const MAX_VIDEO_MB = 200;
+let pickedFile = null, uploadCtl = null, recStream = null, recorder = null, recChunks = [], recTimer = null, recStart = 0, videoPoll = null;
+
 async function loadScenario() {
   const res = await api('GET', '/teachers/scenario', undefined, token);
   showResponse('scenarioResp', res.data, res.ok);
   if (!res.ok) { toast(res.data.error ?? 'Failed', 'error'); return; }
   const s = res.data;
-  document.getElementById('scenario_view').innerHTML = `
+  $('scenario_view').innerHTML = `
     <div class="card" style="background:var(--surface2)">
       <div class="flex-row" style="margin-bottom:10px">
-        <span class="badge badge-blue">${s.subject ?? '—'}</span>
-        <span class="badge badge-gray">${s.level ?? '—'}</span>
-        <span class="badge ${s.generated_by === 'ai' ? 'badge-yellow' : 'badge-gray'}">${s.generated_by}</span>
+        <span class="badge badge-blue">${esc(s.subject ?? '—')}</span>
+        <span class="badge badge-gray">${esc(s.level ?? '—')}</span>
+        <span class="badge ${s.generated_by === 'ai' ? 'badge-yellow' : 'badge-gray'}">${esc(s.generated_by ?? '')}</span>
       </div>
-      <p style="line-height:1.6">${s.prompt_text ?? '—'}</p>
-      <p class="hint" style="margin-top:8px">Scenario ID: ${s.id}</p>
+      <p style="line-height:1.6">${esc(s.prompt_text ?? '—')}</p>
+      <p class="hint">Scenario ID: ${esc(s.id)}</p>
     </div>`;
-  document.getElementById('vid_scenario_id').value  = s.id ?? '';
-  document.getElementById('confirm_scenario_id').value = s.id ?? '';
+  $('vid_scenario_id').value = s.id ?? '';
 }
 
+// ── pick / preview ──
+function onFilePicked(f) {
+  if (!f) return;
+  if (!f.type.startsWith('video/')) { toast('Choose a video file', 'error'); return; }
+  if (f.size > MAX_VIDEO_MB * 1048576) { toast(`Video is over ${MAX_VIDEO_MB} MB`, 'error'); return; }
+  clearPicked();
+  pickedFile = f;
+  const v = $('vid_preview');
+  v.src = URL.createObjectURL(f);
+  $('vid_meta').textContent = `${f.name} · ${(f.size / 1048576).toFixed(1)} MB`;
+  $('vid_picked').style.display = 'block';
+  $('up_status').textContent = '';
+}
+function clearPicked() {
+  pickedFile = null;
+  const v = $('vid_preview'); v.removeAttribute('src'); v.load();
+  $('vid_picked').style.display = 'none';
+  $('up_prog_wrap').style.display = 'none';
+}
+
+// ── record ──
+async function startCamera() {
+  try {
+    recStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    $('rec_live').srcObject = recStream; $('rec_live').play();
+    $('rec_panel').style.display = 'block';
+  } catch (e) { toast('Camera or microphone blocked: ' + e.message, 'error'); }
+}
+function startRec() {
+  recChunks = [];
+  const mime = ['video/webm;codecs=vp9,opus', 'video/webm', 'video/mp4'].find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m));
+  recorder = new MediaRecorder(recStream, mime ? { mimeType: mime } : undefined);
+  recorder.ondataavailable = e => { if (e.data.size) recChunks.push(e.data); };
+  recorder.onstop = () => {
+    const type = (recorder.mimeType || 'video/webm').split(';')[0];
+    onFilePicked(new File(recChunks, `recording-${Date.now()}.${type.includes('mp4') ? 'mp4' : 'webm'}`, { type }));
+    stopCamera();
+  };
+  recorder.start(1000);
+  recStart = Date.now();
+  $('rec_start').style.display = 'none'; $('rec_stop').style.display = ''; $('rec_time').style.display = '';
+  recTimer = setInterval(() => { $('rec_time').textContent = fmtTime(Date.now() - recStart); }, 500);
+}
+function stopRec() { if (recorder?.state === 'recording') recorder.stop(); }
+function stopCamera() {
+  clearInterval(recTimer);
+  recStream?.getTracks().forEach(t => t.stop()); recStream = null;
+  $('rec_panel').style.display = 'none';
+  $('rec_start').style.display = ''; $('rec_stop').style.display = 'none'; $('rec_time').style.display = 'none';
+}
+
+// ── upload ──
 async function doRequestUploadUrl() {
-  const scenario_id = parseInt(document.getElementById('vid_scenario_id').value);
+  const scenario_id = parseInt($('vid_scenario_id').value);
+  if (!scenario_id) { toast('Enter a scenario ID', 'error'); return null; }
   const res = await api('POST', '/teachers/video/upload-url', { scenario_id }, token);
   showResponse('uploadUrlResp', res.data, res.ok);
-  if (res.ok) toast('Upload URL received');
+  if (!res.ok) { toast(res.data.error ?? 'Failed', 'error'); return null; }
+  toast('Upload URL received');
+  return res.data;
+}
+
+async function doUpload() {
+  if (!pickedFile) { toast('Choose or record a video first', 'error'); return; }
+  const sign = await doRequestUploadUrl();
+  if (!sign) return;
+  const bar = $('up_prog'), st = $('up_status');
+  $('up_prog_wrap').style.display = 'block'; bar.style.width = '0';
+  $('btn_upload').disabled = true; $('btn_cancel_up').style.display = '';
+  st.textContent = 'Uploading…';
+  uploadCtl = cloudinaryUpload(pickedFile, sign, pct => { bar.style.width = pct + '%'; st.textContent = `Uploading… ${pct}%`; });
+  try {
+    const r = await uploadCtl.promise;
+    const url = r.secure_url ?? r.url;
+    $('confirm_video_url').value = url;
+    st.textContent = 'Upload complete';
+    toast('Video uploaded');
+    if ($('auto_confirm').checked) await doConfirmUpload();
+  } catch (e) {
+    st.textContent = e.message; toast(e.message, 'error');
+  } finally {
+    $('btn_upload').disabled = false; $('btn_cancel_up').style.display = 'none'; uploadCtl = null;
+  }
+}
+function cancelUpload() { uploadCtl?.abort(); }
+
+async function doConfirmUpload() {
+  const body = { scenario_id: parseInt($('vid_scenario_id').value), video_url: $('confirm_video_url').value.trim() };
+  if (!body.scenario_id || !body.video_url) { toast('Scenario ID and video URL are required', 'error'); return; }
+  const res = await api('POST', '/teachers/video/confirm', body, token);
+  showResponse('confirmResp', res.data, res.ok);
+  if (res.ok) { toast('Upload confirmed — review started'); clearPicked(); loadVideos(); }
   else toast(res.data.error ?? 'Failed', 'error');
 }
 
-async function doConfirmUpload() {
-  const body = {
-    scenario_id: parseInt(document.getElementById('confirm_scenario_id').value),
-    video_url: document.getElementById('confirm_video_url').value.trim(),
-  };
-  const res = await api('POST', '/teachers/video/confirm', body, token);
-  showResponse('confirmResp', res.data, res.ok);
-  if (res.ok) toast('Upload confirmed');
-  else toast(res.data.error ?? 'Failed', 'error');
+// ── my videos ──
+async function loadVideos() {
+  clearTimeout(videoPoll);
+  const res = await api('GET', '/teachers/videos', undefined, token);
+  showResponse('videosResp', res.data, res.ok);
+  const list = $('video_list');
+  if (!res.ok) { list.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>${esc(res.data.error ?? 'Unable to load videos')}</p></div>`; return; }
+  const vids = Array.isArray(res.data) ? res.data : [];
+  if (!vids.length) { list.innerHTML = `<div class="empty-state"><div class="icon">🎬</div><p>No teaching videos submitted yet.</p></div>`; return; }
+  list.innerHTML = vids.map(v => `
+    <div class="card" style="margin-bottom:10px;background:var(--surface2)">
+      <div class="flex-between">
+        <strong>Video #${v.id}</strong>
+        ${badge(v.status, STATUS_COLORS)}
+      </div>
+      <div class="hint">Scenario ${esc(v.scenario_id ?? '—')} · Uploaded ${esc((v.uploaded_at ?? '—').toString().slice(0, 16).replace('T', ' '))}</div>
+      ${v.video_url ? `<div class="flex-row mt-16"><button class="btn btn-sm" onclick="playVideo('${esc(v.video_url)}')">▶ Play</button><a class="btn btn-ghost" href="${esc(v.video_url)}" target="_blank" rel="noopener">Open</a></div>` : ''}
+    </div>`).join('');
+  // keep refreshing while the review pipeline is still running
+  if (vids.some(v => v.status === 'uploaded' || v.status === 'ai_reviewed') && $('sec_scenario').style.display !== 'none')
+    videoPoll = setTimeout(loadVideos, 15000);
+}
+function playVideo(url) {
+  $('play_video').src = url;
+  openModal('playModal');
 }
 
 // ── Init ─────────────────────────────────────────────────────
 loadDashboard();
+resumeExamIfAny();
 </script>
 </body>
 </html>

@@ -206,3 +206,24 @@ def override_rating(
     db.session.commit()
 
     return rating
+
+def get_rating(teacher_id):
+    """
+    Return the persisted rating for a teacher.
+
+    If no rating exists yet, compute it first so the API always
+    returns the current rating state.
+    """
+    teacher = Teacher.query.get(teacher_id)
+
+    if not teacher:
+        raise NotFoundError("Teacher not found")
+
+    rating = Rating.query.filter_by(
+        teacher_id=teacher_id
+    ).first()
+
+    if not rating:
+        return recompute_rating(teacher_id)
+
+    return rating

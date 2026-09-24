@@ -6,174 +6,155 @@
   <title>KlassCred — Reviewer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href=" static/style.css">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-
 <div class="app-layout">
 
-  <!-- ── Sidebar ─────────────────────────────────────────── -->
   <nav class="sidebar">
     <div class="sidebar-logo">KlassCred <span>Reviewer Portal</span></div>
 
     <span class="nav-section">Overview</span>
-    <button class="nav-item active" data-page="dashboard" onclick="nav('dashboard')">
-      <span class="nav-icon">🏠</span> Dashboard
-    </button>
+    <button class="nav-item active" data-page="dashboard" onclick="nav('dashboard')"><span class="nav-icon">🏠</span> Dashboard</button>
 
     <span class="nav-section">My Profile</span>
-    <button class="nav-item" data-page="profile" onclick="nav('profile')">
-      <span class="nav-icon">👤</span> Profile
-    </button>
+    <button class="nav-item" data-page="profile" onclick="nav('profile')"><span class="nav-icon">👤</span> Profile</button>
 
     <span class="nav-section">Review Work</span>
-    <button class="nav-item" data-page="assignments" onclick="nav('assignments')">
-      <span class="nav-icon">📋</span> Assignments
-    </button>
-    <button class="nav-item" data-page="reviews" onclick="nav('reviews')">
-      <span class="nav-icon">⭐</span> Submitted Reviews
-    </button>
+    <button class="nav-item" data-page="assignments" onclick="nav('assignments')"><span class="nav-icon">📋</span> Assignments</button>
+    <button class="nav-item" data-page="reviews" onclick="nav('reviews')"><span class="nav-icon">⭐</span> Submitted Reviews</button>
 
     <span class="nav-section">Admin</span>
-    <button class="nav-item" data-page="verify" onclick="nav('verify')">
-      <span class="nav-icon">✅</span> Verify Users
-    </button>
-    <button class="nav-item" data-page="override" onclick="nav('override')">
-      <span class="nav-icon">🔧</span> Rating Override
-    </button>
+    <button class="nav-item" data-page="verify" onclick="nav('verify')"><span class="nav-icon">✅</span> Verify Users</button>
+    <button class="nav-item" data-page="override" onclick="nav('override')"><span class="nav-icon">🔧</span> Rating Override</button>
 
     <div class="sidebar-footer">
-      <button class="nav-item" onclick="logout()" style="color:var(--red)">
-        <span class="nav-icon">🚪</span> Logout
-      </button>
+      <button class="nav-item" onclick="logout()" style="color:var(--red)"><span class="nav-icon">🚪</span> Logout</button>
     </div>
   </nav>
 
-  <!-- ── Main ────────────────────────────────────────────── -->
   <main class="main-content">
 
-    <!-- DASHBOARD ──────────────────────────────────────────── -->
+    <!-- DASHBOARD -->
     <section id="sec_dashboard" class="page-section">
-      <div class="page-header">
-        <h2>Reviewer Dashboard</h2>
-        <p id="dash_greeting">Welcome back</p>
-      </div>
-
+      <div class="page-header"><h2>Reviewer Dashboard</h2><p>Review activity overview</p></div>
       <div class="stat-grid">
-        <div class="stat-card"><div class="label">Open Assignments</div><div class="value" id="ds_open">—</div><div class="sub">assigned + in_progress</div></div>
+        <div class="stat-card"><div class="label">Open Assignments</div><div class="value" id="ds_open">—</div><div class="sub">assigned + in progress</div></div>
         <div class="stat-card"><div class="label">Completed Reviews</div><div class="value" id="ds_completed">—</div></div>
         <div class="stat-card"><div class="label">Total Assigned</div><div class="value" id="ds_total">—</div></div>
+        <div class="stat-card"><div class="label">Pending Verifications</div><div class="value" id="ds_pending">—</div><div class="sub">teachers awaiting check</div></div>
       </div>
-
       <div class="card">
         <div class="card-title">Open Assignments</div>
-        <div id="dash_assignments">
-          <div class="empty-state"><div class="icon">📋</div><p>Loading…</p></div>
-        </div>
+        <div id="dash_assignments"><div class="empty-state"><div class="icon">📋</div><p>Loading…</p></div></div>
       </div>
     </section>
 
-    <!-- PROFILE ────────────────────────────────────────────── -->
+    <!-- PROFILE -->
     <section id="sec_profile" class="page-section" style="display:none">
       <div class="page-header flex-between">
         <div><h2>Profile</h2><p>Your reviewer account</p></div>
+        <button class="btn btn-sm" onclick="loadProfile()">Refresh</button>
       </div>
-      <div class="card">
-        <div id="profile_view">
-          <div class="empty-state"><div class="icon">👤</div><p>Loading…</p></div>
-        </div>
-      </div>
+      <div class="card"><div id="profile_view"><div class="empty-state"><div class="icon">👤</div><p>Loading…</p></div></div></div>
       <div class="card mt-24">
         <div class="card-title">Change Password</div>
         <label>Current password</label><input id="cp_old" type="password">
         <label>New password</label><input id="cp_new" type="password">
-        <button class="btn btn-sm mt-16" onclick="doChangePassword()">Update</button>
+        <button class="btn btn-sm mt-16" onclick="doChangePassword()">Update password</button>
         <div id="cpResp" class="response-box"></div>
       </div>
     </section>
 
-    <!-- ASSIGNMENTS ─────────────────────────────────────────── -->
+    <!-- ASSIGNMENTS -->
     <section id="sec_assignments" class="page-section" style="display:none">
       <div class="page-header flex-between">
-        <div><h2>Review Assignments</h2><p>GET /reviewer/assignments</p></div>
+        <div><h2>Review Assignments</h2><p>Watch the video, compare with the AI review, then score it</p></div>
         <button class="btn btn-sm" onclick="loadAssignments()">Refresh</button>
       </div>
-
+      <div class="flex-row" style="margin-bottom:16px">
+        <select id="as_filter" style="width:auto;min-width:170px" onchange="renderAssignments()">
+          <option value="">All statuses</option>
+          <option value="assigned">Assigned</option>
+          <option value="in_progress">In progress</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Assignment ID</th><th>Video ID</th><th>Status</th><th>Assigned</th><th>Completed</th><th>Action</th></tr></thead>
-            <tbody id="assign_table">
-              <tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:24px">Click Refresh to load.</td></tr>
-            </tbody>
+            <thead><tr><th>ID</th><th>Video</th><th>Status</th><th>Assigned</th><th>Completed</th><th>Action</th></tr></thead>
+            <tbody id="assign_table"><tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:24px">Loading…</td></tr></tbody>
           </table>
         </div>
         <div id="assignResp" class="response-box"></div>
       </div>
     </section>
 
-    <!-- REVIEWS ─────────────────────────────────────────────── -->
+    <!-- REVIEWS -->
     <section id="sec_reviews" class="page-section" style="display:none">
-      <div class="page-header">
-        <h2>Submitted Reviews</h2>
-        <p>Reviews you have submitted this session (responses logged below)</p>
+      <div class="page-header flex-between">
+        <div><h2>Submitted Reviews</h2><p>Reviews you have completed</p></div>
+        <button class="btn btn-sm" onclick="loadReviewHistory()">Refresh</button>
       </div>
-
-      <div class="card">
-        <div class="card-title">Session Log</div>
-        <div id="reviews_log">
-          <div class="empty-state"><div class="icon">⭐</div><p>Submit a review via the Assignments page — it will appear here.</p></div>
-        </div>
-      </div>
+      <div class="card"><div id="review_history"><div class="empty-state"><div class="icon">⭐</div><p>Loading…</p></div></div></div>
+      <div id="reviewsResp" class="response-box"></div>
     </section>
 
-    <!-- VERIFY ──────────────────────────────────────────────── -->
+    <!-- VERIFY -->
     <section id="sec_verify" class="page-section" style="display:none">
-      <div class="page-header">
-        <h2>Verify Users</h2>
-        <p>POST /verify/:type/:id — triggers Cencori identity check</p>
-      </div>
+      <div class="page-header"><h2>Verify Users</h2><p>Check documents, then verify or reject</p></div>
 
       <div class="card section">
-        <div class="card-title">Verify Teacher</div>
-        <label>Teacher ID</label>
-        <input id="v_teacher_id" type="number" placeholder="e.g. 5">
-        <button class="btn btn-sm mt-16" onclick="doVerify('teacher')">Verify Teacher</button>
-        <div id="vTeacherResp" class="response-box"></div>
-      </div>
-
-      <div class="card section">
-        <div class="card-title">Verify Organization</div>
-        <label>Employer ID</label>
-        <input id="v_org_id" type="number">
-        <button class="btn btn-sm mt-16" onclick="doVerify('organization')">Verify Organization</button>
-        <div id="vOrgResp" class="response-box"></div>
+        <div class="flex-between">
+          <div class="card-title" style="margin:0">Pending queue</div>
+          <div class="flex-row">
+            <select id="vp_type" style="width:auto" onchange="loadPending()">
+              <option value="teacher">Teachers</option>
+              <option value="organization">Organizations</option>
+              <option value="parent">Parents</option>
+            </select>
+            <button class="btn btn-sm" onclick="loadPending()">Refresh</button>
+          </div>
+        </div>
+        <div class="table-wrap mt-16">
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Submitted</th><th>Action</th></tr></thead>
+            <tbody id="pending_table"><tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:24px">Loading…</td></tr></tbody>
+          </table>
+        </div>
+        <div id="pendingResp" class="response-box"></div>
       </div>
 
       <div class="card">
-        <div class="card-title">Verify Parent</div>
-        <label>Employer ID</label>
-        <input id="v_parent_id" type="number">
-        <button class="btn btn-sm mt-16" onclick="doVerify('parent')">Verify Parent</button>
-        <div id="vParentResp" class="response-box"></div>
+        <div class="card-title">Look up by ID</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div><label>Type</label>
+            <select id="v_type"><option value="teacher">Teacher</option><option value="organization">Organization</option><option value="parent">Parent</option></select></div>
+          <div><label>ID</label><input id="v_id" type="number" placeholder="e.g. 5"></div>
+        </div>
+        <div class="flex-row mt-16">
+          <button class="btn btn-ghost" onclick="inspect($('v_type').value, $('v_id').value)">Inspect</button>
+          <button class="btn btn-sm" onclick="doVerify($('v_type').value, $('v_id').value)">Verify</button>
+          <button class="btn btn-danger-sm" onclick="doReject($('v_type').value, $('v_id').value)">Reject</button>
+        </div>
+        <div id="vResp" class="response-box"></div>
       </div>
     </section>
 
-    <!-- RATING OVERRIDE ─────────────────────────────────────── -->
+    <!-- OVERRIDE -->
     <section id="sec_override" class="page-section" style="display:none">
-      <div class="page-header">
-        <h2>Rating Override</h2>
-        <p>POST /reviewer/ratings/:teacher_id/override</p>
-      </div>
-
+      <div class="page-header"><h2>Rating Override</h2><p>Manually set a teacher's composite rating</p></div>
       <div class="card">
         <label>Teacher ID</label>
-        <input id="ov_teacher_id" type="number">
-        <label>Composite rating (0–100)</label>
+        <div class="input-row"><input id="ov_teacher_id" type="number"><button class="btn btn-sm" onclick="loadCurrentRating()">Load current rating</button></div>
+        <div id="ov_current" class="mt-16"></div>
+        <label>New composite rating (0–100)</label>
         <input id="ov_composite" type="number" min="0" max="100" step="0.1">
         <label>Reason</label>
         <textarea id="ov_reason" placeholder="Reason for manual override…"></textarea>
-        <button class="btn btn-sm mt-16" onclick="doOverride()">Apply Override</button>
+        <button class="btn btn-sm mt-16" onclick="doOverride()">Apply override</button>
         <div id="ovResp" class="response-box"></div>
       </div>
     </section>
@@ -181,221 +162,319 @@
   </main>
 </div>
 
-<!-- ── Submit Human Review Modal ──────────────────────────── -->
+<!-- Review modal -->
 <div class="modal-overlay" id="reviewModal">
-  <div class="modal">
-    <div class="modal-header">
-      <h3>Submit Review</h3>
-      <button class="modal-close" onclick="closeModal('reviewModal')">✕</button>
-    </div>
+  <div class="modal wide">
+    <div class="modal-header"><h3>Review video</h3><button class="modal-close" onclick="closeReview()">✕</button></div>
     <input type="hidden" id="rv_assignment_id">
-    <p style="color:var(--text-dim);font-size:13px;margin-bottom:12px">
-      Assignment #<strong id="rv_label"></strong>
-    </p>
+    <div class="flex-between">
+      <p>Assignment <strong id="rv_label"></strong> <span id="rv_status"></span></p>
+      <button class="btn btn-sm" id="rv_start_btn" onclick="startAssignment($('rv_assignment_id').value, true)">Start review</button>
+    </div>
+
+    <div id="rv_scenario" class="hint" style="line-height:1.6"></div>
+    <video id="rv_video" class="preview" controls playsinline style="display:none"></video>
+    <div id="rv_video_note" class="hint"></div>
+    <a id="rv_open" class="btn btn-ghost" target="_blank" rel="noopener" style="display:none;margin-top:8px">Open video in new tab</a>
+
+    <div class="card mt-16" style="background:var(--surface2)">
+      <div class="card-title">AI review</div>
+      <div id="rv_ai"><p class="hint">Loading…</p></div>
+    </div>
+
     <label>Score (0–100)</label>
     <input id="rv_score" type="number" min="0" max="100" step="0.1" placeholder="e.g. 78.5">
     <label>Notes</label>
     <textarea id="rv_notes" placeholder="Reviewer notes…"></textarea>
     <label>Flag this video?</label>
-    <select id="rv_flagged" onchange="toggleFlagReason()">
-      <option value="false">No</option>
-      <option value="true">Yes — flag</option>
-    </select>
+    <select id="rv_flagged" onchange="toggleFlagReason()"><option value="false">No</option><option value="true">Yes — flag</option></select>
     <div id="rv_flag_reason_wrap" style="display:none">
       <label>Flag reason</label>
       <textarea id="rv_flag_reason" placeholder="Why is this being flagged?"></textarea>
     </div>
-    <button class="btn btn-primary" onclick="doSubmitReview()">Submit Review</button>
+    <button class="btn btn-primary" onclick="doSubmitReview()">Submit review</button>
     <div id="reviewResp" class="response-box"></div>
+  </div>
+</div>
+
+<!-- Inspect modal -->
+<div class="modal-overlay" id="inspectModal">
+  <div class="modal wide">
+    <div class="modal-header"><h3 id="in_title">Inspect</h3><button class="modal-close" onclick="closeModal('inspectModal')">✕</button></div>
+    <div id="in_body"></div>
+    <div class="flex-row mt-16">
+      <button class="btn btn-sm" onclick="doVerify(inspecting.type, inspecting.id)">Verify</button>
+      <button class="btn btn-danger-sm" onclick="doReject(inspecting.type, inspecting.id)">Reject</button>
+    </div>
+    <div id="inspectResp" class="response-box"></div>
   </div>
 </div>
 
 <div id="toast"></div>
 
-<script src=" static/common.js"></script>
+<script src="/static/common.js"></script>
 <script>
 const token = session.required();
-const reviewLog = [];
 
 // ── Navigation ───────────────────────────────────────────────
 function nav(page) {
   document.querySelectorAll('.page-section').forEach(s => s.style.display = 'none');
-  document.getElementById(`sec_${page}`).style.display = 'block';
+  $(`sec_${page}`).style.display = 'block';
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.page === page));
   if (page === 'dashboard')   loadDashboard();
   if (page === 'profile')     loadProfile();
   if (page === 'assignments') loadAssignments();
-  if (page === 'reviews')     renderReviewLog();
+  if (page === 'reviews')     loadReviewHistory();
+  if (page === 'verify')      loadPending();
 }
+
+const errMsg = (res, fallback) => esc(res.data?.error ?? fallback);
+const rowMsg = (cols, msg) => `<tr><td colspan="${cols}" style="text-align:center;color:var(--text-dim);padding:24px">${msg}</td></tr>`;
 
 // ── Dashboard ────────────────────────────────────────────────
 async function loadDashboard() {
-  const res = await api('GET', '/reviewer/assignments', undefined, token);
-  if (!res.ok) return;
-  const all = Array.isArray(res.data) ? res.data : [];
-  const open = all.filter(a => a.status === 'assigned' || a.status === 'in_progress');
-  const done = all.filter(a => a.status === 'completed');
-
-  document.getElementById('ds_open').textContent = open.length;
-  document.getElementById('ds_completed').textContent = done.length;
-  document.getElementById('ds_total').textContent = all.length;
-
-  if (!open.length) {
-    document.getElementById('dash_assignments').innerHTML =
-      `<div class="empty-state"><div class="icon">✅</div><p>No open assignments.</p></div>`;
+  const [res, pend] = await Promise.all([
+    api('GET', '/reviewer/assignments', undefined, token),
+    api('GET', '/verify/pending/teacher', undefined, token),
+  ]);
+  if (pend.ok && Array.isArray(pend.data)) $('ds_pending').textContent = pend.data.length;
+  if (!res.ok) {
+    $('dash_assignments').innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>${errMsg(res, 'Could not load assignments')}</p></div>`;
     return;
   }
-
-  document.getElementById('dash_assignments').innerHTML = `
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>ID</th><th>Video ID</th><th>Status</th><th>Assigned</th><th></th></tr></thead>
-        <tbody>${open.map(a => `
-          <tr>
-            <td>#${a.id}</td>
-            <td>${a.video_id}</td>
-            <td>${badge(a.status, STATUS_COLORS)}</td>
-            <td>${a.assigned_at?.slice(0,10) ?? '—'}</td>
-            <td><button class="btn btn-sm" onclick="openReviewModal(${a.id})">Review</button></td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`;
+  const all = Array.isArray(res.data) ? res.data : [];
+  const open = all.filter(a => a.status === 'assigned' || a.status === 'in_progress');
+  $('ds_open').textContent = open.length;
+  $('ds_completed').textContent = all.filter(a => a.status === 'completed').length;
+  $('ds_total').textContent = all.length;
+  $('dash_assignments').innerHTML = open.length ? `
+    <div class="table-wrap"><table>
+      <thead><tr><th>ID</th><th>Video</th><th>Status</th><th>Assigned</th><th></th></tr></thead>
+      <tbody>${open.map(a => `<tr>
+        <td>#${a.id}</td><td>${esc(a.video_id)}</td><td>${badge(a.status, STATUS_COLORS)}</td>
+        <td>${esc(a.assigned_at?.slice(0, 10) ?? '—')}</td><td>${assignAction(a)}</td></tr>`).join('')}
+      </tbody></table></div>`
+    : `<div class="empty-state"><div class="icon">✅</div><p>No open assignments.</p></div>`;
 }
 
 // ── Profile ──────────────────────────────────────────────────
 async function loadProfile() {
-  // Reviewer profile isn't a separate endpoint — basic info from auth token
-  const view = document.getElementById('profile_view');
-  view.innerHTML = `
+  const res = await api('GET', '/reviewer/profile', undefined, token);
+  let claims = {};
+  try { claims = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); } catch {}
+  const data = res.ok ? res.data : { account_type: 'reviewer', ...(claims.type ? { type: claims.type } : {}) };
+  $('profile_view').innerHTML = `
     <div class="profile-grid">
       <div class="profile-field"><div class="label">Account type</div><div class="val">Reviewer</div></div>
-      <div class="profile-field"><div class="label">Token</div><div class="val" style="font-size:11px;word-break:break-all;color:var(--text-dim)">${token.slice(0,40)}…</div></div>
+      ${data.id !== undefined ? `<div class="profile-field"><div class="label">Reviewer ID</div><div class="val">${esc(data.id)}</div></div>` : ''}
+      ${data.full_name ? `<div class="profile-field"><div class="label">Name</div><div class="val">${esc(data.full_name)}</div></div>` : ''}
+      ${data.email ? `<div class="profile-field"><div class="label">Email</div><div class="val">${esc(data.email)}</div></div>` : ''}
+      ${data.created_at ? `<div class="profile-field"><div class="label">Member since</div><div class="val">${esc(data.created_at.slice(0, 10))}</div></div>` : ''}
+      ${claims.exp ? `<div class="profile-field"><div class="label">Session expires</div><div class="val">${new Date(claims.exp * 1000).toLocaleString()}</div></div>` : ''}
     </div>
-    <p class="hint" style="margin-top:12px">Full reviewer profile endpoint not yet exposed — token carries identity.</p>`;
+    ${res.ok ? '' : `<p class="hint mt-16">${errMsg(res, 'Profile unavailable')} — showing details from your login token.</p>`}`;
 }
 
 async function doChangePassword() {
-  const res = await api('POST', '/auth/change-password', {
-    old_password: document.getElementById('cp_old').value,
-    new_password: document.getElementById('cp_new').value,
-  }, token);
+  const res = await api('POST', '/auth/change-password', { old_password: $('cp_old').value, new_password: $('cp_new').value }, token);
   showResponse('cpResp', res.data, res.ok);
-  if (res.ok) toast('Password changed');
-  else toast(res.data.error ?? 'Failed', 'error');
+  if (res.ok) toast('Password changed'); else toast(res.data.error ?? 'Failed', 'error');
 }
 
 // ── Assignments ──────────────────────────────────────────────
+let assignments = [];
+
+function assignAction(a) {
+  if (a.status === 'assigned')    return `<button class="btn btn-sm" onclick="startAssignment(${a.id})">Start review</button>`;
+  if (a.status === 'in_progress') return `<button class="btn btn-sm" onclick="openReviewModal(${a.id})">Continue review</button>`;
+  if (a.status === 'completed')   return `<div class="flex-row">${badge('done', {done: 'badge-green'})}<button class="btn btn-ghost" onclick="openReviewModal(${a.id}, true)">View</button></div>`;
+  return badge('cancelled', {cancelled: 'badge-red'});
+}
+
 async function loadAssignments() {
   const res = await api('GET', '/reviewer/assignments', undefined, token);
   showResponse('assignResp', res.data, res.ok);
-  const tbody = document.getElementById('assign_table');
-  if (!res.ok) { tbody.innerHTML = `<tr><td colspan="6">Error</td></tr>`; toast(res.data.error,'error'); return; }
-  const list = Array.isArray(res.data) ? res.data : [];
-  if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:24px">No assignments.</td></tr>`;
+  if (!res.ok) { $('assign_table').innerHTML = rowMsg(6, errMsg(res, 'Error loading assignments')); return; }
+  assignments = Array.isArray(res.data) ? res.data : [];
+  renderAssignments();
+}
+
+function renderAssignments() {
+  const f = $('as_filter').value;
+  const list = assignments.filter(a => !f || a.status === f);
+  $('assign_table').innerHTML = list.length ? list.map(a => `<tr>
+    <td>#${a.id}</td><td>${esc(a.video_id)}</td><td>${badge(a.status, STATUS_COLORS)}</td>
+    <td>${esc(a.assigned_at?.slice(0, 10) ?? '—')}</td><td>${esc(a.completed_at?.slice(0, 10) ?? '—')}</td>
+    <td>${assignAction(a)}</td></tr>`).join('') : rowMsg(6, 'No assignments.');
+}
+
+async function startAssignment(id, fromModal) {
+  const res = await api('POST', `/reviewer/assignments/${id}/start`, {}, token);
+  showResponse(fromModal ? 'reviewResp' : 'assignResp', res.data, res.ok);
+  if (res.ok) {
+    toast('Review started');
+    await Promise.all([loadAssignments(), loadDashboard()]);
+    if (fromModal) $('rv_start_btn').style.display = 'none';
+    else openReviewModal(id);
+  } else toast(res.data.error ?? 'Unable to start review', 'error');
+}
+
+function openReviewModal(id, readOnly) {
+  $('rv_assignment_id').value = id;
+  $('rv_label').textContent = '#' + id;
+  ['rv_score', 'rv_notes', 'rv_flag_reason'].forEach(i => $(i).value = '');
+  $('rv_flagged').value = 'false';
+  $('rv_flag_reason_wrap').style.display = 'none';
+  $('reviewResp').className = 'response-box';
+  const a = assignments.find(x => String(x.id) === String(id));
+  $('rv_status').innerHTML = a ? badge(a.status, STATUS_COLORS) : '';
+  $('rv_start_btn').style.display = a && a.status === 'assigned' ? '' : 'none';
+  $('rv_video').style.display = 'none'; $('rv_open').style.display = 'none';
+  $('rv_video_note').textContent = ''; $('rv_scenario').textContent = '';
+  $('rv_ai').innerHTML = '<p class="hint">Loading…</p>';
+  openModal('reviewModal');
+  loadReviewDetail(id);
+}
+
+function closeReview() { $('rv_video').pause(); closeModal('reviewModal'); }
+
+async function loadReviewDetail(id) {
+  const res = await api('GET', `/reviewer/assignments/${id}`, undefined, token);
+  if (!res.ok) {
+    $('rv_video_note').textContent = 'Could not load the video for this assignment.';
+    $('rv_ai').innerHTML = `<p class="hint">${errMsg(res, 'Details unavailable')}</p>`;
     return;
   }
-  tbody.innerHTML = list.map(a => `
-    <tr>
-      <td>#${a.id}</td>
-      <td>${a.video_id}</td>
-      <td>${badge(a.status, STATUS_COLORS)}</td>
-      <td>${a.assigned_at?.slice(0,10) ?? '—'}</td>
-      <td>${a.completed_at?.slice(0,10) ?? '—'}</td>
-      <td>${(a.status === 'assigned' || a.status === 'in_progress')
-        ? `<button class="btn btn-sm" onclick="openReviewModal(${a.id})">Review</button>`
-        : badge(a.status === 'completed' ? 'done' : 'cancelled', {'done':'badge-green','cancelled':'badge-red'})}</td>
-    </tr>`).join('');
+  const d = res.data;
+  const url = d.video_url ?? d.video?.video_url ?? d.video?.url;
+  const scenario = d.scenario?.prompt_text ?? d.scenario_text ?? d.video?.scenario?.prompt_text;
+  if (scenario) $('rv_scenario').innerHTML = `<strong>Scenario:</strong> ${esc(scenario)}`;
+  if (url) {
+    $('rv_video').src = url; $('rv_video').style.display = 'block';
+    $('rv_open').href = url; $('rv_open').style.display = 'inline-flex';
+  } else $('rv_video_note').textContent = 'No video URL on this assignment.';
+
+  const ai = d.ai_review ?? d.video?.ai_review ?? d.ai ?? null;
+  if (!ai) { $('rv_ai').innerHTML = '<p class="hint">No AI review yet.</p>'; return; }
+  const { score, ai_score, ...rest } = ai;
+  const sc = score ?? ai_score;
+  $('rv_ai').innerHTML = `${sc != null ? `<div style="font-size:28px;font-weight:800">${esc(sc)}<span class="hint"> / 100</span></div>` : ''}${kv(rest)}`;
+  if (sc != null && !$('rv_score').value) $('rv_score').placeholder = `AI scored ${sc}`;
 }
 
-function openReviewModal(assignmentId) {
-  document.getElementById('rv_assignment_id').value = assignmentId;
-  document.getElementById('rv_label').textContent = '#' + assignmentId;
-  document.getElementById('rv_score').value = '';
-  document.getElementById('rv_notes').value = '';
-  document.getElementById('rv_flagged').value = 'false';
-  document.getElementById('rv_flag_reason').value = '';
-  document.getElementById('rv_flag_reason_wrap').style.display = 'none';
-  document.getElementById('reviewResp').className = 'response-box';
-  openModal('reviewModal');
-}
-
-function toggleFlagReason() {
-  const flagged = document.getElementById('rv_flagged').value === 'true';
-  document.getElementById('rv_flag_reason_wrap').style.display = flagged ? 'block' : 'none';
-}
+function toggleFlagReason() { $('rv_flag_reason_wrap').style.display = $('rv_flagged').value === 'true' ? 'block' : 'none'; }
 
 async function doSubmitReview() {
-  const assignmentId = document.getElementById('rv_assignment_id').value;
-  const flagged = document.getElementById('rv_flagged').value === 'true';
-  const body = {
-    score: parseFloat(document.getElementById('rv_score').value),
-    notes: document.getElementById('rv_notes').value.trim() || null,
-    flagged,
-    flag_reason: flagged ? (document.getElementById('rv_flag_reason').value.trim() || null) : null,
-  };
-  const res = await api('POST', `/reviewer/assignments/${assignmentId}/review`, body, token);
+  const id = $('rv_assignment_id').value;
+  const flagged = $('rv_flagged').value === 'true';
+  const score = parseFloat($('rv_score').value);
+  if (isNaN(score) || score < 0 || score > 100) { toast('Score must be between 0 and 100', 'error'); return; }
+  if (flagged && !$('rv_flag_reason').value.trim()) { toast('Add a reason for the flag', 'error'); return; }
+  const res = await api('POST', `/reviewer/assignments/${id}/review`, {
+    score, notes: $('rv_notes').value.trim() || null, flagged,
+    flag_reason: flagged ? $('rv_flag_reason').value.trim() : null,
+  }, token);
   showResponse('reviewResp', res.data, res.ok);
-  if (res.ok) {
-    toast('Review submitted');
-    // Log it
-    reviewLog.unshift({ assignmentId, ...body, response: res.data, at: new Date().toISOString() });
-    closeModal('reviewModal');
-    loadAssignments();
-    loadDashboard();
-  } else {
-    toast(res.data.error ?? 'Submit failed', 'error');
-  }
+  if (res.ok) { closeReview(); toast('Review submitted'); loadAssignments(); loadDashboard(); loadReviewHistory(); }
+  else toast(res.data.error ?? 'Submit failed', 'error');
 }
 
-function renderReviewLog() {
-  const el = document.getElementById('reviews_log');
-  if (!reviewLog.length) {
-    el.innerHTML = `<div class="empty-state"><div class="icon">⭐</div><p>No reviews submitted yet this session.</p></div>`;
-    return;
-  }
-  el.innerHTML = reviewLog.map(r => `
+// ── Submitted reviews ────────────────────────────────────────
+async function loadReviewHistory() {
+  const res = await api('GET', '/reviewer/reviews', undefined, token);
+  showResponse('reviewsResp', res.data, res.ok);
+  const box = $('review_history');
+  if (!res.ok) { box.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>${errMsg(res, 'Failed to load reviews')}</p></div>`; return; }
+  const list = Array.isArray(res.data) ? res.data : [];
+  if (!list.length) { box.innerHTML = `<div class="empty-state"><div class="icon">⭐</div><p>No completed reviews yet.</p></div>`; return; }
+  box.innerHTML = list.map(x => `
     <div class="card" style="margin-bottom:12px;background:var(--surface2)">
       <div class="flex-between">
         <div>
-          <strong>Assignment #${r.assignmentId}</strong>
-          <span class="badge badge-blue" style="margin-left:8px">Score: ${r.score}</span>
-          ${r.flagged ? `<span class="badge badge-red" style="margin-left:4px">Flagged</span>` : ''}
+          <strong>Video #${esc(x.video_id)}</strong>
+          <span class="badge badge-blue" style="margin-left:8px">${esc(x.score)}/100</span>
+          ${x.flagged ? '<span class="badge badge-red" style="margin-left:4px">Flagged</span>' : ''}
         </div>
-        <span style="font-size:11px;color:var(--text-dim)">${r.at.slice(0,19).replace('T',' ')}</span>
+        <span class="hint" style="margin:0">${esc((x.created_at ?? x.reviewed_at ?? '').slice(0, 16).replace('T', ' '))}</span>
       </div>
-      ${r.notes ? `<p style="margin-top:8px;font-size:13px;color:var(--text-dim)">${r.notes}</p>` : ''}
-      ${r.flag_reason ? `<p style="margin-top:6px;font-size:12px;color:var(--red)">Flag reason: ${r.flag_reason}</p>` : ''}
+      ${x.notes ? `<p style="margin-top:8px;font-size:13px;color:var(--text-dim)">${esc(x.notes)}</p>` : ''}
+      ${x.flag_reason ? `<p style="margin-top:6px;font-size:12px;color:var(--red)">Flag reason: ${esc(x.flag_reason)}</p>` : ''}
     </div>`).join('');
 }
 
 // ── Verify ───────────────────────────────────────────────────
-async function doVerify(type) {
-  let id, respId;
-  if (type === 'teacher')      { id = document.getElementById('v_teacher_id').value;  respId = 'vTeacherResp'; }
-  else if (type === 'organization') { id = document.getElementById('v_org_id').value; respId = 'vOrgResp'; }
-  else                         { id = document.getElementById('v_parent_id').value;   respId = 'vParentResp'; }
+let inspecting = { type: 'teacher', id: null };
 
+async function loadPending() {
+  const type = $('vp_type').value;
+  const res = await api('GET', `/verify/pending/${type}`, undefined, token);
+  showResponse('pendingResp', res.data, res.ok);
+  const tb = $('pending_table');
+  if (!res.ok) { tb.innerHTML = rowMsg(4, errMsg(res, 'Could not load the queue')); return; }
+  const list = Array.isArray(res.data) ? res.data : [];
+  if (!list.length) { tb.innerHTML = rowMsg(4, 'Nothing waiting for verification.'); return; }
+  tb.innerHTML = list.map(r => `<tr>
+    <td>#${r.id}</td>
+    <td>${esc(r.full_name ?? r.org_name ?? r.name ?? r.email ?? '—')}</td>
+    <td>${esc(r.created_at?.slice(0, 10) ?? '—')}</td>
+    <td><div class="flex-row">
+      <button class="btn btn-ghost" onclick="inspect('${type}', ${r.id})">Inspect</button>
+      <button class="btn btn-sm" onclick="doVerify('${type}', ${r.id})">Verify</button>
+      <button class="btn btn-danger-sm" onclick="doReject('${type}', ${r.id})">Reject</button>
+    </div></td></tr>`).join('');
+}
+
+async function inspect(type, id) {
   if (!id) { toast('Enter an ID', 'error'); return; }
-  const path = type === 'teacher' ? `/verify/teacher/${id}`
-             : type === 'organization' ? `/verify/organization/${id}`
-             : `/verify/parent/${id}`;
-  const res = await api('POST', path, undefined, token);
-  showResponse(respId, res.data, res.ok);
-  if (res.ok) toast(`${type} verified ✓`);
+  inspecting = { type, id };
+  $('in_title').textContent = `${type[0].toUpperCase() + type.slice(1)} #${id}`;
+  $('in_body').innerHTML = '<p class="hint">Loading…</p>';
+  $('inspectResp').className = 'response-box';
+  openModal('inspectModal');
+  const res = await api('GET', `/verify/${type}/${id}`, undefined, token);
+  $('in_body').innerHTML = res.ok
+    ? kv(res.data)
+    : `<div class="empty-state"><p>${errMsg(res, 'Could not load details')}</p></div>`;
+}
+
+async function doVerify(type, id) {
+  if (!id) { toast('Enter an ID', 'error'); return; }
+  const res = await api('POST', `/verify/${type}/${id}`, undefined, token);
+  showResponse('vResp', res.data, res.ok); showResponse('inspectResp', res.data, res.ok);
+  if (res.ok) { toast(`${type} verified ✓`); loadPending(); loadDashboard(); }
   else toast(res.data.error ?? 'Verification failed', 'error');
 }
 
+async function doReject(type, id) {
+  if (!id) { toast('Enter an ID', 'error'); return; }
+  const reason = prompt('Reason for rejecting this ' + type + '?');
+  if (reason === null) return;
+  if (!reason.trim()) { toast('A reason is required', 'error'); return; }
+  const res = await api('POST', `/verify/${type}/${id}/reject`, { reason: reason.trim() }, token);
+  showResponse('vResp', res.data, res.ok); showResponse('inspectResp', res.data, res.ok);
+  if (res.ok) { toast(`${type} rejected`); loadPending(); }
+  else toast(res.data.error ?? 'Rejection failed', 'error');
+}
+
 // ── Override ─────────────────────────────────────────────────
+async function loadCurrentRating() {
+  const id = parseInt($('ov_teacher_id').value);
+  if (!id) { toast('Enter a teacher ID', 'error'); return; }
+  const res = await api('GET', `/reviewer/ratings/${id}`, undefined, token);
+  $('ov_current').innerHTML = res.ok
+    ? `<div class="card" style="background:var(--surface2)"><div class="card-title">Current rating</div>${kv(res.data)}</div>`
+    : `<p class="hint">${errMsg(res, 'Could not load rating')}</p>`;
+  if (res.ok && res.data.composite != null) $('ov_composite').value = res.data.composite;
+}
+
 async function doOverride() {
-  const teacher_id = parseInt(document.getElementById('ov_teacher_id').value);
-  const composite  = parseFloat(document.getElementById('ov_composite').value);
-  const reason     = document.getElementById('ov_reason').value.trim();
-  if (!teacher_id || isNaN(composite) || !reason) { toast('All fields required', 'error'); return; }
+  const teacher_id = parseInt($('ov_teacher_id').value);
+  const composite = parseFloat($('ov_composite').value);
+  const reason = $('ov_reason').value.trim();
+  if (!teacher_id || isNaN(composite) || composite < 0 || composite > 100 || !reason) { toast('Teacher, a 0–100 rating and a reason are required', 'error'); return; }
   const res = await api('POST', `/reviewer/ratings/${teacher_id}/override`, { composite, reason }, token);
   showResponse('ovResp', res.data, res.ok);
-  if (res.ok) toast(`Rating overridden → ${composite}`);
+  if (res.ok) { toast(`Rating overridden → ${composite}`); loadCurrentRating(); }
   else toast(res.data.error ?? 'Override failed', 'error');
 }
 
