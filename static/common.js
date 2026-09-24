@@ -146,35 +146,63 @@ function kv(obj) {
   }).join('');
 }
 
-// Direct-to-Cloudinary upload using the signed payload returned by the backend.
-// Accepts { upload_url | url | signed_url } plus either nested { params | fields } or top-level signed keys.
-// Returns { promise, abort } — promise resolves with Cloudinary's JSON (secure_url, …).
-function cloudinaryUpload(file, sign, onProgress) {
-  const xhr = new XMLHttpRequest();
-  const promise = new Promise((resolve, reject) => {
-    const url = sign.upload_url ?? sign.url ?? sign.signed_url;
-    if (!url) return reject(new Error('Backend response has no upload URL'));
-    const fd = new FormData();
-    const nested = sign.params ?? sign.fields ?? sign.upload_params ?? {};
-    const flat = {};
-    ['api_key','timestamp','signature','folder','public_id','upload_preset','eager','resource_type',
-     'allowed_formats','context','tags','transformation','eager_async','overwrite']
-      .forEach(k => { if (sign[k] !== undefined && sign[k] !== null) flat[k] = sign[k]; });
-    Object.entries({ ...flat, ...nested }).forEach(([k, v]) => fd.append(k, v));
-    fd.append('file', file);
-    xhr.open('POST', url);
-    xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress?.(Math.round(e.loaded / e.total * 100)); };
-    xhr.onload = () => {
-      let d = {}; try { d = JSON.parse(xhr.responseText); } catch {}
-      if (xhr.status >= 200 && xhr.status < 300) resolve(d);
-      else reject(new Error(d.error?.message ?? `Upload failed (${xhr.status})`));
+// Direct-to-Byteship browser upload.
+// Backend returns a short-lived upload_token.
+function byteshipUpload(file, uploadData, onProgress) {
+  const token = uploadData?.upload_token;
+
+  if (!token) {
+    return {
+      promise: Promise.reject(
+        new Error('Backend response has no Byteship upload token')
+      ),
+      abort: () => {}
     };
-    xhr.onerror = () => reject(new Error('Network error during upload'));
-    xhr.onabort = () => reject(new Error('Upload cancelled'));
-    xhr.send(fd);
-  });
-  return { promise, abort: () => xhr.abort() };
+  }
+
+  const controller = new AbortController();
+
+  const promise = (async () => {
+    if (!window.ByteshipClient) {
+      throw new Error('Byteship SDK is not loaded');
+    }
+
+    const byteship = new ByteshipClient({
+      uploadToken: token
+    });
+
+    const uploaded = await byteship.upload(file, {
+      path: `${uploadData.folder}/${file.name}`,
+      visibility: 'public',
+      method: 'auto',
+      signal: controller.signal,
+      onProgress: progress => {
+        if (progress?.percent != null) {
+          onProgress?.(Math.round(progress.percent));
+        } else if (
+          progress?.loaded != null &&
+          progress?.total
+        ) {
+          onProgress?.(
+            Math.round((progress.loaded / progress.total) * 100)
+          );
+        }
+      }
+    });
+
+    if (!uploaded?.url) {
+      throw new Error('Byteship upload completed without a file URL');
+    }
+
+    return uploaded;
+  })();
+
+  return {
+    promise,
+    abort: () => controller.abort()
+  };
 }
+
 
 // Pick a file → ask backend for signed URL → upload → onDone(url)
 function pickAndUpload({ endpoint, kind, accept = 'image/*,application/pdf', onProgress, onDone, token }) {
@@ -185,7 +213,7 @@ function pickAndUpload({ endpoint, kind, accept = 'image/*,application/pdf', onP
     const s = await api('POST', endpoint, { kind, filename: f.name, content_type: f.type }, token);
     if (!s.ok) { toast(s.data.error ?? 'Could not get upload URL', 'error'); return; }
     try {
-      const r = await cloudinaryUpload(f, s.data, onProgress).promise;
+      const r = await byteshipUpload(f, s.data, onProgress).promise;
       onDone(r.secure_url ?? r.url);
       toast('File uploaded');
     } catch (e) { toast(e.message, 'error'); }
