@@ -31,8 +31,7 @@ _client = genai.Client(
     api_key=_API_KEY,
     http_options=types.HttpOptions(timeout=15000),  # 15s, in ms
 ) if _API_KEY else None
-_MODEL = "gemini-2.5-flash"
-
+_MODEL = "gemini-3.6-flash"
 
 def _require_client():
     if _client is None:
@@ -71,8 +70,9 @@ Now generate the scenario."""
             model=_MODEL,
             contents=prompt,
             config=types.GenerateContentConfig(
-                temperature=0.9,
-                max_output_tokens=200,
+               temperature=0.9,
+               max_output_tokens=1024,
+               thinking_config=types.ThinkingConfig(thinking_level="LOW"),
             ),
         )
     except APIError as e:
@@ -141,9 +141,10 @@ def review_video(prompt_text, video_url):
                     _REVIEW_INSTRUCTIONS.format(prompt_text=prompt_text),
                 ],
                 config=types.GenerateContentConfig(
-                    temperature=0.2,  # low temperature - this is an assessment, not creative writing
+                    temperature=0.2,
                     response_mime_type="application/json",
                     response_json_schema=_REVIEW_JSON_SCHEMA,
+                    thinking_config=types.ThinkingConfig(thinking_level="LOW"),
                 ),
             )
         except APIError as e:
