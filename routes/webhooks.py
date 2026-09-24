@@ -12,26 +12,26 @@ from errors.exceptions import BadRequestError
 bp = Blueprint("webhooks", __name__, url_prefix="/webhooks")
 
 
-@bp.post("/cloudinary")
-def cloudinary_webhook():
-    # Cloudinary sends JSON but we need the raw body string for
+@bp.post("/byteship")
+def byteship_webhook():
+    # Byteship sends JSON but we need the raw body string for
     # signature verification before we parse anything.
     body = request.get_data(as_text=True)
 
-    timestamp = request.headers.get("X-Cld-Timestamp")
-    signature = request.headers.get("X-Cld-Signature")
+    timestamp = request.headers.get("Byteship-Webhook-Timestamp")
+    signature = request.headers.get("Byteship-Webhook-Signature")
 
     if not timestamp or not signature:
-        return jsonify({"error": "Missing Cloudinary signature headers"}), 400
+        return jsonify({"error": "Missing Byteship signature headers"}), 400
 
     payload = request.get_json(silent=True) or {}
 
-    # Only process completed uploads; ignore other notification types
-    # (e.g. eager transformations, moderation results).
-    if payload.get("notification_type") != "upload":
+    # Only process completed uploads; ignore other event types
+    # (file.deleted, image.metadata.created, image.transform.*).
+    if payload.get("type") != "file.uploaded":
         return jsonify({"status": "ignored"}), 200
 
-    submission = video_service.handle_cloudinary_webhook(
+    submission = video_service.handle_byteship_webhook(
         body=body,
         timestamp=timestamp,
         signature=signature,

@@ -1,0 +1,412 @@
+diff --git a/api/byteship.py b/api/byteship.py
+new file mode 100644
+index 0000000..2f392b6
+--- /dev/null
++++ b/api/byteship.py
+@@ -0,0 +1,112 @@
++# api/byteship.py
++#
++# Byteship adapter for video upload and webhook handling.
++# Client is initialized via init_byteship(app) in extensions.py.
++
++import hashlib
++import hmac
++import time
++
++from byteship import ByteshipClient, Visibility
++
++_client = None
++_webhook_secret = None
++
++
++def init_client(api_key, webhook_secret=None):
++    global _client, _webhook_secret
++    _client = ByteshipClient(api_key=api_key)
++    _webhook_secret = webhook_secret
++
++
++def get_client():
++    if _client is None:
++        raise RuntimeError("Byteship client not initialized — call init_client() first")
++    return _client
++
++
++def generate_upload_url(scenario_id, teacher_id):
++    """
++    Mint a short-lived Byteship upload token for direct client-side upload.
++
++    Byteship's create_upload_token() has no free-form context/metadata
++    field (that only exists on server-side upload() calls, which we don't
++    use here). So teacher_id/scenario_id are encoded into the folder path
++    itself, and parsed back out of the file's `path` when the webhook
++    fires (see parse_context_from_path below).
++
++    The client uses the returned token directly against Byteship's own
++    upload endpoints — our server never touches the file bytes.
++    """
++    client = get_client()
++
++    folder = f"teachers/{teacher_id}/scenarios/{scenario_id}"
++
++    response = client.create_upload_token(
++        folder=folder,
++        visibility=Visibility.PUBLIC,
++        max_upload_bytes=200 * 1024 * 1024,  # matches Gemini review's 200MB limit
++        expires_in_seconds=15 * 60,
++    )
++
++    return {
++        "upload_token": response.upload_token.token,
++        "expires_at": response.upload_token.expires_at.isoformat(),
++        "folder": folder,
++        "scenario_id": scenario_id,
++    }
++
++
++def parse_context_from_path(path):
++    """
++    Recover teacher_id/scenario_id from a file path shaped like
++    'teachers/<teacher_id>/scenarios/<scenario_id>/<filename>'.
++
++    Returns (teacher_id, scenario_id) as ints, or (None, None) if the
++    path doesn't match the expected shape.
++    """
++    parts = path.strip("/").split("/")
++
++    if len(parts) < 4 or parts[0] != "teachers" or parts[2] != "scenarios":
++        return None, None
++
++    try:
++        return int(parts[1]), int(parts[3])
++    except (ValueError, IndexError):
++        return None, None
++
++
++def resolve_file_url(path):
++    """
++    The file.uploaded webhook payload doesn't guarantee a resolved URL —
++    fetch the file record to get one.
++    """
++    client = get_client()
++    result = client.get_file(path)
++    return result.file.url
++
++
++def verify_webhook_signature(body, timestamp, signature, max_age_seconds=7200):
++    """
++    Verify that an incoming webhook notification genuinely came from
++    Byteship. Byteship signs `{timestamp}.{body}` with HMAC-SHA256 and
++    sends it as `v1=<hex digest>` in the Byteship-Webhook-Signature header.
++    """
++    if _webhook_secret is None:
++        return False
++
++    try:
++        ts = int(timestamp)
++    except (TypeError, ValueError):
++        return False
++
++    if abs(time.time() - ts) > max_age_seconds:
++        return False
++
++    expected = hmac.new(
++        _webhook_secret.encode(),
++        f"{timestamp}.{body}".encode(),
++        hashlib.sha256,
++    ).hexdigest()
++
++    return hmac.compare_digest(signature, f"v1={expected}")
+diff --git a/api/cloudinary.py b/api/cloudinary.py
+deleted file mode 100644
+index 14cedc9..0000000
+--- a/api/cloudinary.py
++++ /dev/null
+@@ -1,93 +0,0 @@
+-# api/cloudinary.py
+-#
+-# Cloudinary adapter for video upload and webhook handling.
+-# SDK is initialized via init_cloudinary(app) in extensions.py.
+-
+-import time
+-
+-import cloudinary
+-import cloudinary.utils
+-
+-
+-def generate_upload_url(scenario_id, teacher_id):
+-    """
+-    Build signed upload parameters for direct client-side upload to Cloudinary.
+-
+-    The client POSTs these params (plus the video file) directly to:
+-        https://api.cloudinary.com/v1_1/<cloud_name>/video/upload
+-
+-    Cloudinary never touches your server during the upload itself.
+-    The webhook (handle_cloudinary_webhook) handles completion notification.
+-
+-    Returns:
+-    {
+-        "upload_url": "https://api.cloudinary.com/v1_1/<cloud_name>/video/upload",
+-        "fields": {
+-            "api_key": ...,
+-            "timestamp": ...,
+-            "folder": ...,
+-            "context": ...,
+-            "signature": ...
+-        },
+-        "scenario_id": scenario_id
+-    }
+-    """
+-    cfg = cloudinary.config()
+-
+-    timestamp = int(time.time())
+-
+-    folder = f"verifyteach/teachers/{teacher_id}"
+-
+-    # Context is stored as key=value pairs on the Cloudinary asset.
+-    # Cloudinary echoes these back in the webhook payload.
+-    context = f"teacher_id={teacher_id}|scenario_id={scenario_id}"
+-
+-    params_to_sign = {
+-        "timestamp": timestamp,
+-        "folder": folder,
+-        "context": context,
+-    }
+-
+-    signature = cloudinary.utils.api_sign_request(
+-        params_to_sign,
+-        cfg.api_secret,
+-    )
+-
+-    upload_url = (
+-        f"https://api.cloudinary.com/v1_1/{cfg.cloud_name}/video/upload"
+-    )
+-
+-    return {
+-        "upload_url": upload_url,
+-        "fields": {
+-            "api_key": cfg.api_key,
+-            "timestamp": timestamp,
+-            "folder": folder,
+-            "context": context,
+-            "signature": signature,
+-        },
+-        "scenario_id": scenario_id,
+-    }
+-
+-
+-def verify_webhook_signature(body, timestamp, signature):
+-    """
+-    Verify that an incoming webhook notification genuinely came from Cloudinary.
+-
+-    Args:
+-        body:      Raw request body string (JSON).
+-        timestamp: Value of the X-Cld-Timestamp header.
+-        signature: Value of the X-Cld-Signature header.
+-
+-    Returns:
+-        True if the signature is valid and the request is recent, False otherwise.
+-    """
+-    try:
+-        return cloudinary.utils.verify_notification_signature(
+-            body,
+-            timestamp,
+-            signature,
+-            valid_for=7200,  # reject notifications older than 2 hours
+-        )
+-    except Exception:
+-        return False
+diff --git a/app.py b/app.py
+index 3a39dc8..61145eb 100644
+--- a/app.py
++++ b/app.py
+@@ -1,5 +1,5 @@
+ from flask import Flask,send_from_directory,abort
+-from extensions import db, migrate, init_cloudinary
++from extensions import db, migrate, init_byteship
+ from config import Config
+ import os
+ 
+@@ -11,7 +11,7 @@ def create_app():
+ 
+     db.init_app(app)
+     migrate.init_app(app, db)
+-    init_cloudinary(app)
++    init_byteship(app)
+ 
+     import models
+ 
+diff --git a/config.py b/config.py
+index b80fdae..5847ea6 100644
+--- a/config.py
++++ b/config.py
+@@ -10,6 +10,5 @@ class Config:
+     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "dev-jwt-secret")
+     JWT_EXPIRY = timedelta(days=7)
+ 
+-    CLOUDINARY_CLOUD_NAME = os.environ.get("CLOUDINARY_CLOUD_NAME", "")
+-    CLOUDINARY_API_KEY = os.environ.get("CLOUDINARY_API_KEY", "")
+-    CLOUDINARY_API_SECRET = os.environ.get("CLOUDINARY_API_SECRET", "")
+\ No newline at end of file
++    BYTESHIP_API_KEY = os.environ.get("BYTESHIP_API_KEY", "")
++    BYTESHIP_WEBHOOK_SECRET = os.environ.get("BYTESHIP_WEBHOOK_SECRET", "")
+\ No newline at end of file
+diff --git a/extensions.py b/extensions.py
+index 77d3cc7..2fdaa7f 100644
+--- a/extensions.py
++++ b/extensions.py
+@@ -1,16 +1,16 @@
+ from flask_sqlalchemy import SQLAlchemy
+ from flask_migrate import Migrate
+ from flask_bcrypt import Bcrypt
+-import cloudinary
++
++from api import byteship
+ 
+ db = SQLAlchemy()
+ migrate = Migrate()
+ bcrypt = Bcrypt()
+ 
+ 
+-def init_cloudinary(app):
+-    cloudinary.config(
+-        cloud_name=app.config["CLOUDINARY_CLOUD_NAME"],
+-        api_key=app.config["CLOUDINARY_API_KEY"],
+-        api_secret=app.config["CLOUDINARY_API_SECRET"]
++def init_byteship(app):
++    byteship.init_client(
++        api_key=app.config["BYTESHIP_API_KEY"],
++        webhook_secret=app.config["BYTESHIP_WEBHOOK_SECRET"],
+     )
+\ No newline at end of file
+diff --git a/requirements.txt b/requirements.txt
+index 20173a5..fbdd28d 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -7,7 +7,7 @@ gunicorn
+ marshmallow
+ psycopg2-binary
+ sendgrid
+-cloudinary
++byteship
+ cencori
+ google-genai
+ requests
+diff --git a/routes/webhooks.py b/routes/webhooks.py
+index ec0a225..d78a833 100644
+--- a/routes/webhooks.py
++++ b/routes/webhooks.py
+@@ -12,26 +12,26 @@ from errors.exceptions import BadRequestError
+ bp = Blueprint("webhooks", __name__, url_prefix="/webhooks")
+ 
+ 
+-@bp.post("/cloudinary")
+-def cloudinary_webhook():
+-    # Cloudinary sends JSON but we need the raw body string for
++@bp.post("/byteship")
++def byteship_webhook():
++    # Byteship sends JSON but we need the raw body string for
+     # signature verification before we parse anything.
+     body = request.get_data(as_text=True)
+ 
+-    timestamp = request.headers.get("X-Cld-Timestamp")
+-    signature = request.headers.get("X-Cld-Signature")
++    timestamp = request.headers.get("Byteship-Webhook-Timestamp")
++    signature = request.headers.get("Byteship-Webhook-Signature")
+ 
+     if not timestamp or not signature:
+-        return jsonify({"error": "Missing Cloudinary signature headers"}), 400
++        return jsonify({"error": "Missing Byteship signature headers"}), 400
+ 
+     payload = request.get_json(silent=True) or {}
+ 
+-    # Only process completed uploads; ignore other notification types
+-    # (e.g. eager transformations, moderation results).
+-    if payload.get("notification_type") != "upload":
++    # Only process completed uploads; ignore other event types
++    # (file.deleted, image.metadata.created, image.transform.*).
++    if payload.get("type") != "file.uploaded":
+         return jsonify({"status": "ignored"}), 200
+ 
+-    submission = video_service.handle_cloudinary_webhook(
++    submission = video_service.handle_byteship_webhook(
+         body=body,
+         timestamp=timestamp,
+         signature=signature,
+diff --git a/services/video_service.py b/services/video_service.py
+index 2d34849..510bc48 100644
+--- a/services/video_service.py
++++ b/services/video_service.py
+@@ -4,7 +4,7 @@ from datetime import datetime
+ 
+ from models.video import VideoSubmission, TeachingScenario
+ from services import review_service
+-from api import cloudinary as cloudinary_adapter
++from api import byteship as byteship_adapter
+ from extensions import db
+ from errors.exceptions import NotFoundError, BadRequestError
+ 
+@@ -16,7 +16,7 @@ def request_upload_url(teacher_id, scenario_id):
+     if not scenario:
+         raise NotFoundError("Teaching scenario not found")
+ 
+-    result = cloudinary_adapter.generate_upload_url(
++    result = byteship_adapter.generate_upload_url(
+         scenario_id=scenario_id,
+         teacher_id=teacher_id,
+     )
+@@ -56,15 +56,15 @@ def confirm_upload(teacher_id, scenario_id, video_url):
+     return submission
+ 
+ 
+-def handle_cloudinary_webhook(body, timestamp, signature, payload):
++def handle_byteship_webhook(body, timestamp, signature, payload):
+     """
+-    Process a verified Cloudinary upload notification.
++    Process a verified Byteship file.uploaded notification.
+ 
+     Signature verification is done here before touching any data.
+     The route passes raw header values; this function is the single
+     place responsible for deciding whether the webhook is authentic.
+     """
+-    valid = cloudinary_adapter.verify_webhook_signature(
++    valid = byteship_adapter.verify_webhook_signature(
+         body=body,
+         timestamp=timestamp,
+         signature=signature,
+@@ -73,21 +73,24 @@ def handle_cloudinary_webhook(body, timestamp, signature, payload):
+     if not valid:
+         raise BadRequestError("Invalid webhook signature")
+ 
+-    # Cloudinary echoes context as a dict: {"teacher_id": "...", "scenario_id": "..."}
+-    context = payload.get("context", {})
++    # Byteship payload shape: {"type": ..., "data": {"file": {"path": ..., "url": ...}}}
++    file_data = payload.get("data", {}).get("file", {})
++    path = file_data.get("path")
+ 
+-    video_url = payload.get("secure_url") or payload.get("url")
+-    teacher_id = context.get("teacher_id")
+-    scenario_id = context.get("scenario_id")
+-
+-    if not video_url or not teacher_id or not scenario_id:
++    if not path:
+         raise BadRequestError("Webhook payload is missing required fields")
+ 
+-    try:
+-        teacher_id = int(teacher_id)
+-        scenario_id = int(scenario_id)
+-    except (ValueError, TypeError):
+-        raise BadRequestError("Invalid teacher_id or scenario_id in webhook context")
++    teacher_id, scenario_id = byteship_adapter.parse_context_from_path(path)
++
++    if not teacher_id or not scenario_id:
++        raise BadRequestError("Could not recover teacher_id/scenario_id from file path")
++
++    # The webhook payload doesn't reliably include a resolved URL —
++    # fetch it explicitly.
++    video_url = file_data.get("url") or byteship_adapter.resolve_file_url(path)
++
++    if not video_url:
++        raise BadRequestError("Could not resolve a URL for the uploaded file")
+ 
+     existing = (
+         VideoSubmission.query

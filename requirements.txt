@@ -7,7 +7,7 @@ gunicorn
 marshmallow
 psycopg2-binary
 sendgrid
-cloudinary
+byteship
 cencori
 google-genai
 requests

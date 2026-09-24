@@ -1,5 +1,5 @@
 from flask import Flask,send_from_directory,abort
-from extensions import db, migrate, init_cloudinary
+from extensions import db, migrate, init_byteship
 from config import Config
 import os
 
@@ -11,7 +11,7 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
-    init_cloudinary(app)
+    init_byteship(app)
 
     import models
 
@@ -46,6 +46,27 @@ def create_app():
         if not os.path.isfile(file_path):
             abort(404)
         return send_from_directory(app.static_folder, f'{page_name}.html')
+
+    @app.get("/diag/gemini-reachable")
+    def diag_gemini():
+        import requests, time
+        t0 = time.time()
+        try:
+            r = requests.get("https://generativelanguage.googleapis.com", timeout=8)
+            return {"reached": True, "status": r.status_code, "elapsed": time.time() - t0}
+        except requests.RequestException as e:
+            return {"reached": False, "error": str(e), "elapsed": time.time() - t0}
+
+    @app.get("/diag/gemini-call")
+    def diag_gemini_call():
+        import time
+        t0 = time.time()
+        try:
+            from api import gemini as ai_provider
+            result = ai_provider.generate_scenario(subject="Mathematics", level="beginner")
+            return {"ok": True, "elapsed": time.time() - t0, "result_preview": str(result)[:200]}
+        except Exception as e:
+            return {"ok": False, "elapsed": time.time() - t0, "error": type(e).__name__, "message": str(e)}
 
 
     return app

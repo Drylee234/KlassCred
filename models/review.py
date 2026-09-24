@@ -73,10 +73,8 @@ class Review(db.Model):
         index=True
     )
 
-    reviewer_type = db.Column(
-        db.Enum("ai", "human"),
-        nullable=False
-    )
+    reviewer_type = db.Column(db.Enum("ai", "human", name="review_reviewer_type"), nullable=False)
+
 
     score = db.Column(
         db.Float

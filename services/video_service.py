@@ -4,7 +4,7 @@ from datetime import datetime
 
 from models.video import VideoSubmission, TeachingScenario
 from services import review_service
-from api import cloudinary as cloudinary_adapter
+from api import byteship as byteship_adapter
 from extensions import db
 from errors.exceptions import NotFoundError, BadRequestError
 
@@ -16,7 +16,7 @@ def request_upload_url(teacher_id, scenario_id):
     if not scenario:
         raise NotFoundError("Teaching scenario not found")
 
-    result = cloudinary_adapter.generate_upload_url(
+    result = byteship_adapter.generate_upload_url(
         scenario_id=scenario_id,
         teacher_id=teacher_id,
     )
@@ -56,15 +56,15 @@ def confirm_upload(teacher_id, scenario_id, video_url):
     return submission
 
 
-def handle_cloudinary_webhook(body, timestamp, signature, payload):
+def handle_byteship_webhook(body, timestamp, signature, payload):
     """
-    Process a verified Cloudinary upload notification.
+    Process a verified Byteship file.uploaded notification.
 
     Signature verification is done here before touching any data.
     The route passes raw header values; this function is the single
     place responsible for deciding whether the webhook is authentic.
     """
-    valid = cloudinary_adapter.verify_webhook_signature(
+    valid = byteship_adapter.verify_webhook_signature(
         body=body,
         timestamp=timestamp,
         signature=signature,
@@ -73,21 +73,24 @@ def handle_cloudinary_webhook(body, timestamp, signature, payload):
     if not valid:
         raise BadRequestError("Invalid webhook signature")
 
-    # Cloudinary echoes context as a dict: {"teacher_id": "...", "scenario_id": "..."}
-    context = payload.get("context", {})
+    # Byteship payload shape: {"type": ..., "data": {"file": {"path": ..., "url": ...}}}
+    file_data = payload.get("data", {}).get("file", {})
+    path = file_data.get("path")
 
-    video_url = payload.get("secure_url") or payload.get("url")
-    teacher_id = context.get("teacher_id")
-    scenario_id = context.get("scenario_id")
-
-    if not video_url or not teacher_id or not scenario_id:
+    if not path:
         raise BadRequestError("Webhook payload is missing required fields")
 
-    try:
-        teacher_id = int(teacher_id)
-        scenario_id = int(scenario_id)
-    except (ValueError, TypeError):
-        raise BadRequestError("Invalid teacher_id or scenario_id in webhook context")
+    teacher_id, scenario_id = byteship_adapter.parse_context_from_path(path)
+
+    if not teacher_id or not scenario_id:
+        raise BadRequestError("Could not recover teacher_id/scenario_id from file path")
+
+    # The webhook payload doesn't reliably include a resolved URL —
+    # fetch it explicitly.
+    video_url = file_data.get("url") or byteship_adapter.resolve_file_url(path)
+
+    if not video_url:
+        raise BadRequestError("Could not resolve a URL for the uploaded file")
 
     existing = (
         VideoSubmission.query
