@@ -335,6 +335,53 @@
   </div>
 </div>
 
+<section class="card">
+  <div class="flex-between">
+    <div>
+      <h3>Verification & Rating</h3>
+      <p class="muted">
+        Current profile verification and credibility score.
+      </p>
+    </div>
+
+    <button class="btn btn-sm" onclick="loadRating()">
+      Refresh
+    </button>
+  </div>
+
+  <div id="ratingResp" class="response-box"></div>
+
+  <div id="rating_panel" style="margin-top:16px">
+    <div class="empty-state">
+      <p>Rating not loaded.</p>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="flex-between">
+    <div>
+      <h3>Teaching Videos</h3>
+      <p class="muted">
+        Track the video review pipeline.
+      </p>
+    </div>
+
+    <button class="btn btn-sm" onclick="loadVideos()">
+      Refresh
+    </button>
+  </div>
+
+  <div id="videosResp" class="response-box"></div>
+
+  <div id="video_list" style="margin-top:16px">
+    <div class="empty-state">
+      <p>No videos loaded.</p>
+    </div>
+  </div>
+</section>
+
+
 <div id="toast"></div>
 
 <script src="static/common.js"></script>
@@ -714,6 +761,157 @@ async function doConfirmUpload() {
 
 // ── Init ─────────────────────────────────────────────────────
 loadDashboard();
+async function loadRating() {
+  const res = await api(
+    'GET',
+    '/teachers/rating',
+    undefined,
+    token
+  );
+
+  showResponse(
+    'ratingResp',
+    res.data,
+    res.ok
+  );
+
+  const panel = document.getElementById(
+    'rating_panel'
+  );
+
+  if (!res.ok) {
+    panel.innerHTML = `
+      <div class="badge badge-red">
+        ${res.data.error ?? 'Unable to load rating'}
+      </div>
+    `;
+    return;
+  }
+
+  const r = res.data;
+
+  const component = (label, score) => `
+    <div class="card" style="margin-top:8px">
+      <div class="flex-between">
+        <span>${label}</span>
+        <strong>
+          ${score == null ? 'Not available' : `${score}/100`}
+        </strong>
+      </div>
+    </div>
+  `;
+
+  panel.innerHTML = `
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:42px;font-weight:700">
+        ${r.composite == null ? '—' : r.composite}
+      </div>
+
+      <div class="muted">
+        Composite rating
+      </div>
+
+      ${
+        r.overridden
+          ? `<span class="badge badge-yellow">
+               Manually overridden
+             </span>`
+          : ''
+      }
+    </div>
+
+    ${component('Exam', r.exam_score)}
+    ${component('Video', r.video_score)}
+    ${component('References', r.reference_score)}
+    ${component('Profile', r.profile_score)}
+
+    ${
+      r.override_reason
+        ? `
+          <div class="card" style="margin-top:12px">
+            <strong>Override reason</strong>
+            <p>${r.override_reason}</p>
+          </div>
+        `
+        : ''
+    }
+  `;
+}
+
+
+async function loadVideos() {
+  const res = await api(
+    'GET',
+    '/teachers/videos',
+    undefined,
+    token
+  );
+
+  showResponse(
+    'videosResp',
+    res.data,
+    res.ok
+  );
+
+  const list = document.getElementById(
+    'video_list'
+  );
+
+  if (!res.ok) {
+    list.innerHTML = `
+      <div class="badge badge-red">
+        ${res.data.error ?? 'Unable to load videos'}
+      </div>
+    `;
+    return;
+  }
+
+  if (!res.data.length) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <p>No teaching videos submitted yet.</p>
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = res.data.map(video => `
+    <div class="card" style="margin-bottom:10px">
+      <div class="flex-between">
+        <strong>
+          Video #${video.id}
+        </strong>
+
+        <span class="badge badge-blue">
+          ${video.status}
+        </span>
+      </div>
+
+      <div class="muted" style="margin-top:8px">
+        Scenario: ${video.scenario_id}
+      </div>
+
+      <div class="muted">
+        Uploaded:
+        ${video.uploaded_at ?? '—'}
+      </div>
+
+      ${
+        video.video_url
+          ? `
+            <a
+              href="${video.video_url}"
+              target="_blank"
+              rel="noopener"
+            >
+              Open video
+            </a>
+          `
+          : ''
+      }
+    </div>
+  `).join('');
+}
 </script>
 </body>
 </html>

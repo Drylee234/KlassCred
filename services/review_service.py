@@ -135,3 +135,41 @@ def submit_human_review(reviewer_id, assignment_id, data):
     rating_service.recompute_rating(submission.teacher_id)
 
     return review
+
+def get_reviews_for_reviewer(reviewer_id):
+    """
+    Return human reviews submitted by the authenticated reviewer.
+    """
+    return (
+        Review.query
+        .filter_by(
+            reviewer_id=reviewer_id,
+            reviewer_type="human",
+        )
+        .order_by(Review.created_at.desc())
+        .all()
+    )
+
+
+def start_assignment(reviewer_id, assignment_id):
+    """
+    Move an assigned review into the in-progress state.
+    """
+    assignment = ReviewAssignment.query.get(assignment_id)
+
+    if not assignment:
+        raise NotFoundError("Assignment not found")
+
+    if assignment.reviewer_id != reviewer_id:
+        raise ForbiddenError("You do not own this assignment")
+
+    if assignment.status != "assigned":
+        raise BadRequestError(
+            "Only assigned reviews can be started"
+        )
+
+    assignment.status = "in_progress"
+
+    db.session.commit()
+
+    return assignment

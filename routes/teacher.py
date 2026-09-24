@@ -4,12 +4,14 @@ from schemas.teacher import TeacherSchema, WorkHistorySchema, ReferenceSchema
 from schemas.exam import ExamSchema, ExamAttemptSchema, ExamStartSchema, ExamSubmitSchema
 from schemas.video import TeachingScenarioSchema, VideoSubmissionSchema
 from schemas.interview import InterviewRequestSchema
+from schemas.rating import RatingSchema
 
 from services import (
     teacher_service,
     exam_service,
     scenario_service,
     video_service,
+    rating_service,
     interview_service,
 )
 
@@ -221,3 +223,28 @@ def respond_to_interview(request_id):
     )
 
     return InterviewRequestSchema().dump(result), 200
+
+# ─── Rating ─────────────────────────────────────────────────
+
+@bp.get("/rating")
+@require_role("teacher")
+def get_rating():
+    rating = rating_service.get_rating(
+        teacher_id=g.current_user.id
+    )
+
+    return RatingSchema().dump(rating), 200
+
+
+# ─── Video History ──────────────────────────────────────────
+
+@bp.get("/videos")
+@require_role("teacher")
+def get_videos():
+    submissions = video_service.get_submissions(
+        teacher_id=g.current_user.id
+    )
+
+    return VideoSubmissionSchema(many=True).dump(
+        submissions
+    ), 200

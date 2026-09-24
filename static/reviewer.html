@@ -210,6 +210,26 @@
   </div>
 </div>
 
+<section class="card">
+  <div class="flex-between">
+    <div>
+      <h3>Review History</h3>
+      <p class="muted">
+        Human reviews submitted by this reviewer.
+      </p>
+    </div>
+
+    <button
+      class="btn btn-sm"
+      onclick="loadReviewHistory()"
+    >
+      Refresh
+    </button>
+  </div>
+
+  <div id="review_history"></div>
+</section>
+
 <div id="toast"></div>
 
 <script src=" static/common.js"></script>
@@ -397,6 +417,31 @@ async function doOverride() {
   showResponse('ovResp', res.data, res.ok);
   if (res.ok) toast(`Rating overridden → ${composite}`);
   else toast(res.data.error ?? 'Override failed', 'error');
+}
+
+async function startAssignment(assignmentId) {
+  const res = await api(
+    'POST',
+    `/reviewer/assignments/${assignmentId}/start`,
+    {},
+    token
+  );
+
+  showResponse(
+    'assignmentResp',
+    res.data,
+    res.ok
+  );
+
+  if (res.ok) {
+    toast('Review started');
+    loadAssignments();
+  } else {
+    toast(
+      res.data.error ?? 'Unable to start review',
+      'error'
+    );
+  }
 }
 
 // ── Init ─────────────────────────────────────────────────────
