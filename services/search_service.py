@@ -25,7 +25,7 @@ def search_teachers(
             if teacher.subjects and subject in teacher.subjects
         ]
 
-    if min_rating is not None:
+       if min_rating is not None:
         teachers = [
             teacher
             for teacher in teachers
@@ -33,5 +33,19 @@ def search_teachers(
             and teacher.rating.composite is not None
             and teacher.rating.composite >= min_rating
         ]
+
+    # Exclude any teacher with a flagged review on any video submission.
+    # A human reviewer flag means a safety/pedagogy concern was raised —
+    # that teacher should not be discoverable by employers regardless of
+    # their numeric score, until the flag is manually resolved.
+    teachers = [
+        teacher
+        for teacher in teachers
+        if not any(
+            review.flagged
+            for submission in teacher.video_submissions
+            for review in submission.reviews
+        )
+    ]
 
     return teachers
