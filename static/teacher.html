@@ -76,6 +76,39 @@
       </div>
 
       <div class="card">
+  <div class="flex-between">
+    <div>
+      <div class="card-title" style="margin:0">Verification</div>
+      <p class="hint">Complete your profile and submit it for reviewer verification.</p>
+    </div>
+    <span id="verification_badge" class="badge badge-gray">Not submitted</span>
+  </div>
+
+  <div id="verification_status" class="mt-16"></div>
+
+  <div class="flex-row mt-16">
+    <button
+      class="btn btn-sm"
+      id="apply_verification_btn"
+      onclick="applyForVerification()"
+      style="display:none"
+    >
+      Apply for verification
+    </button>
+
+    <button
+      class="btn btn-ghost"
+      onclick="loadVerificationStatus()"
+    >
+      Refresh status
+    </button>
+  </div>
+
+  <div id="verificationResp" class="response-box"></div>
+
+  <div class="card-title mt-24">Requirements</div>
+  <div id="dash_checklist"></div>
+</div>
         <div class="card-title">Rating Breakdown</div>
         <div id="dash_breakdown">
           <div class="empty-state"><div class="icon">📊</div><p>No rating yet — complete your profile and take an exam.</p></div>

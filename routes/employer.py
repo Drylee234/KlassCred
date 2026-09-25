@@ -5,13 +5,15 @@ from schemas.employer import (
     ParentSchema,
     RecruitmentHistorySchema,
 )
-from schemas.teacher import TeacherSchema
+from schemas.teacher import TeacherPublicSchema
+from schemas.application import ApplicationSchema, ApplicationRespondSchema
 from schemas.interview import InterviewRequestSchema
 
 from services import (
     employer_service,
     search_service,
     interview_service,
+    application_service,
 )
 
 from utils.auth_utils import require_role
@@ -64,17 +66,20 @@ def update_profile():
 @bp.get("/search")
 @require_role("organization", "parent")
 def search_teachers():
-    subject = request.args.get("subject")
-    min_rating = request.args.get("min_rating", type=float)
-    verified_only = request.args.get("verified_only", default=True, type=lambda v: v.lower() == "true")
+    args = request.args
 
     teachers = search_service.search_teachers(
-        subject=subject,
-        min_rating=min_rating,
-        verified_only=verified_only,
+        subject=args.get("subject") or None,
+        min_rating=args.get("min_rating", type=float),
+        verified_only=args.get("verified_only", default=True, type=lambda v: v.lower() == "true"),
+        min_experience=args.get("min_experience", type=int),
+        location=args.get("location") or None,
+        radius_km=args.get("radius_km", type=float),
+        q=args.get("q") or None,
+        employer_id=g.current_user.id,
     )
 
-    return TeacherSchema(many=True).dump(teachers), 200
+    return TeacherPublicSchema(many=True).dump(teachers), 200
 
 
 # ─── Recruitment ────────────────────────────────────────────
@@ -146,3 +151,42 @@ def get_interview_requests():
     )
 
     return InterviewRequestSchema(many=True).dump(requests), 200
+
+
+# ─── Applications ───────────────────────────────────────────
+
+@bp.get("/applications")
+@require_role("organization", "parent")
+def get_applications():
+    applications = application_service.get_for_employer(
+        employer_id=g.current_user.id,
+        status_filter=request.args.get("status") or None,
+    )
+
+    return ApplicationSchema(many=True).dump(applications), 200
+
+
+@bp.get("/applications/<int:application_id>")
+@require_role("organization", "parent")
+def get_application(application_id):
+    application = application_service.get_one(
+        user_id=g.current_user.id,
+        role=g.current_user.type,
+        application_id=application_id,
+    )
+
+    return ApplicationSchema().dump(application), 200
+
+
+@bp.put("/applications/<int:application_id>")
+@require_role("organization", "parent")
+def respond_to_application(application_id):
+    data = ApplicationRespondSchema().load(request.get_json())
+
+    application = application_service.respond(
+        employer_id=g.current_user.id,
+        application_id=application_id,
+        status=data["status"],
+    )
+
+    return ApplicationSchema().dump(application), 200

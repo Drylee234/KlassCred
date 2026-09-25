@@ -1,9 +1,13 @@
-from marshmallow import Schema, fields, validate  # FIX: Schema was missing
+from marshmallow import Schema, fields, validate
 from schemas.user import UserSchema
 
 
 class EmployerSchema(UserSchema):
     id = fields.Int(dump_only=True)
+
+    # Reference point for distance search (set by the client).
+    latitude = fields.Float(allow_none=True, validate=validate.Range(min=-90, max=90))
+    longitude = fields.Float(allow_none=True, validate=validate.Range(min=-180, max=180))
 
 
 class OrganizationSchema(EmployerSchema):
@@ -22,11 +26,11 @@ class OrganizationSchema(EmployerSchema):
     location = fields.Str(required=True)
 
 
-class ParentSchema(EmployerSchema):  # FIX: was UserSchema, should be EmployerSchema
+class ParentSchema(EmployerSchema):
     id = fields.Int(dump_only=True)
     name = fields.Str(required=True)
-    id_card = fields.Str(allow_none=True)          # FIX: was missing
-    picture_upload = fields.Str(allow_none=True)   # FIX: was missing
+    id_card = fields.Str(allow_none=True)
+    picture_upload = fields.Str(allow_none=True)
 
 
 class RecruitmentHistorySchema(Schema):

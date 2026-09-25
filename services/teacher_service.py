@@ -2,6 +2,8 @@
 
 from models.teacher import Teacher, WorkHistory, Reference
 from extensions import db
+from utils.geo import parse_coordinates
+from utils.subjects import validate_subjects
 
 from errors.exceptions import (
     BadRequestError,
@@ -22,12 +24,19 @@ def create_profile(user_id, data):
     if teacher:
         raise ConflictError("Teacher profile already exists.")
 
+    latitude, longitude = parse_coordinates(
+        data.get("latitude"), data.get("longitude")
+    )
+
     teacher = Teacher(
         id=user_id,
         full_name=data["full_name"],
-        subjects=data["subjects"],
+        subjects=validate_subjects(data["subjects"]),
         experience_years=data["experience_years"],
         profile_complete=False,
+        location=data.get("location"),
+        latitude=latitude,
+        longitude=longitude,
     )
 
     db.session.add(teacher)
@@ -47,7 +56,20 @@ def update_profile(user_id, data):
         "subjects",
         "experience_years",
         "documents",
+        "location",
+        "latitude",
+        "longitude",
     }
+
+    data = dict(data)
+
+    if "subjects" in data:
+        data["subjects"] = validate_subjects(data["subjects"])
+
+    if "latitude" in data or "longitude" in data:
+        data["latitude"], data["longitude"] = parse_coordinates(
+            data.get("latitude"), data.get("longitude")
+        )
 
     for field, value in data.items():
         if field in allowed_fields:

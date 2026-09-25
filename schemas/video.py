@@ -28,6 +28,7 @@ class VideoSubmissionSchema(Schema):
     teacher_id = fields.Int(required=True)
     scenario_id = fields.Int(required=True)
 
+    subject = fields.Str(attribute="scenario.subject", dump_only=True)
     video_url = fields.Str(dump_only=True)
     uploaded_at = fields.DateTime(dump_only=True)
 
@@ -36,6 +37,7 @@ class VideoSubmissionSchema(Schema):
         dump_only=True,
         validate=validate.OneOf([
             "uploaded",
+            "ai_reviewing",
             "ai_reviewed",
             "assigned",
             "in_progress",
