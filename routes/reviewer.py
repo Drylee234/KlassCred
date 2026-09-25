@@ -3,11 +3,13 @@ from flask import Blueprint, request, g
 from schemas.review import ReviewAssignmentSchema, HumanReviewSubmitSchema, ReviewSchema
 from schemas.rating import RatingSchema
 from schemas.reviewer import ReviewerSchema
+from schemas.teacher import TeacherSchema, TeacherSummarySchema, VerificationRejectSchema
 
 from services import (
     reviewer_service,
     review_service,
     rating_service,
+    verification_service,
 )
 
 from utils.auth_utils import require_role
@@ -64,5 +66,70 @@ def override_rating(teacher_id):
         composite=data["composite"],
         reason=data["reason"],
     )
+
+    return RatingSchema().dump(rating), 200
+
+
+# ─── Teacher search ─────────────────────────────────────────
+
+@bp.get("/teachers")
+@require_role("reviewer")
+def search_teachers():
+    teachers = reviewer_service.search_teachers(
+        q=request.args.get("q"),
+    )
+
+    return TeacherSummarySchema(many=True).dump(teachers), 200
+
+
+# ─── Teacher verification ───────────────────────────────────
+
+@bp.get("/verification/pending")
+@require_role("reviewer")
+def get_pending_verifications():
+    teachers = verification_service.list_pending()
+
+    return TeacherSummarySchema(many=True).dump(teachers), 200
+
+
+@bp.get("/verification/teachers/<int:teacher_id>")
+@require_role("reviewer")
+def inspect_teacher(teacher_id):
+    teacher = verification_service.get_teacher_for_review(
+        teacher_id=teacher_id,
+    )
+
+    return TeacherSchema().dump(teacher), 200
+
+
+@bp.post("/verification/teachers/<int:teacher_id>/approve")
+@require_role("reviewer")
+def approve_teacher(teacher_id):
+    teacher = verification_service.approve_teacher(
+        teacher_id=teacher_id,
+    )
+
+    return TeacherSummarySchema().dump(teacher), 200
+
+
+@bp.post("/verification/teachers/<int:teacher_id>/reject")
+@require_role("reviewer")
+def reject_teacher(teacher_id):
+    data = VerificationRejectSchema().load(request.get_json())
+
+    teacher = verification_service.reject_teacher(
+        teacher_id=teacher_id,
+        reason=data["reason"],
+    )
+
+    return TeacherSummarySchema().dump(teacher), 200
+
+
+# ─── Rating lookup ──────────────────────────────────────────
+
+@bp.get("/ratings/<int:teacher_id>")
+@require_role("reviewer")
+def get_rating(teacher_id):
+    rating = rating_service.get_rating(teacher_id=teacher_id)
 
     return RatingSchema().dump(rating), 200

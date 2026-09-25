@@ -6,6 +6,8 @@ class Employer(User):
     __tablename__ = "employer"
 
     id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key=True)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
 
     # FIX: removed duplicate `type` column and `polymorphic_on` — those belong on User only
     __mapper_args__ = {

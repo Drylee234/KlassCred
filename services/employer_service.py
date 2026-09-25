@@ -3,6 +3,7 @@ from datetime import datetime
 from extensions import db
 from models.employer import Employer, Organization, Parent, RecruitmentHistory
 from models.teacher import Teacher
+from utils.geo import parse_coordinates
 
 from errors.exceptions import (
     BadRequestError,
@@ -10,6 +11,23 @@ from errors.exceptions import (
     ForbiddenError,
     NotFoundError,
 )
+
+# Fields an employer may edit on their own profile. Anything else in the
+# request body (id_verified, password_hash, type, ...) is ignored.
+_EDITABLE_FIELDS = {
+    "org_name", "cac_number", "location",
+    "name", "id_card", "picture_upload",
+    "latitude", "longitude",
+}
+
+
+def _coordinates(data):
+    if "latitude" not in data and "longitude" not in data:
+        return {}
+
+    lat, lng = parse_coordinates(data.get("latitude"), data.get("longitude"))
+    return {"latitude": lat, "longitude": lng}
+
 
 def get_profile(user_id):
     employer = Employer.query.filter_by(id=user_id).first()
@@ -29,6 +47,7 @@ def create_profile(user_id, type, data):
             org_name=data["org_name"],
             cac_number=data.get("cac_number"),
             location=data.get("location"),
+            **_coordinates(data),
         )
 
     elif type == "parent":
@@ -37,6 +56,7 @@ def create_profile(user_id, type, data):
             name=data["name"],
             id_card=data.get("id_card"),
             picture_upload=data.get("picture_upload"),
+            **_coordinates(data),
         )
 
     else:
@@ -57,8 +77,10 @@ def update_profile(user_id, data):
     if employer.id != user_id:
         raise ForbiddenError("You do not own this profile.")
 
+    data = {**data, **_coordinates(data)}
+
     for field, value in data.items():
-        if hasattr(employer, field):
+        if field in _EDITABLE_FIELDS and hasattr(employer, field):
             setattr(employer, field, value)
 
     db.session.commit()

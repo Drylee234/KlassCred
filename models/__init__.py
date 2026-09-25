@@ -7,3 +7,4 @@ from models.video import TeachingScenario, VideoSubmission
 from models.review import ReviewAssignment, Review
 from models.rating import Rating
 from models.interview import InterviewRequest
+from models.application import Application

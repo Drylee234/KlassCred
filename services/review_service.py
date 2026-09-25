@@ -22,10 +22,21 @@ def run_ai_review(video_id):
     if not scenario:
         raise NotFoundError("Teaching scenario not found")
 
-    result = ai_provider.review_video(
-        prompt_text=scenario.prompt_text,
-        video_url=submission.video_url,
-    )
+    # Committed before the (slow) AI call so the teacher can see
+    # "AI reviewing"; also stops a second trigger from re-running the review.
+    submission.status = "ai_reviewing"
+    db.session.commit()
+
+    try:
+        result = ai_provider.review_video(
+            prompt_text=scenario.prompt_text,
+            video_url=submission.video_url,
+        )
+    except Exception:
+        db.session.rollback()
+        submission.status = "failed"
+        db.session.commit()
+        raise
 
     review = Review(
         video_id=video_id,

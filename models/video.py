@@ -4,29 +4,11 @@ from extensions import db
 class TeachingScenario(db.Model):
     __tablename__ = "teachingscenario"
 
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
-
-    subject = db.Column(
-        db.String(100),
-        nullable=False
-    )
-
-    level = db.Column(
-        db.String(50),
-        nullable=False
-    )
-
-    prompt_text = db.Column(
-        db.Text,
-        nullable=False
-    )
-
+    id = db.Column(db.Integer, primary_key=True)
+    subject = db.Column(db.String(100), nullable=False)
+    level = db.Column(db.String(50), nullable=False)
+    prompt_text = db.Column(db.Text, nullable=False)
     generated_by = db.Column(db.Enum("ai", "bank", name="scenario_generated_by"), nullable=False)
-
-
 
     video_submissions = db.relationship(
         "VideoSubmission",
@@ -37,39 +19,27 @@ class TeachingScenario(db.Model):
 class VideoSubmission(db.Model):
     __tablename__ = "videosubmission"
 
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
+    id = db.Column(db.Integer, primary_key=True)
 
     teacher_id = db.Column(
-        db.Integer,
-        db.ForeignKey("teacher.id"),
-        nullable=False,
-        index=True
+        db.Integer, db.ForeignKey("teacher.id"), nullable=False, index=True
     )
-
     scenario_id = db.Column(
-        db.Integer,
-        db.ForeignKey("teachingscenario.id"),
-        nullable=False,
-        index=True
+        db.Integer, db.ForeignKey("teachingscenario.id"), nullable=False, index=True
     )
 
-    video_url = db.Column(
-        db.String(255),
-        nullable=False
-    )
+    video_url = db.Column(db.String(255), nullable=False)
 
     uploaded_at = db.Column(
-        db.DateTime,
-        server_default=db.func.now(),
-        nullable=False
+        db.DateTime, server_default=db.func.now(), nullable=False
     )
 
+    # Pipeline: uploaded -> ai_reviewing -> ai_reviewed -> assigned
+    #           -> in_progress -> completed.  "failed" is a terminal branch.
     status = db.Column(
         db.Enum(
             "uploaded",
+            "ai_reviewing",
             "ai_reviewed",
             "assigned",
             "in_progress",
@@ -81,24 +51,12 @@ class VideoSubmission(db.Model):
         default="uploaded"
     )
 
-    teacher = db.relationship(
-        "Teacher",
-        back_populates="video_submissions"
-    )
-
-    scenario = db.relationship(
-        "TeachingScenario",
-        back_populates="video_submissions"
-    )
+    teacher = db.relationship("Teacher", back_populates="video_submissions")
+    scenario = db.relationship("TeachingScenario", back_populates="video_submissions")
 
     reviews = db.relationship(
-        "Review",
-        back_populates="video",
-        cascade="all, delete-orphan"
+        "Review", back_populates="video", cascade="all, delete-orphan"
     )
-
     assignments = db.relationship(
-        "ReviewAssignment",
-        back_populates="video",
-        cascade="all, delete-orphan"
+        "ReviewAssignment", back_populates="video", cascade="all, delete-orphan"
     )

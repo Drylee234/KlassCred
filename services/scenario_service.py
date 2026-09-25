@@ -5,6 +5,7 @@ from models.teacher import Teacher
 from api import gemini as ai_provider  # was: from api import cencori
 from extensions import db
 from errors.exceptions import BadRequestError
+from utils.subjects import validate_subjects
 
 
 def get_scenario_for_teacher(teacher):
@@ -37,6 +38,8 @@ def get_scenario_for_teacher(teacher):
 def generate_scenario(teacher):
     if not teacher.subjects:
         raise BadRequestError("Teacher has no subjects assigned")
+
+    validate_subjects(teacher.subjects)
 
     target_level = "secondary"
 

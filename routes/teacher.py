@@ -1,6 +1,7 @@
 from flask import Blueprint, request, g
 
-from schemas.teacher import TeacherSchema, WorkHistorySchema, ReferenceSchema
+from schemas.teacher import TeacherSchema, WorkHistorySchema, ReferenceSchema, VerificationStatusSchema
+from schemas.application import ApplicationSchema, ApplicationCreateSchema
 from schemas.exam import ExamSchema, ExamAttemptSchema, ExamStartSchema, ExamSubmitSchema
 from schemas.video import TeachingScenarioSchema, VideoSubmissionSchema
 from schemas.interview import InterviewRequestSchema
@@ -13,6 +14,8 @@ from services import (
     video_service,
     rating_service,
     interview_service,
+    verification_service,
+    application_service,
 )
 
 from utils.auth_utils import require_role
@@ -248,3 +251,76 @@ def get_videos():
     return VideoSubmissionSchema(many=True).dump(
         submissions
     ), 200
+
+
+# ─── Verification ───────────────────────────────────────────
+
+@bp.get("/verification/status")
+@require_role("teacher")
+def get_verification_status():
+    status = verification_service.get_status(
+        teacher_id=g.current_user.id,
+    )
+
+    return VerificationStatusSchema().dump(status), 200
+
+
+@bp.post("/verification/apply")
+@require_role("teacher")
+def apply_for_verification():
+    status = verification_service.apply(
+        teacher_id=g.current_user.id,
+    )
+
+    return VerificationStatusSchema().dump(status), 200
+
+
+# ─── Applications ───────────────────────────────────────────
+
+@bp.post("/applications")
+@require_role("teacher")
+def create_application():
+    data = ApplicationCreateSchema().load(request.get_json())
+
+    application = application_service.create_application(
+        teacher_id=g.current_user.id,
+        employer_id=data["employer_id"],
+        position=data["position"],
+        message=data.get("message"),
+    )
+
+    return ApplicationSchema().dump(application), 201
+
+
+@bp.get("/applications")
+@require_role("teacher")
+def get_applications():
+    applications = application_service.get_for_teacher(
+        teacher_id=g.current_user.id,
+        status_filter=request.args.get("status") or None,
+    )
+
+    return ApplicationSchema(many=True).dump(applications), 200
+
+
+@bp.get("/applications/<int:application_id>")
+@require_role("teacher")
+def get_application(application_id):
+    application = application_service.get_one(
+        user_id=g.current_user.id,
+        role="teacher",
+        application_id=application_id,
+    )
+
+    return ApplicationSchema().dump(application), 200
+
+
+@bp.post("/applications/<int:application_id>/withdraw")
+@require_role("teacher")
+def withdraw_application(application_id):
+    application = application_service.withdraw(
+        teacher_id=g.current_user.id,
+        application_id=application_id,
+    )
+
+    return ApplicationSchema().dump(application), 200

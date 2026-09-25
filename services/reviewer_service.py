@@ -1,7 +1,8 @@
-from sqlalchemy import func
+from sqlalchemy import String, cast, func, or_
 
 from models.reviewer import Reviewer
 from models.review import ReviewAssignment
+from models.teacher import Teacher
 from extensions import db
 from errors.exceptions import NotFoundError
 
@@ -42,3 +43,23 @@ def get_least_loaded_reviewer():
         raise NotFoundError("No reviewers are available to assign this video to.")
 
     return reviewer
+
+
+def search_teachers(q=None, limit=25):
+    """
+    Reviewer-side teacher lookup by name, email or subject.
+    Includes unverified teachers (unlike the employer search).
+    """
+    query = Teacher.query
+
+    if q and q.strip():
+        like = f"%{q.strip()}%"
+        query = query.filter(
+            or_(
+                Teacher.full_name.ilike(like),
+                Teacher.email.ilike(like),
+                cast(Teacher.subjects, String).ilike(like),
+            )
+        )
+
+    return query.order_by(Teacher.full_name.asc()).limit(limit).all()
