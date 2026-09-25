@@ -14,9 +14,9 @@ const session = {
   clear() { localStorage.removeItem('kc_token'); localStorage.removeItem('kc_type'); },
   required() {
     const t = this.token();
-    if (!t) { window.location.href = '/index.html'; return null; }
+    if (!t) { window.location.href = '/test-ui/'; return null; }
     return t;
-},
+  }
 };
 
 // ── API helper ───────────────────────────────────────────────
@@ -84,7 +84,7 @@ function showSection(id) {
 // ── Logout ───────────────────────────────────────────────────
 function logout() {
   session.clear();
-  window.location.href = '/index.html';
+  window.location.href = '/test-ui/';
 }
 
 // ── Badge helper ─────────────────────────────────────────────
@@ -109,86 +109,41 @@ const STATUS_COLORS = {
   failed:      'badge-red',
 };
 
-// ── Extras (shared by all portals) ───────────────────────────
-const $ = id => document.getElementById(id);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const isUrl = u => typeof u === 'string' && /^https?:\/\//i.test(u);
-const isImageUrl = u => /\.(png|jpe?g|gif|webp|avif)(\?|$)/i.test(u || '');
+// ── Fixed subject vocabulary (keep in sync with backend SUBJECTS) ──
+const SUBJECTS = ['Mathematics','Further Mathematics','English','Literature','Physics','Chemistry','Biology','Computer Science','Economics','Government','Geography','History','Civic Education','Commerce','Accounting','Agricultural Science'];
+const subjectChecks = (id, sel = []) => `<div id="${id}" class="subject-grid">${SUBJECTS.map(s =>
+  `<label class="subj"><input type="checkbox" value="${s}" ${sel.includes(s) ? 'checked' : ''}> ${s}</label>`).join('')}</div>`;
+const checkedSubjects = id => [...document.querySelectorAll(`#${id} input:checked`)].map(i => i.value);
+const subjectOptions = (any = true) => (any ? '<option value="">Any</option>' : '') + SUBJECTS.map(s => `<option>${s}</option>`).join('');
 
-function fmtTime(ms) {
-  const t = Math.max(0, Math.floor(ms / 1000));
-  const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
-  const p = n => String(n).padStart(2, '0');
-  return (h ? h + ':' : '') + p(m) + ':' + p(s);
-}
-
-// Backend timestamps are usually naive UTC — treat them as UTC unless they carry an offset
-function parseUTC(v) {
-  if (!v) return null;
-  if (typeof v === 'number') return v;
-  let s = String(v);
-  if (!/[zZ]$|[+-]\d\d:?\d\d$/.test(s) || /^\d{4}-\d\d-\d\d$/.test(s)) s += /^\d{4}-\d\d-\d\d$/.test(s) ? '' : 'Z';
-  const t = Date.parse(s);
-  return isNaN(t) ? null : t;
-}
-
-// Render any object as label/value rows. URLs become links (images get thumbnails).
-function kv(obj) {
-  if (obj == null || typeof obj !== 'object') return `<p>${esc(obj ?? '—')}</p>`;
-  return Object.entries(obj).map(([k, v]) => {
-    let val;
-    if (isUrl(v)) val = isImageUrl(v)
-      ? `<a href="${esc(v)}" target="_blank" rel="noopener"><img src="${esc(v)}" class="thumb" alt=""></a>`
-      : `<a href="${esc(v)}" target="_blank" rel="noopener" style="color:var(--accent)">${esc(v)}</a>`;
-    else if (v && typeof v === 'object') val = `<pre class="mini-pre">${esc(JSON.stringify(v, null, 2))}</pre>`;
-    else val = esc(v ?? '—');
-    return `<div class="profile-field" style="margin-bottom:10px"><div class="label">${esc(k.replace(/_/g, ' '))}</div><div class="val">${val}</div></div>`;
-  }).join('');
-}
-
-// Direct-to-Cloudinary upload using the signed payload returned by the backend.
-// Accepts { upload_url | url | signed_url } plus either nested { params | fields } or top-level signed keys.
-// Returns { promise, abort } — promise resolves with Cloudinary's JSON (secure_url, …).
-function cloudinaryUpload(file, sign, onProgress) {
-  const xhr = new XMLHttpRequest();
-  const promise = new Promise((resolve, reject) => {
-    const url = sign.upload_url ?? sign.url ?? sign.signed_url;
-    if (!url) return reject(new Error('Backend response has no upload URL'));
-    const fd = new FormData();
-    const nested = sign.params ?? sign.fields ?? sign.upload_params ?? {};
-    const flat = {};
-    ['api_key','timestamp','signature','folder','public_id','upload_preset','eager','resource_type',
-     'allowed_formats','context','tags','transformation','eager_async','overwrite']
-      .forEach(k => { if (sign[k] !== undefined && sign[k] !== null) flat[k] = sign[k]; });
-    Object.entries({ ...flat, ...nested }).forEach(([k, v]) => fd.append(k, v));
-    fd.append('file', file);
-    xhr.open('POST', url);
-    xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress?.(Math.round(e.loaded / e.total * 100)); };
-    xhr.onload = () => {
-      let d = {}; try { d = JSON.parse(xhr.responseText); } catch {}
-      if (xhr.status >= 200 && xhr.status < 300) resolve(d);
-      else reject(new Error(d.error?.message ?? `Upload failed (${xhr.status})`));
-    };
-    xhr.onerror = () => reject(new Error('Network error during upload'));
-    xhr.onabort = () => reject(new Error('Upload cancelled'));
-    xhr.send(fd);
+// ── Teacher row + searchable picker (no manual ID entry) ─────
+function teacherRow(tc, actions) {
+  const d = document.createElement('div');
+  d.className = 'tp-item';
+  d.innerHTML = `<div><strong>${tc.full_name ?? '—'}</strong> <span class="hint">#${tc.id}${tc.email ? ' · ' + tc.email : ''}</span>
+    <div class="chip-list">${(tc.subjects ?? []).map(s => `<span class="chip">${s}</span>`).join('')}</div>
+    <div class="hint">${tc.rating?.composite != null ? '★ ' + tc.rating.composite.toFixed(1) + ' · ' : ''}${tc.verification_status ?? (tc.id_verified ? 'verified' : 'unverified')}</div></div>
+    <div class="flex-row"></div>`;
+  actions.forEach(a => {
+    const b = document.createElement('button');
+    b.className = 'btn btn-sm'; b.textContent = a.label; b.onclick = () => a.fn(tc);
+    d.lastElementChild.appendChild(b);
   });
-  return { promise, abort: () => xhr.abort() };
+  return d;
 }
 
-// Pick a file → ask backend for signed URL → upload → onDone(url)
-function pickAndUpload({ endpoint, kind, accept = 'image/*,application/pdf', onProgress, onDone, token }) {
-  const inp = document.createElement('input');
-  inp.type = 'file'; inp.accept = accept;
-  inp.onchange = async () => {
-    const f = inp.files[0]; if (!f) return;
-    const s = await api('POST', endpoint, { kind, filename: f.name, content_type: f.type }, token);
-    if (!s.ok) { toast(s.data.error ?? 'Could not get upload URL', 'error'); return; }
-    try {
-      const r = await cloudinaryUpload(f, s.data, onProgress).promise;
-      onDone(r.secure_url ?? r.url);
-      toast('File uploaded');
-    } catch (e) { toast(e.message, 'error'); }
+function teacherPicker(mountId, { path, token, actions }) {
+  const m = document.getElementById(mountId);
+  m.innerHTML = '<input placeholder="Search name, email or subject…"><div class="tp-results"></div>';
+  const inp = m.querySelector('input'), out = m.querySelector('.tp-results');
+  let t;
+  const run = async () => {
+    const res = await api('GET', `${path}${path.includes('?') ? '&' : '?'}q=${encodeURIComponent(inp.value.trim())}`, undefined, token);
+    const list = res.ok && Array.isArray(res.data) ? res.data : [];
+    out.innerHTML = list.length ? '' : '<p class="hint">No teachers found.</p>';
+    list.forEach(tc => out.appendChild(teacherRow(tc, actions)));
   };
-  inp.click();
+  inp.addEventListener('input', () => { clearTimeout(t); t = setTimeout(run, 300); });
+  inp.addEventListener('focus', () => { if (!out.children.length) run(); });
+  return { refresh: run };
 }
