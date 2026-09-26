@@ -21,7 +21,27 @@ bp = Blueprint("reviewer", __name__, url_prefix="/reviewer")
 def get_profile():
     reviewer = reviewer_service.get_profile(user_id=g.current_user.id)
     return ReviewerSchema().dump(reviewer), 200
+@bp.get("/verification/pending")
+@require_role("reviewer")
+def get_pending_verification():
+    verification_type = request.args.get("type", "teacher").lower()
 
+    if verification_type == "teacher":
+        pending = Teacher.query.filter_by(id_verified=False).all()
+        return TeacherSchema(many=True).dump(pending), 200
+
+    if verification_type == "organization":
+        pending = Organization.query.filter_by(id_verified=False).all()
+        return OrganizationSchema(many=True).dump(pending), 200
+
+    if verification_type == "parent":
+        pending = Parent.query.filter_by(id_verified=False).all()
+        return ParentSchema(many=True).dump(pending), 200
+
+    raise BadRequestError(
+        "Invalid verification type. "
+        "Expected teacher, organization, or parent."
+    )
 # ─── Assignments ────────────────────────────────────────────
 
 @bp.get("/assignments")
