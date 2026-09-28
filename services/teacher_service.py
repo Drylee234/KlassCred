@@ -15,7 +15,29 @@ def get_profile(user_id):
     if not teacher:
         raise NotFoundError("Teacher profile not found.")
     return teacher
-    
+
+
+def search_all_teachers(query=None):
+    """
+    Used by reviewers to find any teacher (verified, unverified, or
+    flagged). Unlike the employer-facing search, this deliberately does
+    NOT filter out unverified or flagged teachers -- reviewing and
+    verifying exactly those teachers is the reviewer's job.
+    """
+    teachers = Teacher.query.all()
+
+    if query:
+        q = query.strip().lower()
+        teachers = [
+            t for t in teachers
+            if q in (t.full_name or "").lower()
+            or q in (t.email or "").lower()
+            or any(q in s.lower() for s in (t.subjects or []))
+        ]
+
+    return teachers
+
+
 def create_profile(user_id, data):
     teacher = Teacher.query.filter_by(id=user_id).first()
 
