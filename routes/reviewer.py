@@ -1,14 +1,22 @@
 from flask import Blueprint, request, g
 
+from models.teacher import Teacher
+from models.employer import Organization, Parent
+
 from schemas.review import ReviewAssignmentSchema, HumanReviewSubmitSchema, ReviewSchema
 from schemas.rating import RatingSchema
 from schemas.reviewer import ReviewerSchema
+from schemas.teacher import TeacherSchema
+from schemas.employer import OrganizationSchema, ParentSchema
 
 from services import (
     reviewer_service,
     review_service,
     rating_service,
+    teacher_service,
 )
+
+from errors.exceptions import BadRequestError
 
 from utils.auth_utils import require_role
 
@@ -21,6 +29,17 @@ bp = Blueprint("reviewer", __name__, url_prefix="/reviewer")
 def get_profile():
     reviewer = reviewer_service.get_profile(user_id=g.current_user.id)
     return ReviewerSchema().dump(reviewer), 200
+
+
+@bp.get("/teachers")
+@require_role("reviewer")
+def search_teachers():
+    teachers = teacher_service.search_all_teachers(
+        query=request.args.get("q"),
+    )
+    return TeacherSchema(many=True).dump(teachers), 200
+
+
 @bp.get("/verification/pending")
 @require_role("reviewer")
 def get_pending_verification():
