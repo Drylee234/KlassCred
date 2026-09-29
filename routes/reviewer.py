@@ -16,7 +16,7 @@ from services import (
     teacher_service,
 )
 
-from errors.exceptions import BadRequestError
+from errors.exceptions import BadRequestError, NotFoundError
 
 from utils.auth_utils import require_role
 
@@ -38,6 +38,44 @@ def search_teachers():
         query=request.args.get("q"),
     )
     return TeacherSchema(many=True).dump(teachers), 200
+
+
+@bp.get("/verification/teachers/<int:teacher_id>")
+@require_role("reviewer")
+def inspect_teacher(teacher_id):
+    teacher = Teacher.query.get(teacher_id)
+    if not teacher:
+        raise NotFoundError("Teacher not found")
+    return TeacherSchema().dump(teacher), 200
+
+
+@bp.post("/verification/teachers/<int:teacher_id>/approve")
+@require_role("reviewer")
+def approve_teacher(teacher_id):
+    verification_service.verify_teacher(teacher_id)
+    teacher = Teacher.query.get(teacher_id)
+    return TeacherSchema().dump(teacher), 200
+
+
+@bp.post("/verification/teachers/<int:teacher_id>/reject")
+@require_role("reviewer")
+def reject_teacher(teacher_id):
+    teacher = Teacher.query.get(teacher_id)
+    if not teacher:
+        raise NotFoundError("Teacher not found")
+
+    data = request.get_json(silent=True) or {}
+    reason = (data.get("reason") or "").strip()
+    if not reason:
+        raise BadRequestError("Rejection reason is required")
+
+    # The current schema has no persisted verification-rejection state.
+    # Keep the teacher unverified and return the reason to the reviewer.
+    return {
+        "status": "rejected",
+        "teacher_id": teacher_id,
+        "reason": reason,
+    }, 200
 
 
 @bp.get("/verification/pending")
@@ -92,6 +130,13 @@ def submit_review(assignment_id):
 
 
 # ─── Rating Override ─────────────────────────────────────────
+
+@bp.get("/ratings/<int:teacher_id>")
+@require_role("reviewer")
+def get_teacher_rating(teacher_id):
+    rating = rating_service.get_rating(teacher_id)
+    return RatingSchema().dump(rating), 200
+
 
 @bp.post("/ratings/<int:teacher_id>/override")
 @require_role("reviewer")
