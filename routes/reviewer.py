@@ -1,5 +1,6 @@
 from flask import Blueprint, request, g
 
+from extensions import db
 from models.teacher import Teacher
 from models.employer import Organization, Parent
 
@@ -105,3 +106,43 @@ def override_rating(teacher_id):
     )
 
     return RatingSchema().dump(rating), 200
+
+@bp.post("/verification/teachers/<int:teacher_id>/approve")
+@require_role("reviewer")
+def approve_teacher(teacher_id):
+    teacher = Teacher.query.get(teacher_id)
+
+    if not teacher:
+        raise BadRequestError("Teacher not found")
+
+    teacher.verification_status = "approved"
+    teacher.verification_rejection_reason = None
+
+    # Keep the existing verification flag in sync.
+    teacher.id_verified = True
+
+    db.session.commit()
+
+    return TeacherSchema().dump(teacher), 200
+
+@bp.post("/verification/teachers/<int:teacher_id>/reject")
+@require_role("reviewer")
+def reject_teacher(teacher_id):
+    data = request.get_json() or {}
+    reason = (data.get("reason") or "").strip()
+
+    if not reason:
+        raise BadRequestError("Rejection reason is required")
+
+    teacher = Teacher.query.get(teacher_id)
+
+    if not teacher:
+        raise BadRequestError("Teacher not found")
+
+    teacher.verification_status = "rejected"
+    teacher.verification_rejection_reason = reason
+    teacher.id_verified = False
+
+    db.session.commit()
+
+    return TeacherSchema().dump(teacher), 200
