@@ -2,6 +2,7 @@ from flask import Blueprint, request, g
 
 from models.teacher import Teacher
 from models.employer import Organization, Parent
+from extensions import db
 
 from schemas.review import ReviewAssignmentSchema, HumanReviewSubmitSchema, ReviewSchema
 from schemas.rating import RatingSchema
