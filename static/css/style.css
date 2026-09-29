@@ -530,3 +530,24 @@ tr:hover td { background: var(--surface2); }
 .steps li.done { color: var(--green); }
 .steps li.cur { color: var(--yellow); font-weight: 600; }
 .steps li.bad { color: var(--red); }
+
+
+/* ── Identity document upload ── */
+.id-upload-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-top:18px; }
+.id-upload-panel { min-width:0; }
+.id-upload-label { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; margin-bottom:8px; }
+.id-dropzone { min-height:180px; border:1.5px dashed var(--border); border-radius:var(--radius-lg); background:var(--surface2); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; padding:20px; text-align:center; cursor:pointer; transition:border-color .15s, background .15s; }
+.id-dropzone:hover { border-color:var(--primary); background:var(--primary-soft); }
+.id-upload-icon { font-size:28px; color:var(--primary); }
+.id-dropzone strong { font-size:13px; color:var(--ink); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.id-dropzone span { font-size:11px; color:var(--ink-dim); }
+.id-preview { display:block; width:100%; max-height:220px; object-fit:contain; margin-top:10px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface2); }
+.id-checklist { margin-top:18px; padding:14px 16px; border-radius:var(--radius); background:var(--surface2); color:var(--ink-dim); font-size:12px; line-height:1.7; }
+.id-checklist strong { color:var(--ink); }
+.id-checklist ul { padding-left:18px; }
+.document-url-row { display:flex; gap:10px; align-items:end; }
+.document-url-row input { flex:1; }
+@media (max-width:700px) {
+  .id-upload-grid { grid-template-columns:1fr; }
+  .document-url-row { flex-direction:column; align-items:stretch; }
+}

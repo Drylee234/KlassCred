@@ -68,7 +68,6 @@ def update_profile(user_id, data):
         "full_name",
         "subjects",
         "experience_years",
-        "documents",
     }
 
     for field, value in data.items():
