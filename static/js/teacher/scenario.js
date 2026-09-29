@@ -3,6 +3,21 @@ const MAX_VIDEO_MB = 200;
 let pickedFile = null;
 let recStream = null, recorder = null, recChunks = [], recTimer = null, recStart = 0;
 let vidPoll;
+let byteshipClientPromise;
+
+async function getByteshipClient() {
+  if (!byteshipClientPromise) {
+    byteshipClientPromise = import('https://cdn.jsdelivr.net/npm/@byteship/js@latest/+esm')
+      .then(module => module.ByteshipClient)
+      .then(ByteshipClient => {
+        if (typeof ByteshipClient !== 'function') {
+          throw new Error('Byteship SDK loaded, but ByteshipClient is unavailable');
+        }
+        return ByteshipClient;
+      });
+  }
+  return byteshipClientPromise;
+}
 
 async function loadScenario() {
   const res = await api('GET', '/teachers/scenario');
@@ -116,8 +131,12 @@ async function doUpload() {
   const sign = await doRequestUploadUrl();
   if (!sign) return;
 
-  if (typeof ByteshipClient !== 'function')
-    return toast('Byteship browser SDK failed to load', 'error');
+  let ByteshipClient;
+  try {
+    ByteshipClient = await getByteshipClient();
+  } catch (e) {
+    return toast('Could not load the Byteship browser SDK: ' + e.message, 'error');
+  }
 
   const scenarioId = parseInt($('vid_scenario_id').value);
   const client = new ByteshipClient({ uploadToken: sign.upload_token });
@@ -133,6 +152,11 @@ async function doUpload() {
     const result = await client.upload(pickedFile, {
       path,
       visibility: 'public',
+      onProgress: progress => {
+        if (progress?.percent != null) {
+          $('up_status').textContent = `Uploading video to Byteship… ${Math.round(progress.percent)}%`;
+        }
+      },
     });
 
     const videoUrl = result.url ?? result.file?.url;
