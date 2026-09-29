@@ -126,6 +126,17 @@ async function beginExam() {
     return;
   }
 
+  try {
+    const saved = JSON.parse(localStorage.getItem(ACTIVE_EXAM_KEY));
+    if (saved?.attemptId && Number(saved.examId) === examId && Array.isArray(saved.questions)) {
+      examState = saved;
+      startExamSession();
+      return;
+    }
+  } catch {
+    clearExam();
+  }
+
   const list = await api('GET', '/teachers/exams');
   if (!list.ok) {
     showError(list.data.error ?? 'Unable to load exam.');
