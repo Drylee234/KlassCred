@@ -1,20 +1,60 @@
 {% extends "teacher/_layout.html" %}
-{% from "_macros.html" import header, field, empty %}
+{% from "_macros.html" import header, empty %}
 {% block content %}
-{{ header('Documents', 'Identity and certification documents (stored in <code>teacher.documents</code> JSON field)') }}
+{{ header('Identity Documents', 'Upload the documents reviewers use to verify your teacher identity.') }}
 
 <div class="card">
-  <div class="card-title">Current Documents</div>
-  <div id="docs_view">{{ empty('📄', 'Loading…') }}</div>
+  <div class="card-title">Government-issued ID card</div>
+  <p class="hint">Upload clear images of the front and back of the same valid ID. Make sure your name, photo and document details are readable.</p>
+
+  <div class="id-upload-grid">
+    <div class="id-upload-panel">
+      <div class="id-upload-label">Front of ID card <span class="badge badge-red">Required</span></div>
+      <label class="id-dropzone" for="doc_front_file">
+        <div class="id-upload-icon">▣</div>
+        <strong id="front_file_name">Choose front image</strong>
+        <span>JPG, PNG or WEBP · max 10 MB</span>
+        <input id="doc_front_file" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="previewId('front', this.files[0])">
+      </label>
+      <img id="front_preview" class="id-preview" alt="Front of ID preview" hidden>
+    </div>
+
+    <div class="id-upload-panel">
+      <div class="id-upload-label">Back of ID card <span class="badge badge-red">Required</span></div>
+      <label class="id-dropzone" for="doc_back_file">
+        <div class="id-upload-icon">▣</div>
+        <strong id="back_file_name">Choose back image</strong>
+        <span>JPG, PNG or WEBP · max 10 MB</span>
+        <input id="doc_back_file" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="previewId('back', this.files[0])">
+      </label>
+      <img id="back_preview" class="id-preview" alt="Back of ID preview" hidden>
+    </div>
+  </div>
+
+  <div class="id-checklist">
+    <strong>Before submitting</strong>
+    <ul>
+      <li>Both sides belong to the same ID.</li>
+      <li>All text and the photograph are clearly visible.</li>
+      <li>No glare, heavy blur, cropped edges or screenshots.</li>
+    </ul>
+  </div>
+
+  <button class="btn btn-primary mt-16" id="save_id_btn" onclick="doUpdateDocs()">Save ID documents</button>
+  <div id="docsResp" class="response-box"></div>
 </div>
 
 <div class="card mt-24">
-  <div class="card-title">Upload / Update Documents</div>
-  <p class="hint">Provide URLs (Cloudinary or direct link). Mandatory: id_card_front, id_card_back.</p>
-  {{ field('ID Card Front URL', 'doc_front', ph='https://res.cloudinary.com/…') }}
-  {{ field('ID Card Back URL', 'doc_back', ph='https://res.cloudinary.com/…') }}
-  {{ field('Certificate URL (optional)', 'doc_cert', ph='https://…') }}
-  <button class="btn btn-sm mt-16" onclick="doUpdateDocs()">Save documents</button>
-  <div id="docsResp" class="response-box"></div>
+  <div class="card-title">Other certification</div>
+  <p class="hint">Optional. Add a certificate or other supporting credential separately from your identity document.</p>
+  <div class="document-url-row">
+    <input id="doc_cert" type="url" placeholder="Certificate URL">
+    <button class="btn btn-sm" onclick="saveCertificate()">Save certificate</button>
+  </div>
+</div>
+
+<div class="card mt-24">
+  <div class="card-title">Submitted documents</div>
+  <div id="docs_view">{{ empty('📄', 'Loading…') }}</div>
 </div>
 {% endblock %}
