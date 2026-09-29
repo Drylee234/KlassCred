@@ -1,0 +1,44 @@
+{% extends "teacher/_layout.html" %}
+{% block content %}
+<div class="page-header flex-between">
+  <div>
+    <h2 id="exam_subject">Exam</h2>
+    <p id="exam_progress">Loading exam…</p>
+  </div>
+  <div class="exam-timer" id="exam_timer">--:--</div>
+</div>
+
+<div id="exam_error" class="exam-message" style="display:none"></div>
+
+<section id="exam_shell" style="display:none">
+  <div class="exam-layout">
+    <aside class="card exam-sidebar">
+      <div class="card-title">Questions</div>
+      <div id="question_nav" class="question-nav"></div>
+    </aside>
+
+    <main class="card exam-card">
+      <div class="exam-question-meta">
+        <span id="question_number">Question 1</span>
+        <span id="answered_count">0 answered</span>
+      </div>
+      <h3 id="question_text" class="exam-question"></h3>
+      <div id="question_options" class="exam-options"></div>
+
+      <div class="exam-actions">
+        <button class="btn btn-ghost" id="prev_btn" onclick="previousQuestion()">Previous</button>
+        <button class="btn btn-sm" id="next_btn" onclick="nextQuestion()">Next</button>
+        <button class="btn btn-success" id="submit_btn" onclick="submitExam()">Submit Exam</button>
+      </div>
+    </main>
+  </div>
+</section>
+
+<section id="exam_result" class="card exam-result" style="display:none">
+  <div class="result-icon">✓</div>
+  <h3>Exam submitted</h3>
+  <div id="result_score"></div>
+  <p id="result_detail"></p>
+  <a class="btn btn-sm" href="/app/teacher/exams">Return to Exams</a>
+</section>
+{% endblock %}
