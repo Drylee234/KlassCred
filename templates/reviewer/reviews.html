@@ -1,0 +1,9 @@
+{% extends "reviewer/_layout.html" %}
+{% from "_macros.html" import header, empty %}
+{% block content %}
+{{ header('Submitted Reviews', 'Reviews you have submitted this session') }}
+<div class="card">
+  <div class="card-title">Session Log</div>
+  <div id="reviews_log">{{ empty('⭐', 'No reviews submitted yet this session.') }}</div>
+</div>
+{% endblock %}

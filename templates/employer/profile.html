@@ -1,0 +1,24 @@
+{% extends "employer/_layout.html" %}
+{% from "_macros.html" import header, field, modal, empty %}
+{% block content %}
+{% call header('Profile', 'Your employer profile') %}
+  <button class="btn btn-sm" onclick="openModal('editProfileModal')">Edit</button>
+{% endcall %}
+
+<div class="card"><div id="profile_view">{{ empty('👤', 'Loading…') }}</div></div>
+{% include "_password_card.html" %}
+{% endblock %}
+
+{% block modals %}
+{% call modal('editProfileModal', 'Edit Profile') %}
+  <div id="ep_org_fields">
+    {{ field('Organization name', 'ep_org_name') }}
+    {{ field('CAC number', 'ep_cac') }}
+    {{ field('Location', 'ep_location') }}
+  </div>
+  <div id="ep_parent_fields" style="display:none">
+    {{ field('Full name', 'ep_p_name') }}
+  </div>
+  <button class="btn btn-primary" onclick="doUpdateProfile()">Save</button>
+{% endcall %}
+{% endblock %}

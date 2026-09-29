@@ -1,8 +1,9 @@
-from flask import Flask,send_from_directory,abort
+from flask import Flask, abort, redirect, render_template, url_for
+from jinja2 import TemplateNotFound
 from extensions import db, migrate, init_byteship
 from config import Config
-import os
 
+ROLES = ("teacher", "employer", "reviewer")
 
 
 def create_app():
@@ -36,16 +37,33 @@ def create_app():
     def health():
         return {"status": "ok"}
 
-    @app.get("/test")
-    def test_ui():
-        return send_from_directory("static", "index.html")
+    # ── UI pages ─────────────────────────────────────────────────────────
+    # Templates: templates/   Assets: static/ (css/, js/)
+    # Everything lives under /app so it can't clash with the API prefixes
+    # (/reviewer/*, /teachers/*, /employers/*, /auth/*, /verify/*).
+    #   /app/                  login + register
+    #   /app/<role>/           that role's dashboard (templates/<role>/index.html)
+    #   /app/<role>/<page>     any other page   (templates/<role>/<page>.html)
+    @app.get("/app/")
+    def login_page():
+        return render_template("index.html")
 
-    @app.route('/<page_name>.html')
-    def serve_html(page_name):
-        file_path = os.path.join(app.static_folder, f'{page_name}.html')
-        if not os.path.isfile(file_path):
+    @app.get("/app/<role>/", defaults={"page": "index"})
+    @app.get("/app/<role>/<page>")
+    def portal_page(role, page):
+        if role not in ROLES or page.startswith("_"):   # "_" = layouts/partials
             abort(404)
-        return send_from_directory(app.static_folder, f'{page_name}.html')
+        name = f"{role}/{page}.html"
+        try:
+            return render_template(name, role=role, page=page)
+        except TemplateNotFound as e:
+            if e.name != name:      # a missing include/extends is a real bug — don't hide it as a 404
+                raise
+            abort(404)
+
+    @app.get("/test")               # old entry point — keep existing links working
+    def legacy_test_ui():
+        return redirect(url_for("login_page"))
 
     @app.get("/diag/gemini-reachable")
     def diag_gemini():
@@ -67,7 +85,6 @@ def create_app():
             return {"ok": True, "elapsed": time.time() - t0, "result_preview": str(result)[:200]}
         except Exception as e:
             return {"ok": False, "elapsed": time.time() - t0, "error": type(e).__name__, "message": str(e)}
-
 
     return app
 

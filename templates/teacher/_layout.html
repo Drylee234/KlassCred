@@ -1,0 +1,8 @@
+{% extends "portal.html" %}
+{% set portal_name = "Teacher Portal" %}
+{% set nav = [
+  ("Overview",   [("index", "🏠", "Dashboard")]),
+  ("My Profile", [("profile", "👤", "Profile"), ("documents", "📄", "Documents"), ("verification", "🛡️", "Verification"),
+                  ("work-history", "🏢", "Work History"), ("references", "👥", "References")]),
+  ("Activity",   [("exams", "📝", "Exams"), ("interviews", "💬", "Interview Requests"), ("scenario", "🎬", "Teaching Scenario")]),
+] %}

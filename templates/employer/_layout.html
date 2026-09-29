@@ -1,0 +1,9 @@
+{% extends "portal.html" %}
+{% set portal_name = "Employer Portal" %}
+{% set nav = [
+  ("Overview",   [("index", "🏠", "Dashboard")]),
+  ("My Profile", [("profile", "👤", "Profile")]),
+  ("Hiring",     [("search", "🔍", "Search Teachers"), ("recruitment", "📋", "Recruitment History"),
+                  ("interviews", "💬", "Interview Requests"), ("applications", "📨", "Applications")]),
+] %}
+{% block role_js %}<script src="{{ url_for('static', filename='js/employer/shared.js') }}"></script>{% endblock %}

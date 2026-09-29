@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}KlassCred — Login / Register{% endblock %}
+
+{% block body %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1>KlassCred</h1>
+    <p class="subtitle">Teacher verification &amp; hiring platform — Test UI</p>
+
+    <div class="tab-row" id="authTabs">
+      <button class="active" onclick="switchAuthTab('login')">Login</button>
+      <button onclick="switchAuthTab('register')">Register</button>
+    </div>
+
+    <div id="loginForm">
+      {{ field('Email', 'l_email', 'email', 'you@example.com') }}
+      {{ field('Password', 'l_password', 'password', '••••••••') }}
+      <button class="btn btn-primary" onclick="doLogin()">Sign in</button>
+      <div id="loginResp" class="response-box"></div>
+    </div>
+
+    <div id="registerForm" style="display:none">
+      <label>Account type</label>
+      <select id="r_type" onchange="onTypeChange()">
+        <option value="">Select type</option>
+        <option value="teacher">Teacher</option>
+        <option value="organization">Organization</option>
+        <option value="parent">Parent</option>
+        <option value="reviewer">Reviewer</option>
+      </select>
+      {{ field('Email', 'r_email', 'email', 'you@example.com') }}
+      {{ field('Password', 'r_password', 'password', 'min 8 chars') }}
+
+      <div class="type-fields" id="fields_teacher" style="display:none">
+        <hr class="divider"><p class="hint">Teacher profile — required to register</p>
+        {{ field('Full name', 't_full_name', ph='Jane Doe') }}
+        <label>Subjects</label><div id="t_subjects_mount"></div>
+        {{ field('Years of experience', 't_exp', 'number', '3', 'min="0"') }}
+      </div>
+
+      <div class="type-fields" id="fields_organization" style="display:none">
+        <hr class="divider"><p class="hint">Organization profile — required to register</p>
+        {{ field('Organization name', 'o_name', ph='Greenfield Academy') }}
+        {{ field('CAC number', 'o_cac', ph='RC000000') }}
+        {{ field('Location', 'o_location', ph='Lagos, Nigeria') }}
+      </div>
+
+      <div class="type-fields" id="fields_parent" style="display:none">
+        <hr class="divider"><p class="hint">Parent profile — required to register</p>
+        {{ field('Full name', 'p_name', ph='Mr John Doe') }}
+      </div>
+
+      <div class="type-fields" id="fields_reviewer" style="display:none">
+        <hr class="divider"><p class="hint">Reviewer profile — required to register</p>
+        {{ field('Full name', 'rv_full_name', ph='Jane Doe') }}
+      </div>
+
+      <button class="btn btn-primary" onclick="doRegister()">Create account</button>
+      <div id="registerResp" class="response-box"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}<script src="{{ url_for('static', filename='js/auth.js') }}"></script>{% endblock %}

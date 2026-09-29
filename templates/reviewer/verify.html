@@ -1,0 +1,30 @@
+{% extends "reviewer/_layout.html" %}
+{% from "_macros.html" import header, field %}
+{% block content %}
+{{ header('Verify Users', 'POST /verify/:type/:id — triggers Cencori identity check') }}
+
+<div class="card section">
+  <div class="card-title">Pending verification</div>
+  <div id="v_pending"></div>
+</div>
+
+<div class="card section">
+  <div class="card-title">Search teachers</div>
+  <div id="v_picker"></div>
+  <div id="vTeacherResp" class="response-box"></div>
+</div>
+
+<div class="card section">
+  <div class="card-title">Verify Organization</div>
+  {{ field('Employer ID', 'v_org_id', 'number') }}
+  <button class="btn btn-sm mt-16" onclick="doVerify('organization')">Verify Organization</button>
+  <div id="vOrgResp" class="response-box"></div>
+</div>
+
+<div class="card">
+  <div class="card-title">Verify Parent</div>
+  {{ field('Employer ID', 'v_parent_id', 'number') }}
+  <button class="btn btn-sm mt-16" onclick="doVerify('parent')">Verify Parent</button>
+  <div id="vParentResp" class="response-box"></div>
+</div>
+{% endblock %}

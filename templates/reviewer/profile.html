@@ -1,0 +1,7 @@
+{% extends "reviewer/_layout.html" %}
+{% from "_macros.html" import header, empty %}
+{% block content %}
+{{ header('Profile', 'Your reviewer account') }}
+<div class="card"><div id="profile_view">{{ empty('👤', 'Loading…') }}</div></div>
+{% include "_password_card.html" %}
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "teacher/_layout.html" %}
+{% from "_macros.html" import header, field, modal, empty %}
+{% block content %}
+{% call header('Profile', 'Your teacher profile information') %}
+  <button class="btn btn-sm" onclick="openModal('editProfileModal')">Edit</button>
+{% endcall %}
+
+<div class="card"><div id="profile_view">{{ empty('👤', 'Loading profile…') }}</div></div>
+{% include "_password_card.html" %}
+{% endblock %}
+
+{% block modals %}
+{% call modal('editProfileModal', 'Edit Profile') %}
+  {{ field('Full name', 'ep_full_name') }}
+  <label>Subjects</label><div id="ep_subjects_mount"></div>
+  {{ field('Years of experience', 'ep_exp', 'number', attrs='min="0"') }}
+  <button class="btn btn-primary" onclick="doUpdateProfile()">Save changes</button>
+{% endcall %}
+{% endblock %}

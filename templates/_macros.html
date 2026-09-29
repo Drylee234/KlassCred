@@ -1,0 +1,39 @@
+{# Small building blocks shared by every page #}
+
+{# Page title. Wrap in {% call %} to add controls (buttons) on the right. #}
+{% macro header(title, sub) %}
+<div class="page-header{% if caller is defined %} flex-between{% endif %}">
+  {% if caller is defined %}<div><h2>{{ title }}</h2><p>{{ sub|safe }}</p></div>{{ caller() }}
+  {% else %}<h2>{{ title }}</h2><p>{{ sub|safe }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro stat(label, id, sub='', sub_id='') %}
+<div class="stat-card"><div class="label">{{ label }}</div><div class="value" id="{{ id }}">—</div>
+  {%- if sub or sub_id %}<div class="sub"{% if sub_id %} id="{{ sub_id }}"{% endif %}>{{ sub }}</div>{% endif %}</div>
+{% endmacro %}
+
+{% macro empty(icon, text) %}
+<div class="empty-state"><div class="icon">{{ icon }}</div><p>{{ text }}</p></div>
+{% endmacro %}
+
+{# label + input (or textarea). `attrs` is raw extra attributes, e.g. 'min="0"' #}
+{% macro field(label, id, type='text', ph='', attrs='') %}
+<label>{{ label }}</label>
+{% if type == 'textarea' %}<textarea id="{{ id }}" placeholder="{{ ph }}" {{ attrs|safe }}></textarea>
+{% else %}<input id="{{ id }}" type="{{ type }}" placeholder="{{ ph }}" {{ attrs|safe }}>{% endif %}
+{% endmacro %}
+
+{# Modal shell. Body goes in the {% call %} block; the response box id is <id>Resp #}
+{% macro modal(id, title) %}
+<div class="modal-overlay" id="{{ id }}">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>{{ title }}</h3>
+      <button class="modal-close" onclick="closeModal('{{ id }}')">✕</button>
+    </div>
+    {{ caller() }}
+    <div id="{{ id }}Resp" class="response-box"></div>
+  </div>
+</div>
+{% endmacro %}

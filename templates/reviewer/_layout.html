@@ -1,0 +1,9 @@
+{% extends "portal.html" %}
+{% set portal_name = "Reviewer Portal" %}
+{% set nav = [
+  ("Overview",    [("index", "🏠", "Dashboard")]),
+  ("My Profile",  [("profile", "👤", "Profile")]),
+  ("Review Work", [("assignments", "📋", "Assignments"), ("reviews", "⭐", "Submitted Reviews")]),
+  ("Admin",       [("verify", "✅", "Verify Users"), ("override", "🔧", "Rating Override")]),
+] %}
+{% block role_js %}<script src="{{ url_for('static', filename='js/reviewer/shared.js') }}"></script>{% endblock %}

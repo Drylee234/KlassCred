@@ -1,0 +1,16 @@
+{% extends "employer/_layout.html" %}
+{% from "_macros.html" import header %}
+{% block content %}
+{{ header('Applications', 'GET /employers/applications') }}
+
+<div class="flex-row" style="margin-bottom:16px">
+  <select id="app_status" style="width:auto;min-width:160px" onchange="loadApplications()">
+    <option value="">All statuses</option>
+    <option value="pending">Pending</option>
+    <option value="accepted">Accepted</option>
+    <option value="rejected">Rejected</option>
+    <option value="withdrawn">Withdrawn</option>
+  </select>
+</div>
+<div id="app_list"></div>
+{% endblock %}

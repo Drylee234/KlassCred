@@ -1,0 +1,20 @@
+{% extends "teacher/_layout.html" %}
+{% from "_macros.html" import stat, empty %}
+{% block content %}
+<div class="page-header flex-between">
+  <div><h2>Dashboard</h2><p id="dash_greeting">Welcome back</p></div>
+  <span id="dash_verified" class="badge badge-gray">Unverified</span>
+</div>
+
+<div class="stat-grid">
+  {{ stat('Composite Rating', 'ds_rating', 'out of 100') }}
+  {{ stat('Exam Attempts', 'ds_exams') }}
+  {{ stat('Interview Requests', 'ds_interviews') }}
+  {{ stat('Profile', 'ds_profile', sub_id='ds_profile_sub') }}
+</div>
+
+<div class="card">
+  <div class="card-title">Rating Breakdown</div>
+  <div id="dash_breakdown">{{ empty('📊', 'No rating yet — complete your profile and take an exam.') }}</div>
+</div>
+{% endblock %}

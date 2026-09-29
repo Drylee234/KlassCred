@@ -1,0 +1,28 @@
+{% extends "teacher/_layout.html" %}
+{% from "_macros.html" import header, field, modal %}
+{% block content %}
+{% call header('References', 'POST /teachers/profile/references') %}
+  <button class="btn btn-sm" onclick="openModal('addRefModal')">+ Add</button>
+{% endcall %}
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Org</th><th>Role</th><th>Email</th><th>Phone</th><th>Relation</th><th></th></tr></thead>
+      <tbody id="ref_table"></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+{% call modal('addRefModal', 'Add Reference') %}
+  {{ field('Full name', 'ref_full_name') }}
+  {{ field('Organization', 'ref_org') }}
+  {{ field('Role', 'ref_role') }}
+  {{ field('Email', 'ref_email', 'email') }}
+  {{ field('Phone', 'ref_phone') }}
+  {{ field('Relationship type', 'ref_rel', ph='Former supervisor / colleague …') }}
+  <button class="btn btn-primary" onclick="doAddRef()">Add</button>
+{% endcall %}
+{% endblock %}

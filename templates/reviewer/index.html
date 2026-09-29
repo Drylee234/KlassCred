@@ -1,0 +1,21 @@
+{% extends "reviewer/_layout.html" %}
+{% from "_macros.html" import stat, empty %}
+{% block content %}
+<div class="page-header">
+  <h2>Reviewer Dashboard</h2>
+  <p>Welcome back</p>
+</div>
+
+<div class="stat-grid">
+  {{ stat('Open Assignments', 'ds_open', 'assigned + in_progress') }}
+  {{ stat('Completed Reviews', 'ds_completed') }}
+  {{ stat('Total Assigned', 'ds_total') }}
+</div>
+
+<div class="card">
+  <div class="card-title">Open Assignments</div>
+  <div id="dash_assignments">{{ empty('📋', 'Loading…') }}</div>
+</div>
+{% endblock %}
+
+{% block modals %}{% include "reviewer/_review_modal.html" %}{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "teacher/_layout.html" %}
+{% from "_macros.html" import header, field, modal %}
+{% block content %}
+{% call header('Work History', 'POST /teachers/profile/work-history') %}
+  <button class="btn btn-sm" onclick="openModal('addWorkModal')">+ Add</button>
+{% endcall %}
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Organization</th><th>Role</th><th>Start</th><th>End</th><th></th></tr></thead>
+      <tbody id="work_table"></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+{% call modal('addWorkModal', 'Add Work History') %}
+  {{ field('Organization', 'wh_org') }}
+  {{ field('Role', 'wh_role') }}
+  {{ field('Start date', 'wh_start', 'date') }}
+  {{ field('End date (leave blank if current)', 'wh_end', 'date') }}
+  <button class="btn btn-primary" onclick="doAddWork()">Add</button>
+{% endcall %}
+{% endblock %}

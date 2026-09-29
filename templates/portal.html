@@ -1,0 +1,35 @@
+{# Shell for every logged-in page: sidebar + content area.
+   Role layouts (teacher/_layout.html …) supply `portal_name` and `nav`.
+   Each page's script is picked up by convention: static/js/<role>/<page>.js #}
+{% extends "base.html" %}
+{% block title %}KlassCred — {{ portal_name }}{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+  <nav class="sidebar">
+    <div class="sidebar-logo">KlassCred <span id="sbar_type">{{ portal_name }}</span></div>
+    {% for section, items in nav %}
+    <span class="nav-section">{{ section }}</span>
+    {% for slug, icon, label in items %}
+    <a class="nav-item{{ ' active' if slug == page }}" href="{{ url_for('portal_page', role=role, page=slug) }}">
+      <span class="nav-icon">{{ icon }}</span> {{ label }}
+    </a>
+    {% endfor %}
+    {% endfor %}
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="logout()" style="color:var(--red)">
+        <span class="nav-icon">🚪</span> Logout
+      </button>
+    </div>
+  </nav>
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% block modals %}{% endblock %}
+{% endblock %}
+
+{% block scripts %}
+{% block role_js %}{% endblock %}
+<script src="{{ url_for('static', filename='js/%s/%s.js' % (role, page)) }}"></script>
+{% endblock %}
