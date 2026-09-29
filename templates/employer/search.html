@@ -1,0 +1,23 @@
+{% extends "employer/_layout.html" %}
+{% from "_macros.html" import header, field, empty %}
+{% block content %}
+{{ header('Search Teachers', 'GET /employers/search') }}
+
+<div class="card section">
+  <div class="card-title">Filters</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+    <div><label>Subject</label><select id="s_subject"></select></div>
+    <div><label>Verified</label><select id="s_verified"><option value="false">Any</option><option value="true">Verified only</option></select></div>
+    <div>{{ field('Min rating (0–100)', 's_min_rating', 'number', attrs='min="0" max="100"') }}</div>
+    <div>{{ field('Min experience (yrs)', 's_min_exp', 'number', attrs='min="0"') }}</div>
+    <div>{{ field('Location', 's_location', ph='Lagos') }}</div>
+    <div><label>Distance</label>
+      <select id="s_radius"><option value="">Any</option><option value="5">5 km</option><option value="10">10 km</option><option value="25">25 km</option><option value="50">50 km</option></select>
+    </div>
+  </div>
+  <button class="btn btn-sm mt-16" onclick="doSearch()">Search</button>
+</div>
+
+<div id="search_results">{{ empty('🔍', 'Run a search above.') }}</div>
+<div id="searchResp" class="response-box"></div>
+{% endblock %}

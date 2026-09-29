@@ -1,0 +1,19 @@
+{% extends "reviewer/_layout.html" %}
+{% from "_macros.html" import header %}
+{% block content %}
+{% call header('Review Assignments', 'GET /reviewer/assignments') %}
+  <button class="btn btn-sm" onclick="loadAssignments()">Refresh</button>
+{% endcall %}
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Assignment ID</th><th>Video ID</th><th>Status</th><th>Assigned</th><th>Completed</th><th>Action</th></tr></thead>
+      <tbody id="assign_table"></tbody>
+    </table>
+  </div>
+  <div id="assignResp" class="response-box"></div>
+</div>
+{% endblock %}
+
+{% block modals %}{% include "reviewer/_review_modal.html" %}{% endblock %}

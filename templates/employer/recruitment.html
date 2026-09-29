@@ -1,0 +1,37 @@
+{% extends "employer/_layout.html" %}
+{% from "_macros.html" import header, field, modal %}
+{% block content %}
+{% call header('Recruitment History', 'GET /employers/recruitment') %}
+  <button class="btn btn-sm" onclick="openModal('hireModal')">+ Hire Teacher</button>
+{% endcall %}
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ID</th><th>Teacher ID</th><th>Position</th><th>Hired</th><th>Ended</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody id="rec_table"></tbody>
+    </table>
+  </div>
+  <div id="recResp" class="response-box"></div>
+</div>
+{% endblock %}
+
+{% block modals %}
+{% call modal('hireModal', 'Hire a Teacher') %}
+  <label>Teacher</label>
+  <div id="hire_picker"></div>
+  <div id="hire_picked" class="picked"></div>
+  <input id="hire_teacher_id" type="hidden">
+  {{ field('Position', 'hire_position', ph='Mathematics Teacher') }}
+  {{ field('Hire date', 'hire_date', 'date') }}
+  <button class="btn btn-primary" onclick="doHireTeacher()">Hire</button>
+{% endcall %}
+
+{% call modal('statusModal', 'Update Recruitment Status') %}
+  <input type="hidden" id="status_rec_id">
+  <p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Record ID: <strong id="status_rec_label"></strong></p>
+  <label>New status</label>
+  <select id="new_status"></select>
+  <button class="btn btn-primary" onclick="doUpdateStatus()">Update</button>
+{% endcall %}
+{% endblock %}

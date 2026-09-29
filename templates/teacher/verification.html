@@ -1,0 +1,13 @@
+{% extends "teacher/_layout.html" %}
+{% from "_macros.html" import header %}
+{% block content %}
+{{ header('Verification', 'Apply for a verified badge') }}
+
+<div class="card">
+  <div id="ver_status"></div>
+  <div class="card-title mt-16">Requirements</div>
+  <ul class="steps" id="ver_reqs"></ul>
+  <button class="btn btn-sm mt-16" id="ver_apply_btn" onclick="applyVerification()">Apply for verification</button>
+  <div id="verResp" class="response-box"></div>
+</div>
+{% endblock %}

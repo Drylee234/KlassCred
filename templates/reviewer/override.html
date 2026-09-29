@@ -1,0 +1,16 @@
+{% extends "reviewer/_layout.html" %}
+{% from "_macros.html" import header, field %}
+{% block content %}
+{{ header('Rating Override', 'POST /reviewer/ratings/:teacher_id/override') }}
+
+<div class="card">
+  <label>Search teacher</label>
+  <div id="ov_picker"></div>
+  <div id="ov_picked" class="picked"></div>
+  <input id="ov_teacher_id" type="hidden">
+  {{ field('Composite rating (0–100)', 'ov_composite', 'number', attrs='min="0" max="100" step="0.1"') }}
+  {{ field('Reason', 'ov_reason', 'textarea', 'Reason for manual override…') }}
+  <button class="btn btn-sm mt-16" onclick="doOverride()">Apply Override</button>
+  <div id="ovResp" class="response-box"></div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{# Used by the dashboard and the assignments page; logic lives in static/js/reviewer/shared.js #}
+{% from "_macros.html" import modal, field %}
+{% call modal('reviewModal', 'Submit Review') %}
+  <input type="hidden" id="rv_assignment_id">
+  <p style="color:var(--text-dim);font-size:13px;margin-bottom:12px">Assignment <strong id="rv_label"></strong></p>
+  {{ field('Score (0–100)', 'rv_score', 'number', 'e.g. 78.5', 'min="0" max="100" step="0.1"') }}
+  {{ field('Notes', 'rv_notes', 'textarea', 'Reviewer notes…') }}
+  <label>Flag this video?</label>
+  <select id="rv_flagged" onchange="toggleFlagReason()">
+    <option value="false">No</option>
+    <option value="true">Yes — flag</option>
+  </select>
+  <div id="rv_flag_reason_wrap" style="display:none">
+    {{ field('Flag reason', 'rv_flag_reason', 'textarea', 'Why is this being flagged?') }}
+  </div>
+  <button class="btn btn-primary" onclick="doSubmitReview()">Submit Review</button>
+{% endcall %}

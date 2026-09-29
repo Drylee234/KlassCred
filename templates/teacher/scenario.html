@@ -1,0 +1,33 @@
+{% extends "teacher/_layout.html" %}
+{% from "_macros.html" import header, field %}
+{% block content %}
+{{ header('Teaching Scenario &amp; Video', 'Get a scenario, then request an upload URL') }}
+
+<div class="card section">
+  <div class="card-title">Fetch Scenario — GET /teachers/scenario</div>
+  <button class="btn btn-sm" onclick="loadScenario()">Get Scenario</button>
+  <div id="scenario_view" class="mt-16"></div>
+  <div id="scenarioResp" class="response-box"></div>
+</div>
+
+<div class="card section">
+  <div class="card-title">Request Upload URL — POST /teachers/video/upload-url</div>
+  <input id="vid_scenario_id" type="hidden">
+  <button class="btn btn-sm mt-16" onclick="doRequestUploadUrl()">Get Upload URL</button>
+  <div id="uploadUrlResp" class="response-box"></div>
+</div>
+
+<div class="card">
+  <div class="card-title">Confirm Upload — POST /teachers/video/confirm</div>
+  <input id="confirm_scenario_id" type="hidden">
+  {{ field('Video URL (from Cloudinary)', 'confirm_video_url', ph='https://res.cloudinary.com/…') }}
+  <button class="btn btn-sm mt-16" onclick="doConfirmUpload()">Confirm Upload</button>
+  <div id="confirmResp" class="response-box"></div>
+</div>
+
+<div class="card mt-24">
+  <div class="card-title">My Video Submissions</div>
+  <button class="btn btn-sm" onclick="loadVideos()">Refresh</button>
+  <div id="vid_list" class="mt-16"></div>
+</div>
+{% endblock %}
