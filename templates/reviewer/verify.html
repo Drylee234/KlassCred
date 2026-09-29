@@ -1,30 +1,29 @@
 {% extends "reviewer/_layout.html" %}
-{% from "_macros.html" import header, field %}
+{% from "_macros.html" import header %}
 {% block content %}
-{{ header('Verify Users', 'POST /verify/:type/:id — triggers Cencori identity check') }}
+{{ header('Verify Users', 'Review and verify teachers and employers') }}
 
 <div class="card section">
-  <div class="card-title">Pending verification</div>
-  <div id="v_pending"></div>
-</div>
+  <div class="verify-tabs" role="tablist">
+    <button class="verify-tab active" data-tab="teachers" onclick="switchVerifyTab('teachers')">Teachers</button>
+    <button class="verify-tab" data-tab="employers" onclick="switchVerifyTab('employers')">Employers</button>
+  </div>
 
-<div class="card section">
-  <div class="card-title">Search teachers</div>
-  <div id="v_picker"></div>
-  <div id="vTeacherResp" class="response-box"></div>
-</div>
+  <section id="teachers_panel" class="verify-panel active">
+    <div class="card-title">Search teachers</div>
+    <div id="v_picker"></div>
+    <div id="vTeacherResp" class="response-box"></div>
+  </section>
 
-<div class="card section">
-  <div class="card-title">Verify Organization</div>
-  {{ field('Employer ID', 'v_org_id', 'number') }}
-  <button class="btn btn-sm mt-16" onclick="doVerify('organization')">Verify Organization</button>
-  <div id="vOrgResp" class="response-box"></div>
+  <section id="employers_panel" class="verify-panel">
+    <div class="card-title">Search employers</div>
+    <div id="e_picker"></div>
+    <div id="vEmployerResp" class="response-box"></div>
+  </section>
 </div>
 
 <div class="card">
-  <div class="card-title">Verify Parent</div>
-  {{ field('Employer ID', 'v_parent_id', 'number') }}
-  <button class="btn btn-sm mt-16" onclick="doVerify('parent')">Verify Parent</button>
-  <div id="vParentResp" class="response-box"></div>
+  <div class="card-title">Pending verification</div>
+  <div id="v_pending"></div>
 </div>
 {% endblock %}
