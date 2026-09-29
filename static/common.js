@@ -84,7 +84,7 @@ function showSection(id) {
 // ── Logout ───────────────────────────────────────────────────
 function logout() {
   session.clear();
-  window.location.href = '/test-ui/';
+  window.location.href = '/test/';
 }
 
 // ── Badge helper ─────────────────────────────────────────────
