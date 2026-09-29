@@ -11,6 +11,7 @@ from schemas.employer import OrganizationSchema, ParentSchema
 
 from services import (
     reviewer_service,
+    verification_service,
     review_service,
     rating_service,
     teacher_service,
