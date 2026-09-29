@@ -2,7 +2,7 @@ from flask import Blueprint, request, g
 
 from models.teacher import Teacher
 from models.employer import Organization, Parent
-from extensions import db
+from sqlalchemy import or_
 
 from schemas.review import ReviewAssignmentSchema, HumanReviewSubmitSchema, ReviewSchema
 from schemas.rating import RatingSchema
@@ -52,7 +52,7 @@ def search_employers():
     if query:
         pattern = f"%{query}%"
         organizations = organizations.filter(
-            db.or_(
+            or_(
                 Organization.org_name.ilike(pattern),
                 Organization.cac_number.ilike(pattern),
                 Organization.location.ilike(pattern),
