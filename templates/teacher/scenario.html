@@ -1,27 +1,56 @@
 {% extends "teacher/_layout.html" %}
 {% from "_macros.html" import header, field %}
 {% block content %}
-{{ header('Teaching Scenario &amp; Video', 'Get a scenario, then request an upload URL') }}
+{{ header('Teaching Scenario &amp; Video', 'Get a scenario, choose/record a video, then upload it directly') }}
 
 <div class="card section">
-  <div class="card-title">Fetch Scenario — GET /teachers/scenario</div>
+  <div class="card-title">1. Teaching Scenario</div>
   <button class="btn btn-sm" onclick="loadScenario()">Get Scenario</button>
   <div id="scenario_view" class="mt-16"></div>
   <div id="scenarioResp" class="response-box"></div>
 </div>
 
 <div class="card section">
-  <div class="card-title">Request Upload URL — POST /teachers/video/upload-url</div>
+  <div class="card-title">2. Upload Teaching Video</div>
   <input id="vid_scenario_id" type="hidden">
-  <button class="btn btn-sm mt-16" onclick="doRequestUploadUrl()">Get Upload URL</button>
+
+  <div class="flex-row" style="flex-wrap:wrap">
+    <button class="btn btn-sm" onclick="$('vid_file').click()">📁 Choose video</button>
+    <button class="btn btn-sm" onclick="startCamera()">🎥 Record with camera</button>
+    <input id="vid_file" type="file" accept="video/*" style="display:none"
+           onchange="onFilePicked(this.files[0]); this.value=''">
+  </div>
+
+  <div id="rec_panel" style="display:none" class="mt-16">
+    <video id="rec_live" class="preview" muted playsinline></video>
+    <div class="flex-row mt-16">
+      <button class="btn btn-sm" id="rec_start" onclick="startRec()">● Start recording</button>
+      <button class="btn btn-danger-sm" id="rec_stop" onclick="stopRec()" style="display:none">■ Stop</button>
+      <span id="rec_time" class="timer" style="display:none">00:00</span>
+      <button class="btn btn-ghost" onclick="stopCamera()">Close camera</button>
+    </div>
+  </div>
+
+  <div id="vid_picked" style="display:none" class="mt-16">
+    <video id="vid_preview" class="preview" controls playsinline></video>
+    <div class="hint" id="vid_meta"></div>
+
+    <div class="flex-row mt-16">
+      <button class="btn btn-sm" id="btn_upload" onclick="doUpload()">⬆ Upload video</button>
+      <button class="btn btn-ghost" onclick="clearPicked()">Remove</button>
+    </div>
+
+    <div class="progress mt-16" id="up_prog_wrap" style="display:none">
+      <div id="up_prog" style="width:100%"></div>
+    </div>
+    <div class="hint" id="up_status"></div>
+  </div>
+
   <div id="uploadUrlResp" class="response-box"></div>
 </div>
 
-<div class="card">
-  <div class="card-title">Confirm Upload — POST /teachers/video/confirm</div>
-  <input id="confirm_scenario_id" type="hidden">
-  {{ field('Video URL (from Cloudinary)', 'confirm_video_url', ph='https://res.cloudinary.com/…') }}
-  <button class="btn btn-sm mt-16" onclick="doConfirmUpload()">Confirm Upload</button>
+<div class="card section">
+  <div class="card-title">3. Upload Result</div>
   <div id="confirmResp" class="response-box"></div>
 </div>
 
