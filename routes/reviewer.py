@@ -24,7 +24,6 @@ from utils.auth_utils import require_role
 bp = Blueprint("reviewer", __name__, url_prefix="/reviewer")
 
 
-
 @bp.get("/profile")
 @require_role("reviewer")
 def get_profile():
@@ -39,6 +38,54 @@ def search_teachers():
         query=request.args.get("q"),
     )
     return TeacherSchema(many=True).dump(teachers), 200
+
+
+@bp.get("/employers")
+@require_role("reviewer")
+def search_employers():
+    query = (request.args.get("q") or "").strip().lower()
+
+    organizations = Organization.query
+    parents = Parent.query
+
+    if query:
+        pattern = f"%{query}%"
+        organizations = organizations.filter(
+            db.or_(
+                Organization.org_name.ilike(pattern),
+                Organization.cac_number.ilike(pattern),
+                Organization.location.ilike(pattern),
+            )
+        )
+        parents = parents.filter(
+            db.or_(
+                Parent.name.ilike(pattern),
+                Parent.email.ilike(pattern),
+            )
+        )
+
+    results = []
+    for employer in organizations.all():
+        results.append({
+            "id": employer.id,
+            "type": "organization",
+            "name": employer.org_name,
+            "email": employer.email,
+            "location": employer.location,
+            "id_verified": employer.id_verified,
+        })
+
+    for employer in parents.all():
+        results.append({
+            "id": employer.id,
+            "type": "parent",
+            "name": employer.name,
+            "email": employer.email,
+            "location": None,
+            "id_verified": employer.id_verified,
+        })
+
+    return results, 200
 
 
 @bp.get("/verification/teachers/<int:teacher_id>")
@@ -70,8 +117,6 @@ def reject_teacher(teacher_id):
     if not reason:
         raise BadRequestError("Rejection reason is required")
 
-    # The current schema has no persisted verification-rejection state.
-    # Keep the teacher unverified and return the reason to the reviewer.
     return {
         "status": "rejected",
         "teacher_id": teacher_id,
@@ -100,37 +145,28 @@ def get_pending_verification():
         "Invalid verification type. "
         "Expected teacher, organization, or parent."
     )
-# ─── Assignments ────────────────────────────────────────────
+
 
 @bp.get("/assignments")
 @require_role("reviewer")
 def get_assignments():
-    assignments = (
-        review_service.get_assignments_for_reviewer(
-            reviewer_id=g.current_user.id,
-        )
+    assignments = review_service.get_assignments_for_reviewer(
+        reviewer_id=g.current_user.id,
     )
-
     return ReviewAssignmentSchema(many=True).dump(assignments), 200
-    
-
 
 
 @bp.post("/assignments/<int:assignment_id>/review")
 @require_role("reviewer")
 def submit_review(assignment_id):
     data = HumanReviewSubmitSchema().load(request.get_json())
-
     result = review_service.submit_human_review(
         reviewer_id=g.current_user.id,
         assignment_id=assignment_id,
         data=data,
     )
-
     return ReviewSchema().dump(result), 201
 
-
-# ─── Rating Override ─────────────────────────────────────────
 
 @bp.get("/ratings/<int:teacher_id>")
 @require_role("reviewer")
@@ -143,11 +179,9 @@ def get_teacher_rating(teacher_id):
 @require_role("reviewer")
 def override_rating(teacher_id):
     data = request.get_json()
-
     rating = rating_service.override_rating(
         teacher_id=teacher_id,
         composite=data["composite"],
         reason=data["reason"],
     )
-
     return RatingSchema().dump(rating), 200
