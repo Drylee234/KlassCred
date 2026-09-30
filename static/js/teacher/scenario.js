@@ -7,7 +7,7 @@ let vidPoll;
 
 async function loadScenario() {
   const res = await api('GET', '/teachers/scenario');
-  showResponse('scenarioResp', res.data, res.ok);
+
   if (!res.ok) return toast(res.data.error ?? 'Failed', 'error');
 
   const s = res.data;
@@ -103,7 +103,7 @@ async function doRequestUploadUrl() {
   }
 
   const res = await api('POST', '/teachers/video/upload-url', { scenario_id });
-  showResponse('uploadUrlResp', res.data, res.ok);
+
   if (!res.ok) {
     toast(res.data.error ?? 'Could not prepare upload', 'error');
     return null;
@@ -218,8 +218,6 @@ async function doUpload() {
       scenario_id: scenarioId,
       video_url: videoUrl,
     });
-
-    showResponse('confirmResp', confirm.data, confirm.ok);
 
     if (!confirm.ok) {
       toast(confirm.data.error ?? 'Upload succeeded, but confirmation failed', 'error');
