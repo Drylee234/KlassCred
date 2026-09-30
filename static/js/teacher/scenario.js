@@ -1,5 +1,6 @@
 // ── Teacher scenario + video ──
 const MAX_VIDEO_MB = 200;
+const BYTESHIP_API = 'https://api.byteship.dev';
 let pickedFile = null;
 let recStream = null, recorder = null, recChunks = [], recTimer = null, recStart = 0;
 let vidPoll;
@@ -110,47 +111,105 @@ async function doRequestUploadUrl() {
   return res.data;
 }
 
+async function byteshipRequest(path, token, options = {}) {
+  const res = await fetch(`${BYTESHIP_API}${path}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(options.headers || {}),
+    },
+  });
+
+  let data = null;
+  try { data = await res.json(); } catch (_) {}
+
+  if (!res.ok) {
+    const message = data?.error || `Byteship request failed (${res.status})`;
+    throw new Error(message);
+  }
+
+  return data;
+}
+
+function uploadBytesWithProgress(url, headers, file) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.open('PUT', url);
+    Object.entries(headers || {}).forEach(([key, value]) => {
+      xhr.setRequestHeader(key, value);
+    });
+
+    xhr.upload.onprogress = event => {
+      if (!event.lengthComputable) return;
+      const percent = Math.round((event.loaded / event.total) * 100);
+      $('up_status').textContent = `Uploading video to Byteship… ${percent}%`;
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+        return;
+      }
+      reject(new Error(`Byteship file upload failed (${xhr.status})`));
+    };
+
+    xhr.onerror = () => reject(new Error('Network error while uploading video to Byteship'));
+    xhr.onabort = () => reject(new Error('Byteship upload was cancelled'));
+    xhr.send(file);
+  });
+}
+
 async function doUpload() {
   if (!pickedFile) return toast('Choose or record a video first', 'error');
 
   const sign = await doRequestUploadUrl();
   if (!sign) return;
 
-  let ByteshipCtor = window.ByteshipClient;
-
-  // The restored CDN bundle is not guaranteed to execute before this
-  // page script. Fall back to the browser ESM build and cache the
-  // constructor globally for subsequent uploads.
-  if (typeof ByteshipCtor !== 'function') {
-    try {
-      const sdk = await import('https://cdn.jsdelivr.net/npm/@byteship/js/+esm');
-      ByteshipCtor = sdk.ByteshipClient;
-      if (typeof ByteshipCtor === 'function') window.ByteshipClient = ByteshipCtor;
-    } catch (e) {
-      console.error('Byteship SDK import failed:', e);
-    }
-  }
-
-  if (typeof ByteshipCtor !== 'function')
-    return toast('Byteship browser SDK failed to load', 'error');
-
   const scenarioId = parseInt($('vid_scenario_id').value);
-  const client = new ByteshipCtor({ uploadToken: sign.upload_token });
-
   const safeName = pickedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
   const path = `${sign.folder}/${Date.now()}-${safeName}`;
+  const encodedPath = path.split('/').map(encodeURIComponent).join('/');
 
   $('btn_upload').disabled = true;
   $('up_prog_wrap').style.display = 'block';
-  $('up_status').textContent = 'Uploading video to Byteship…';
+  $('up_status').textContent = 'Preparing Byteship upload…';
 
   try {
-    const result = await client.upload(pickedFile, {
-      path,
-      visibility: 'public',
+    const session = await byteshipRequest(`/v1/files/${encodedPath}`, sign.upload_token, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        byteSize: pickedFile.size,
+        contentType: pickedFile.type || 'application/octet-stream',
+        method: 'auto',
+        visibility: 'public',
+      }),
     });
 
-    const videoUrl = result.url ?? result.file?.url;
+    if (!session?.upload?.url || !session?.upload?.id) {
+      throw new Error('Byteship did not return a valid upload session');
+    }
+
+    $('up_status').textContent = 'Uploading video to Byteship… 0%';
+    await uploadBytesWithProgress(
+      session.upload.url,
+      session.upload.headers,
+      pickedFile,
+    );
+
+    $('up_status').textContent = 'Finalizing Byteship upload…';
+    const completed = await byteshipRequest(
+      `/v1/files/${encodedPath}/upload/complete`,
+      sign.upload_token,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uploadId: session.upload.id }),
+      },
+    );
+
+    const videoUrl = completed?.file?.url || session?.file?.url;
     if (!videoUrl) throw new Error('Byteship upload completed without a video URL');
 
     $('up_status').textContent = 'Upload complete — starting review…';
@@ -171,6 +230,7 @@ async function doUpload() {
     clearPicked();
     loadVideos();
   } catch (e) {
+    console.error('Byteship upload failed:', e);
     $('up_status').textContent = e.message;
     toast(e.message, 'error');
   } finally {
