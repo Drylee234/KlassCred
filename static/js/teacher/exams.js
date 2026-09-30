@@ -1,7 +1,7 @@
 // ── Teacher exams ──
 async function loadExams() {
   const res = await api('GET', '/teachers/exams');
-  showResponse('examListResp', res.data, res.ok);
+
   if (!res.ok) return toast(res.data.error ?? 'Failed', 'error');
   $('exam_list').innerHTML = res.data.length ? res.data.map(({ exam: e, attempts_left: left }) => `
     <div class="card" style="margin-bottom:12px">
