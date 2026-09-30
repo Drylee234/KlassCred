@@ -1,10 +1,10 @@
 {% extends "teacher/_layout.html" %}
 {% from "_macros.html" import header, field, empty %}
 {% block content %}
-{{ header('Exams', 'Available exams &amp; your attempt history') }}
+{{ header('Exams', 'Complete your subject assessments and track your results') }}
 
 <div class="card section">
-  <div class="card-title">Available Exams — GET /teachers/exams</div>
+  <div class="card-title">Available Exams</div>
   <button class="btn btn-sm" onclick="loadExams()">Refresh</button>
   <div id="exam_list" class="mt-16">{{ empty('📝', 'Click Refresh to load exams.') }}</div>
 
