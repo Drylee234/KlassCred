@@ -2,7 +2,7 @@
 const VACT = [
   { label: 'Inspect', fn: async tc => {
       const r = await api('GET', `/reviewer/verification/teachers/${tc.id}`);
-      showResponse('vTeacherResp', r.data, r.ok);
+
   } },
   { label: 'Verify', fn: tc => send(
       'POST',
