@@ -3,22 +3,231 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KlassCred — JSON</title>
+  <title>KlassCred — Login / Register</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
-<pre id="json" class="response-box show" style="white-space:pre-wrap;word-break:break-word;">Loading…</pre>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1>KlassCred</h1>
+    <p class="subtitle">Teacher verification & hiring platform — Test UI</p>
+
+    <!-- Login / Register tab -->
+    <div class="tab-row" id="authTabs">
+      <button class="active" onclick="switchAuthTab('login')">Login</button>
+      <button onclick="switchAuthTab('register')">Register</button>
+    </div>
+
+    <!-- ── LOGIN ───────────────────────────────────────────── -->
+    <div id="loginForm">
+      <label>Email</label>
+      <input id="l_email" type="email" placeholder="you@example.com">
+
+      <label>Password</label>
+      <input id="l_password" type="password" placeholder="••••••••">
+
+      <button class="btn btn-primary" onclick="doLogin()">Sign in</button>
+      <div id="loginResp" class="response-box"></div>
+    </div>
+
+    <!-- ── REGISTER ─────────────────────────────────────────── -->
+    <div id="registerForm" style="display:none">
+
+      <!-- User type selector -->
+      <label>Account type</label>
+      <select id="r_type" onchange="onTypeChange()">
+        <option value="">Select type </option>
+        <option value="teacher">Teacher</option>
+        <option value="organization">Organization</option>
+        <option value="parent">Parent</option>
+        <option value="reviewer">Reviewer</option>
+      </select>
+
+      <label>Email</label>
+      <input id="r_email" type="email" placeholder="you@example.com">
+
+      <label>Password</label>
+      <input id="r_password" type="password" placeholder="min 8 chars">
+
+      <!-- ── Teacher-only fields ── -->
+      <div class="type-fields" id="fields_teacher" style="display:none">
+        <hr class="divider">
+        <p class="hint">Teacher profile — required to register</p>
+        <label>Full name</label>
+        <input id="t_full_name" placeholder="Jane Doe">
+        <label>Subjects</label>
+        <div id="t_subjects_mount"></div>
+        <label>Years of experience</label>
+        <input id="t_exp" type="number" min="0" placeholder="3">
+      </div>
+
+      <!-- ── Organization-only fields ── -->
+      <div class="type-fields" id="fields_organization" style="display:none">
+        <hr class="divider">
+        <p class="hint">Organization profile — required to register</p>
+        <label>Organization name</label>
+        <input id="o_name" placeholder="Greenfield Academy">
+        <label>CAC number</label>
+        <input id="o_cac" placeholder="RC000000">
+        <label>Location</label>
+        <input id="o_location" placeholder="Lagos, Nigeria">
+      </div>
+
+      <!-- ── Parent-only fields ── -->
+      <div class="type-fields" id="fields_parent" style="display:none">
+        <hr class="divider">
+        <p class="hint">Parent profile — required to register</p>
+        <label>Full name</label>
+        <input id="p_name" placeholder="Mr John Doe">
+      </div>
+
+      <!-- ── Reviewer-only fields ── -->
+      <div class="type-fields" id="fields_reviewer" style="display:none">
+        <hr class="divider">
+        <p class="hint">Reviewer profile — required to register</p>
+        <label>Full name</label>
+        <input id="rv_full_name" placeholder="Jane Doe">
+      </div>
+
+      <button class="btn btn-primary" onclick="doRegister()">Create account</button>
+      <div id="registerResp" class="response-box"></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="static/common.js"></script>
 <script>
-(async () => {
-  const el = document.getElementById('json');
-  try {
-    const response = await fetch('/health');
-    const data = await response.json();
-    el.textContent = JSON.stringify(data, null, 2);
-  } catch (error) {
-    el.textContent = JSON.stringify({ error: String(error) }, null, 2);
+document.getElementById('t_subjects_mount').innerHTML = subjectChecks('t_subjects');
+// redirect if already logged in
+if (session.token()) {
+  const t = session.type();
+  if (t === 'teacher') location.href = '/teacher.html';
+  else if (t === 'organization' || t === 'parent') location.href = '/employer.html';
+  else if (t === 'reviewer') location.href = '/reviewer.html';
+}
+
+function switchAuthTab(tab) {
+  const tabs = document.querySelectorAll('#authTabs button');
+  tabs[0].classList.toggle('active', tab === 'login');
+  tabs[1].classList.toggle('active', tab === 'register');
+  document.getElementById('loginForm').style.display    = tab === 'login'    ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+}
+
+function onTypeChange() {
+  const type = document.getElementById('r_type').value;
+  document.querySelectorAll('.type-fields').forEach(el => el.style.display = 'none');
+  if (type) {
+    const el = document.getElementById(`fields_${type}`);
+    if (el) el.style.display = 'block';
   }
-})();
+}
+
+async function doLogin() {
+  const email    = document.getElementById('l_email').value.trim();
+  const password = document.getElementById('l_password').value;
+  if (!email || !password) { toast('Fill in email and password', 'error'); return; }
+
+  const { ok, data } = await api('POST', '/auth/login', { email, password });
+  showResponse('loginResp', data, ok);
+
+  if (ok && data.token) {
+    // We need the user type — decode JWT payload (base64)
+    try {
+      const payload = JSON.parse(atob(data.token.split('.')[1]));
+      const type = payload.type;
+      session.save(data.token, type);
+      toast('Logged in!');
+      setTimeout(() => {
+        if (type === 'teacher') location.href = '/teacher.html';
+        else if (type === 'organization' || type === 'parent') location.href = '/employer.html';
+        else if (type === 'reviewer') location.href = '/reviewer.html';
+        else location.href = '/';
+      }, 600);
+    } catch(e) {
+      toast('Login OK but could not read token payload', 'error');
+    }
+  } else {
+    toast(data.error ?? 'Login failed', 'error');
+  }
+}
+
+async function doRegister() {
+  const type     = document.getElementById('r_type').value;
+  const email    = document.getElementById('r_email').value.trim();
+  const password = document.getElementById('r_password').value;
+
+  if (!type || !email || !password) {
+    toast('Type, email and password are required', 'error'); return;
+  }
+
+  const extra = getProfileFields(type);
+  if (extra === null) {
+    toast('Fill in the required profile fields', 'error'); return;
+  }
+
+  const { ok, data } = await api('POST', '/auth/register', { email, password, type, ...extra });
+  showResponse('registerResp', data, ok);
+
+  if (ok) {
+    toast('Account created — logging in…');
+    // Auto-login
+    const loginRes = await api('POST', '/auth/login', { email, password });
+    if (loginRes.ok && loginRes.data.token) {
+      const payload = JSON.parse(atob(loginRes.data.token.split('.')[1]));
+      session.save(loginRes.data.token, payload.type);
+
+      setTimeout(() => {
+        if (type === 'teacher') location.href = '/teacher.html';
+        else if (type === 'organization' || type === 'parent') location.href = '/employer.html';
+        else if (type === 'reviewer') location.href = '/reviewer.html';
+      }, 800);
+    }
+  } else {
+    toast(data.error ?? 'Registration failed', 'error');
+  }
+}
+
+// Collects and validates the type-specific profile fields needed at
+// registration time. Returns null if required fields are missing.
+function getProfileFields(type) {
+  if (type === 'teacher') {
+    const full_name        = document.getElementById('t_full_name').value.trim();
+    const subjects         = checkedSubjects('t_subjects');
+    const experience_years = parseInt(document.getElementById('t_exp').value);
+    if (!full_name || !subjects.length || isNaN(experience_years)) return null;
+    return { full_name, subjects, experience_years };
+  }
+
+  if (type === 'organization') {
+    const org_name   = document.getElementById('o_name').value.trim();
+    const cac_number = document.getElementById('o_cac').value.trim();
+    const location    = document.getElementById('o_location').value.trim();
+    if (!org_name || !location) return null;
+    return { org_name, cac_number: cac_number || null, location };
+  }
+
+  if (type === 'parent') {
+    const name = document.getElementById('p_name').value.trim();
+    if (!name) return null;
+    return { name };
+  }
+
+  if (type === 'reviewer') {
+    const full_name = document.getElementById('rv_full_name').value.trim();
+    if (!full_name) return null;
+    return { full_name };
+  }
+
+  return {};
+}
 </script>
+
 </body>
 </html>
