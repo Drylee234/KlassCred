@@ -1,6 +1,9 @@
 {% extends "portal.html" %}
 {% set portal_name = "Teacher Portal" %}
-{% block role_js %}<script src="https://cdn.jsdelivr.net/npm/@byteship/js/dist/index.global.js"></script>{% endblock %}
+{% block role_js %}<script type="module">
+  import { ByteshipClient } from "https://cdn.jsdelivr.net/npm/@byteship/js/+esm";
+  window.ByteshipClient = ByteshipClient;
+</script>{% endblock %}
 {% set nav = [
   ("Overview",   [("index", "🏠", "Dashboard")]),
   ("My Profile", [("profile", "👤", "Profile"), ("verification", "🛡️", "Verification"),
