@@ -27,7 +27,7 @@ async function doLogin() {
   const email = val('l_email'), password = $('l_password').value;
   if (!email || !password) return toast('Fill in email and password', 'error');
   const { ok, data } = await api('POST', '/auth/login', { email, password }, false);
-  showResponse('loginResp', data, ok);
+
   if (!(ok && data.token)) return toast(data.error ?? 'Login failed', 'error');
   try {
     const type = startSession(data.token);
@@ -45,7 +45,7 @@ async function doRegister() {
   if (extra === null) return toast('Fill in the required profile fields', 'error');
 
   const { ok, data } = await api('POST', '/auth/register', { email, password, type, ...extra }, false);
-  showResponse('registerResp', data, ok);
+
   if (!ok) return toast(data.error ?? 'Registration failed', 'error');
 
   toast('Account created — logging in…');

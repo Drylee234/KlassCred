@@ -2,7 +2,24 @@
 const VACT = [
   { label: 'Inspect', fn: async tc => {
       const r = await api('GET', `/reviewer/verification/teachers/${tc.id}`);
-      showResponse('vTeacherResp', r.data, r.ok);
+      const panel = $('v_inspect');
+      if (!r.ok) return toast(r.data.error ?? 'Could not load teacher', 'error');
+      const t = r.data.teacher ?? r.data;
+      panel.style.display = 'block';
+      panel.innerHTML = `
+        <div class="flex-between">
+          <div>
+            <div class="card-title" style="margin-bottom:4px">Teacher Profile</div>
+            <strong style="font-size:18px">${t.full_name ?? '—'}</strong>
+          </div>
+          ${t.id_verified ? '<span class="badge badge-green">Verified</span>' : '<span class="badge badge-yellow">Pending</span>'}
+        </div>
+        <div class="profile-grid" style="margin-top:16px">
+          <div class="profile-field"><div class="label">Email</div><div class="val">${t.email ?? '—'}</div></div>
+          <div class="profile-field"><div class="label">Experience</div><div class="val">${t.experience_years ?? '—'} years</div></div>
+          <div class="profile-field"><div class="label">Subjects</div><div class="val">${(t.subjects ?? []).join(', ') || '—'}</div></div>
+          <div class="profile-field"><div class="label">Profile</div><div class="val">${t.profile_complete ? 'Complete' : 'Incomplete'}</div></div>
+        </div>`;
   } },
   { label: 'Verify', fn: tc => send(
       'POST',

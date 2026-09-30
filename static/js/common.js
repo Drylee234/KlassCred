@@ -47,9 +47,8 @@ async function api(method, path, body, auth = true) {
 }
 
 // api() + the usual follow-up: show the JSON in `resp`, toast `msg` on success, run `done(res)`; toast the error otherwise
-async function send(method, path, body, { resp, msg, done } = {}) {
+async async function send(method, path, body, { msg, done } = {}) {
   const res = await api(method, path, body);
-  if (resp) showResponse(resp, res.data, res.ok);
   if (res.ok) { if (msg) toast(msg); done?.(res); }
   else toast(res.data.error ?? 'Failed', 'error');
   return res;
@@ -63,13 +62,6 @@ function toast(msg, type = 'success') {
   el.className = `show ${type}`;
   clearTimeout(el._t);
   el._t = setTimeout(() => { el.className = ''; }, 3200);
-}
-
-function showResponse(boxId, data, ok) {
-  const box = $(boxId);
-  if (!box) return;
-  box.textContent = JSON.stringify(data, null, 2);
-  box.className = `response-box show${ok ? '' : ' error'}`;
 }
 
 const openModal = id => $(id)?.classList.add('open');

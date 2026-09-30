@@ -88,7 +88,7 @@
         <label>Current password</label><input id="cp_old" type="password">
         <label>New password</label><input id="cp_new" type="password">
         <button class="btn btn-sm mt-16" onclick="doChangePassword()">Update</button>
-        <div id="cpResp" class="response-box"></div>
+
       </div>
     </section>
 
@@ -108,7 +108,7 @@
             </tbody>
           </table>
         </div>
-        <div id="assignResp" class="response-box"></div>
+
       </div>
     </section>
 
@@ -142,7 +142,7 @@
       <div class="card section">
         <div class="card-title">Search teachers</div>
         <div id="v_picker"></div>
-        <div id="vTeacherResp" class="response-box"></div>
+
       </div>
 
       <div class="card section">
@@ -150,7 +150,7 @@
         <label>Employer ID</label>
         <input id="v_org_id" type="number">
         <button class="btn btn-sm mt-16" onclick="doVerify('organization')">Verify Organization</button>
-        <div id="vOrgResp" class="response-box"></div>
+
       </div>
 
       <div class="card">
@@ -158,7 +158,7 @@
         <label>Employer ID</label>
         <input id="v_parent_id" type="number">
         <button class="btn btn-sm mt-16" onclick="doVerify('parent')">Verify Parent</button>
-        <div id="vParentResp" class="response-box"></div>
+
       </div>
     </section>
 
@@ -179,7 +179,7 @@
         <label>Reason</label>
         <textarea id="ov_reason" placeholder="Reason for manual override…"></textarea>
         <button class="btn btn-sm mt-16" onclick="doOverride()">Apply Override</button>
-        <div id="ovResp" class="response-box"></div>
+
       </div>
     </section>
 
@@ -211,7 +211,7 @@
       <textarea id="rv_flag_reason" placeholder="Why is this being flagged?"></textarea>
     </div>
     <button class="btn btn-primary" onclick="doSubmitReview()">Submit Review</button>
-    <div id="reviewResp" class="response-box"></div>
+
   </div>
 </div>
 
@@ -277,9 +277,9 @@ async function loadProfile() {
   view.innerHTML = `
     <div class="profile-grid">
       <div class="profile-field"><div class="label">Account type</div><div class="val">Reviewer</div></div>
-      <div class="profile-field"><div class="label">Token</div><div class="val" style="font-size:11px;word-break:break-all;color:var(--text-dim)">${token.slice(0,40)}…</div></div>
+
     </div>
-    <p class="hint" style="margin-top:12px">Full reviewer profile endpoint not yet exposed — token carries identity.</p>`;
+    <p class="hint" style="margin-top:12px">Reviewer access is active for this session.</p>`;
 }
 
 async function doChangePassword() {
@@ -287,7 +287,7 @@ async function doChangePassword() {
     old_password: document.getElementById('cp_old').value,
     new_password: document.getElementById('cp_new').value,
   }, token);
-  showResponse('cpResp', res.data, res.ok);
+
   if (res.ok) toast('Password changed');
   else toast(res.data.error ?? 'Failed', 'error');
 }
@@ -295,7 +295,7 @@ async function doChangePassword() {
 // ── Assignments ──────────────────────────────────────────────
 async function loadAssignments() {
   const res = await api('GET', '/reviewer/assignments', undefined, token);
-  showResponse('assignResp', res.data, res.ok);
+
   const tbody = document.getElementById('assign_table');
   if (!res.ok) { tbody.innerHTML = `<tr><td colspan="6">Error</td></tr>`; toast(res.data.error,'error'); return; }
   const list = Array.isArray(res.data) ? res.data : [];
@@ -324,7 +324,7 @@ function openReviewModal(assignmentId) {
   document.getElementById('rv_flagged').value = 'false';
   document.getElementById('rv_flag_reason').value = '';
   document.getElementById('rv_flag_reason_wrap').style.display = 'none';
-  document.getElementById('reviewResp').className = 'response-box';
+
   openModal('reviewModal');
 }
 
@@ -343,7 +343,7 @@ async function doSubmitReview() {
     flag_reason: flagged ? (document.getElementById('rv_flag_reason').value.trim() || null) : null,
   };
   const res = await api('POST', `/reviewer/assignments/${assignmentId}/review`, body, token);
-  showResponse('reviewResp', res.data, res.ok);
+
   if (res.ok) {
     toast('Review submitted');
     // Log it
@@ -413,7 +413,7 @@ async function doVerify(type) {
              : type === 'organization' ? `/verify/organization/${id}`
              : `/verify/parent/${id}`;
   const res = await api('POST', path, undefined, token);
-  showResponse(respId, res.data, res.ok);
+
   if (res.ok) toast(`${type} verified ✓`);
   else toast(res.data.error ?? 'Verification failed', 'error');
 }
@@ -425,7 +425,7 @@ async function doOverride() {
   const reason     = document.getElementById('ov_reason').value.trim();
   if (!teacher_id || isNaN(composite) || !reason) { toast('All fields required', 'error'); return; }
   const res = await api('POST', `/reviewer/ratings/${teacher_id}/override`, { composite, reason }, token);
-  showResponse('ovResp', res.data, res.ok);
+
   if (res.ok) toast(`Rating overridden → ${composite}`);
   else toast(res.data.error ?? 'Override failed', 'error');
 }

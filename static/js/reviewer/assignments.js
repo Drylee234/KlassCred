@@ -1,7 +1,7 @@
 // ── Reviewer assignments ──
 async function loadAssignments() {
   const res = await api('GET', '/reviewer/assignments');
-  showResponse('assignResp', res.data, res.ok);
+
   if (!res.ok) toast(res.data.error ?? 'Failed', 'error');
   fillRows('assign_table', 6, asList(res), a => `
     <tr>

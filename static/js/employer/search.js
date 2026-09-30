@@ -8,7 +8,7 @@ async function doSearch() {
    ['location', 's_location'], ['radius_km', 's_radius']].forEach(([k, id]) => { const v = val(id); if (v) params.set(k, v); });
 
   const res = await api('GET', `/employers/search?${params}`);
-  showResponse('searchResp', res.data, res.ok);
+
   const box = $('search_results');
   if (!res.ok) { box.innerHTML = emptyState('⚠️', res.data.error ?? 'Search failed'); return; }
 

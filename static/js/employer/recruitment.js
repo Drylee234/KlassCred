@@ -1,7 +1,7 @@
 // ── Employer: recruitment history + hire ──
 async function loadRecruitment() {
   const res = await api('GET', '/employers/recruitment');
-  showResponse('recResp', res.data, res.ok);
+
   fillRows('rec_table', 7, asList(res), r => `
     <tr>
       <td>#${r.id}</td><td>${r.teacher_id}</td><td>${r.position}</td><td>${r.hired_at}</td><td>${r.ended_at ?? '—'}</td>
@@ -15,7 +15,7 @@ function openStatusModal(id, current) {
   $('status_rec_label').textContent = '#' + id;
   $('new_status').innerHTML = (current === 'active' ? '<option value="suspended">Suspended</option>' : '') +
     '<option value="terminated">Terminated</option>';
-  $('statusModalResp').className = 'response-box';
+
   openModal('statusModal');
 }
 

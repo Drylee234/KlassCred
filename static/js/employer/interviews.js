@@ -2,7 +2,7 @@
 async function loadInterviews() {
   const status = $('iv_status_filter').value;
   const res = await api('GET', `/employers/interviews${status ? `?status=${status}` : ''}`);
-  showResponse('ivResp', res.data, res.ok);
+
   fillRows('iv_table', 5, asList(res), r => `
     <tr>
       <td>#${r.id}</td><td>${r.teacher_id}</td><td>${r.contact_method}</td>
