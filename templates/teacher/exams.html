@@ -7,7 +7,7 @@
   <div class="card-title">Available Exams — GET /teachers/exams</div>
   <button class="btn btn-sm" onclick="loadExams()">Refresh</button>
   <div id="exam_list" class="mt-16">{{ empty('📝', 'Click Refresh to load exams.') }}</div>
-  <div id="examListResp" class="response-box"></div>
+
 </div>
 
 <div class="card">
@@ -15,6 +15,6 @@
   {{ field('Attempt ID', 'submit_attempt_id', 'number', 'From start response') }}
   {{ field('Answers JSON (e.g. {"1":"A","2":"B"})', 'submit_answers', 'textarea', '{"1":"A","2":"B"}') }}
   <button class="btn btn-sm mt-16" onclick="doSubmitExam()">Submit Answers</button>
-  <div id="submitExamResp" class="response-box"></div>
+
 </div>
 {% endblock %}
