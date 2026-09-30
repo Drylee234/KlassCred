@@ -116,11 +116,26 @@ async function doUpload() {
   const sign = await doRequestUploadUrl();
   if (!sign) return;
 
-  if (typeof ByteshipClient !== 'function')
+  let ByteshipCtor = window.ByteshipClient;
+
+  // The restored CDN bundle is not guaranteed to execute before this
+  // page script. Fall back to the browser ESM build and cache the
+  // constructor globally for subsequent uploads.
+  if (typeof ByteshipCtor !== 'function') {
+    try {
+      const sdk = await import('https://cdn.jsdelivr.net/npm/@byteship/js/+esm');
+      ByteshipCtor = sdk.ByteshipClient;
+      if (typeof ByteshipCtor === 'function') window.ByteshipClient = ByteshipCtor;
+    } catch (e) {
+      console.error('Byteship SDK import failed:', e);
+    }
+  }
+
+  if (typeof ByteshipCtor !== 'function')
     return toast('Byteship browser SDK failed to load', 'error');
 
   const scenarioId = parseInt($('vid_scenario_id').value);
-  const client = new ByteshipClient({ uploadToken: sign.upload_token });
+  const client = new ByteshipCtor({ uploadToken: sign.upload_token });
 
   const safeName = pickedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
   const path = `${sign.folder}/${Date.now()}-${safeName}`;
