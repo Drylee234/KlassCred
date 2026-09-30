@@ -57,15 +57,23 @@ function renderQuestions() {
   }).join('');
 }
 
-function startExamTimer(startedAt, questions) {
+function startExamTimer(startedAt) {
   clearInterval(examTimer);
-  const timeLimit = Math.max(1, Number(questions?.time_limit ?? 0));
-  // The API returns the exam questions separately, so use the active exam card's
-  // countdown only when the exam list supplied a limit.
-  const card = document.querySelector('#exam_list .card');
   const text = $('exam_timer');
-  if (!text) return;
-  text.textContent = 'Answer all questions, then submit when ready.';
+  if (!text || !activeTimeLimit || !startedAt) return;
+  const end = new Date(startedAt).getTime() + activeTimeLimit * 60000;
+  const tick = () => {
+    const left = Math.max(0, end - Date.now());
+    const mins = Math.floor(left / 60000);
+    const secs = Math.floor((left % 60000) / 1000);
+    text.textContent = `Time remaining: ${mins}:${String(secs).padStart(2, '0')}`;
+    if (!left) {
+      clearInterval(examTimer);
+      toast('Time is up. Submit your exam.', 'error');
+    }
+  };
+  tick();
+  examTimer = setInterval(tick, 1000);
 }
 
 async function doSubmitExam() {
