@@ -2,7 +2,7 @@
 async function loadInterviews() {
   const status = $('iv_status_filter').value;
   const res = await api('GET', `/teachers/interviews${status ? `?status=${status}` : ''}`);
-  showResponse('ivResp', res.data, res.ok);
+
   if (!res.ok) toast(res.data.error ?? 'Failed', 'error');
   fillRows('iv_table', 6, asList(res), r => `
     <tr>
@@ -15,7 +15,7 @@ async function loadInterviews() {
 function openRespond(id) {
   $('respond_req_id').value = id;
   $('respond_req_label').textContent = '#' + id;
-  $('respondModalResp').className = 'response-box';
+
   openModal('respondModal');
 }
 
