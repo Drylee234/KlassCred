@@ -1,11 +1,12 @@
 let activeQuestions = [];
+let activeTimeLimit = 0;
 let examTimer = null;
 
 async function loadExams() {
   const res = await api('GET', '/teachers/exams');
   if (!res.ok) return toast(res.data.error ?? 'Could not load exams', 'error');
   $('exam_list').innerHTML = res.data.length ? res.data.map(({ exam: e, attempts_left: left }) => `
-    <div class="card" style="margin-bottom:12px">
+    <div class="card" data-time-limit="${e.time_limit}" style="margin-bottom:12px">
       <div class="flex-between">
         <div>
           <strong>${e.subject}</strong>
@@ -25,6 +26,8 @@ async function startExam(examId) {
   if (!res.ok) return toast(res.data.error ?? 'Could not start exam', 'error');
 
   activeQuestions = res.data.questions ?? [];
+  const exam = [...document.querySelectorAll('#exam_list .card')].find(card => card.querySelector('button')?.getAttribute('onclick') === `startExam(${examId})`);
+  activeTimeLimit = Number(exam?.dataset.timeLimit ?? 0);
   $('submit_attempt_id').value = res.data.attempt?.id ?? '';
   $('active_exam_title').textContent = 'Active Exam';
   $('active_exam').style.display = 'block';
