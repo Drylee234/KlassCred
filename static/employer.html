@@ -98,7 +98,7 @@
     <!-- SEARCH ─────────────────────────────────────────────── -->
     <section id="sec_search" class="page-section" style="display:none">
       <div class="page-header">
-        <h2>Search Teachers</h2><p>GET /employers/search</p>
+        <h2>Search Teachers</h2><p>Find verified, rated teachers for your school</p>
       </div>
 
       <div class="card section">
@@ -123,7 +123,7 @@
     <!-- RECRUITMENT ─────────────────────────────────────────── -->
     <section id="sec_recruitment" class="page-section" style="display:none">
       <div class="page-header flex-between">
-        <div><h2>Recruitment History</h2><p>GET /employers/recruitment</p></div>
+        <div><h2>Recruitment History</h2><p>Everyone you've hired through Klasscred</p></div>
         <button class="btn btn-sm" onclick="openModal('hireModal')">+ Hire Teacher</button>
       </div>
 
@@ -140,7 +140,7 @@
 
     <!-- APPLICATIONS -->
     <section id="sec_applications" class="page-section" style="display:none">
-      <div class="page-header"><h2>Applications</h2><p>GET /employers/applications</p></div>
+      <div class="page-header"><h2>Applications</h2><p>Teachers who've applied to your postings</p></div>
       <div class="flex-row" style="margin-bottom:16px">
         <select id="app_status" style="width:auto;min-width:160px" onchange="loadApplications()">
           <option value="">All statuses</option><option value="pending">Pending</option><option value="accepted">Accepted</option><option value="rejected">Rejected</option><option value="withdrawn">Withdrawn</option>
@@ -152,7 +152,7 @@
     <!-- INTERVIEWS ──────────────────────────────────────────── -->
     <section id="sec_interviews" class="page-section" style="display:none">
       <div class="page-header flex-between">
-        <div><h2>Interview Requests</h2><p>GET /employers/interviews</p></div>
+        <div><h2>Interview Requests</h2><p>Interviews you've requested with teachers</p></div>
         <button class="btn btn-sm" onclick="openModal('sendIvModal')">+ Send Request</button>
       </div>
 

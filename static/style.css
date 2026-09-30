@@ -37,7 +37,10 @@ body {
   font-size: 14px;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden; /* guards against any long unbroken string (e.g. a raw error trace) forcing horizontal scroll and dragging the fixed sidebar sideways on mobile */
 }
+
+html { overflow-x: hidden; }
 
 /* ── Auth pages ── */
 .auth-wrap {
@@ -461,6 +464,11 @@ tr:hover td { background: var(--surface2); }
 
 .response-box.error { color: #E39C8A; }
 .response-box.show { display: block; }
+
+/* Hidden for the AIB Ship demo -- these show raw API JSON, useful for
+   development but not for a polished demo. Delete this rule (or set
+   display back to default) to bring the debug output back after judging. */
+.response-box { display: none !important; }
 
 /* ── Toast ── */
 #toast {
