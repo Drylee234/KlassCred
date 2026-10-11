@@ -1,6 +1,6 @@
 from flask import Flask, abort, redirect, render_template, url_for
 from jinja2 import TemplateNotFound
-from extensions import db, migrate, init_byteship
+from extensions import db, migrate, init_cloudinary
 from config import Config
 
 ROLES = ("teacher", "employer", "reviewer")
@@ -12,7 +12,7 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
-    init_byteship(app)
+    init_cloudinary(app)
 
     import models
 
@@ -37,13 +37,6 @@ def create_app():
     def health():
         return {"status": "ok"}
 
-    # ── UI pages ─────────────────────────────────────────────────────────
-    # Templates: templates/   Assets: static/ (css/, js/)
-    # Everything lives under /app so it can't clash with the API prefixes
-    # (/reviewer/*, /teachers/*, /employers/*, /auth/*, /verify/*).
-    #   /app/                  login + register
-    #   /app/<role>/           that role's dashboard (templates/<role>/index.html)
-    #   /app/<role>/<page>     any other page   (templates/<role>/<page>.html)
     @app.get("/app/")
     def login_page():
         return render_template("index.html")
@@ -51,17 +44,17 @@ def create_app():
     @app.get("/app/<role>/", defaults={"page": "index"})
     @app.get("/app/<role>/<page>")
     def portal_page(role, page):
-        if role not in ROLES or page.startswith("_"):   # "_" = layouts/partials
+        if role not in ROLES or page.startswith("_"):
             abort(404)
         name = f"{role}/{page}.html"
         try:
             return render_template(name, role=role, page=page)
         except TemplateNotFound as e:
-            if e.name != name:      # a missing include/extends is a real bug — don't hide it as a 404
+            if e.name != name:
                 raise
             abort(404)
 
-    @app.get("/test")               # old entry point — keep existing links working
+    @app.get("/test")
     def legacy_test_ui():
         return redirect(url_for("login_page"))
 
