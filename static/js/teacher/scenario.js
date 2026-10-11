@@ -1,13 +1,11 @@
 // ── Teacher scenario + video ──
 const MAX_VIDEO_MB = 200;
-const BYTESHIP_API = 'https://api.byteship.dev';
 let pickedFile = null;
 let recStream = null, recorder = null, recChunks = [], recTimer = null, recStart = 0;
 let vidPoll;
 
 async function loadScenario() {
   const res = await api('GET', '/teachers/scenario');
-
   if (!res.ok) return toast(res.data.error ?? 'Failed', 'error');
 
   const s = res.data;
@@ -103,7 +101,6 @@ async function doRequestUploadUrl() {
   }
 
   const res = await api('POST', '/teachers/video/upload-url', { scenario_id });
-
   if (!res.ok) {
     toast(res.data.error ?? 'Could not prepare upload', 'error');
     return null;
@@ -111,52 +108,33 @@ async function doRequestUploadUrl() {
   return res.data;
 }
 
-async function byteshipRequest(path, token, options = {}) {
-  const res = await fetch(`${BYTESHIP_API}${path}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(options.headers || {}),
-    },
-  });
-
-  let data = null;
-  try { data = await res.json(); } catch (_) {}
-
-  if (!res.ok) {
-    const message = data?.error || `Byteship request failed (${res.status})`;
-    throw new Error(message);
-  }
-
-  return data;
-}
-
-function uploadBytesWithProgress(url, headers, file) {
+function uploadToCloudinary(url, fields, file) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
+    const form = new FormData();
+    Object.entries(fields || {}).forEach(([key, value]) => form.append(key, value));
+    form.append('file', file);
 
-    xhr.open('PUT', url);
-    Object.entries(headers || {}).forEach(([key, value]) => {
-      xhr.setRequestHeader(key, value);
-    });
-
+    xhr.open('POST', url);
     xhr.upload.onprogress = event => {
       if (!event.lengthComputable) return;
       const percent = Math.round((event.loaded / event.total) * 100);
-      $('up_status').textContent = `Uploading video to Byteship… ${percent}%`;
+      $('up_status').textContent = `Uploading video to Cloudinary… ${percent}%`;
     };
-
     xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve();
-        return;
-      }
-      reject(new Error(`Byteship file upload failed (${xhr.status})`));
-    };
+      let data;
+      try { data = JSON.parse(xhr.responseText); }
+      catch (_) { return reject(new Error('Cloudinary returned an unreadable response')); }
 
-    xhr.onerror = () => reject(new Error('Network error while uploading video to Byteship'));
-    xhr.onabort = () => reject(new Error('Byteship upload was cancelled'));
-    xhr.send(file);
+      if (xhr.status >= 200 && xhr.status < 300 && data.secure_url) {
+        resolve(data);
+      } else {
+        reject(new Error(data.error?.message || `Cloudinary upload failed (${xhr.status})`));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error while uploading video to Cloudinary'));
+    xhr.onabort = () => reject(new Error('Cloudinary upload was cancelled'));
+    xhr.send(form);
   });
 }
 
@@ -165,53 +143,15 @@ async function doUpload() {
 
   const sign = await doRequestUploadUrl();
   if (!sign) return;
-
   const scenarioId = parseInt($('vid_scenario_id').value);
-  const safeName = pickedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const path = `${sign.folder}/${Date.now()}-${safeName}`;
-  const encodedPath = path.split('/').map(encodeURIComponent).join('/');
 
   $('btn_upload').disabled = true;
   $('up_prog_wrap').style.display = 'block';
-  $('up_status').textContent = 'Preparing Byteship upload…';
+  $('up_status').textContent = 'Preparing Cloudinary upload…';
 
   try {
-    const session = await byteshipRequest(`/v1/files/${encodedPath}`, sign.upload_token, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        byteSize: pickedFile.size,
-        contentType: pickedFile.type || 'application/octet-stream',
-        method: 'auto',
-        visibility: 'public',
-      }),
-    });
-
-    if (!session?.upload?.url || !session?.upload?.id) {
-      throw new Error('Byteship did not return a valid upload session');
-    }
-
-    $('up_status').textContent = 'Uploading video to Byteship… 0%';
-    await uploadBytesWithProgress(
-      session.upload.url,
-      session.upload.headers,
-      pickedFile,
-    );
-
-    $('up_status').textContent = 'Finalizing Byteship upload…';
-    const completed = await byteshipRequest(
-      `/v1/files/${encodedPath}/upload/complete`,
-      sign.upload_token,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uploadId: session.upload.id }),
-      },
-    );
-
-    const videoUrl = completed?.file?.url || session?.file?.url;
-    if (!videoUrl) throw new Error('Byteship upload completed without a video URL');
-
+    const uploaded = await uploadToCloudinary(sign.upload_url, sign.fields, pickedFile);
+    const videoUrl = uploaded.secure_url;
     $('up_status').textContent = 'Upload complete — starting review…';
 
     const confirm = await api('POST', '/teachers/video/confirm', {
@@ -228,7 +168,7 @@ async function doUpload() {
     clearPicked();
     loadVideos();
   } catch (e) {
-    console.error('Byteship upload failed:', e);
+    console.error('Cloudinary upload failed:', e);
     $('up_status').textContent = e.message;
     toast(e.message, 'error');
   } finally {
