@@ -1,41 +1,29 @@
-# routes/webhooks.py
-#
-# Unauthenticated webhook receiver.
-# Signature verification is delegated to the service layer —
-# the route only handles HTTP parsing and response shaping.
-
+# Unauthenticated webhook receiver; authenticity is verified by the service layer.
 from flask import Blueprint, request, jsonify
 
 from services import video_service
-from errors.exceptions import BadRequestError
 
 bp = Blueprint("webhooks", __name__, url_prefix="/webhooks")
 
 
-@bp.post("/byteship")
-def byteship_webhook():
-    # Byteship sends JSON but we need the raw body string for
-    # signature verification before we parse anything.
+@bp.post("/cloudinary")
+def cloudinary_webhook():
     body = request.get_data(as_text=True)
-
-    timestamp = request.headers.get("Byteship-Webhook-Timestamp")
-    signature = request.headers.get("Byteship-Webhook-Signature")
+    timestamp = request.headers.get("X-Cld-Timestamp")
+    signature = request.headers.get("X-Cld-Signature")
 
     if not timestamp or not signature:
-        return jsonify({"error": "Missing Byteship signature headers"}), 400
+        return jsonify({"error": "Missing Cloudinary signature headers"}), 400
 
     payload = request.get_json(silent=True) or {}
-
-    # Only process completed uploads; ignore other event types
-    # (file.deleted, image.metadata.created, image.transform.*).
-    if payload.get("type") != "file.uploaded":
+    # Ignore non-upload notifications; the browser confirmation flow remains primary.
+    if payload.get("notification_type") not in (None, "upload"):
         return jsonify({"status": "ignored"}), 200
 
-    submission = video_service.handle_byteship_webhook(
+    submission = video_service.handle_cloudinary_webhook(
         body=body,
         timestamp=timestamp,
         signature=signature,
         payload=payload,
     )
-
     return jsonify({"status": "ok", "submission_id": submission.id}), 200
