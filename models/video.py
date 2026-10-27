@@ -70,6 +70,7 @@ class VideoSubmission(db.Model):
     status = db.Column(
         db.Enum(
             "uploaded",
+            "ai_reviewing",
             "ai_reviewed",
             "assigned",
             "in_progress",

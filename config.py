@@ -5,6 +5,11 @@ from datetime import timedelta
 class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///app.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    CELERY_BROKER_URL = (
+        os.environ.get("CELERY_BROKER_URL")
+        or os.environ.get("REDIS_URL")
+        or "redis://localhost:6379/0"
+    )
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret")
 
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "dev-jwt-secret")

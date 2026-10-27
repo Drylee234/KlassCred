@@ -24,12 +24,18 @@ from google import genai
 from google.genai import types
 from google.genai.errors import APIError
 
-from errors.exceptions import AIServiceError
+from errors.exceptions import AIServiceError, RetryableAIServiceError
 
 _API_KEY = os.environ.get("GEMINI_API_KEY")
 _client = genai.Client(
     api_key=_API_KEY,
-    http_options=types.HttpOptions(timeout=15000),  # 15s, in ms
+    http_options=types.HttpOptions(
+        timeout=60000,
+        retry_options=types.HttpRetryOptions(
+            attempts=2,
+            http_status_codes=[408, 429, 500, 502, 503, 504],
+        ),
+    ),
 ) if _API_KEY else None
 _MODEL = "gemini-3.6-flash"
 
@@ -148,7 +154,10 @@ def review_video(prompt_text, video_url):
                 ),
             )
         except APIError as e:
-            raise AIServiceError(f"Gemini API error while reviewing video: {str(e)}")
+            message = f"Gemini API error while reviewing video: {str(e)}"
+            if e.code == 504 or e.status == "DEADLINE_EXCEEDED":
+                raise RetryableAIServiceError(message) from e
+            raise AIServiceError(message) from e
 
         try:
             result = json.loads(response.text)
@@ -210,5 +219,3 @@ def _wait_for_file_active(file_obj, timeout_seconds=120, poll_interval=3):
         raise AIServiceError("Gemini failed to process the uploaded video.")
 
     return file_obj
-
-

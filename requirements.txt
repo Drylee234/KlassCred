@@ -3,6 +3,7 @@ flask
 flask_login
 flask-sqlalchemy
 flask-migrate
+celery[redis]
 gunicorn
 marshmallow
 psycopg2-binary

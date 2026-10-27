@@ -3,10 +3,27 @@
 from datetime import datetime
 
 from models.video import VideoSubmission, TeachingScenario
-from services import review_service
 from api import cloudinary as cloudinary_adapter
 from extensions import db
-from errors.exceptions import NotFoundError, BadRequestError
+from errors.exceptions import AIServiceError, NotFoundError, BadRequestError
+
+
+def _queue_ai_review(submission):
+    if submission.status not in ("uploaded", "failed"):
+        return submission
+
+    submission.status = "ai_reviewing"
+    db.session.commit()
+
+    try:
+        from tasks import review_video_task
+        review_video_task.delay(submission.id)
+    except Exception as e:
+        submission.status = "failed"
+        db.session.commit()
+        raise AIServiceError(f"Unable to queue video review: {e}") from e
+
+    return submission
 
 
 def request_upload_url(teacher_id, scenario_id):
@@ -29,7 +46,7 @@ def confirm_upload(teacher_id, scenario_id, video_url):
 
     existing = VideoSubmission.query.filter_by(video_url=video_url).first()
     if existing:
-        return existing
+        return _queue_ai_review(existing)
 
     submission = VideoSubmission(
         teacher_id=teacher_id,
@@ -40,8 +57,7 @@ def confirm_upload(teacher_id, scenario_id, video_url):
     )
     db.session.add(submission)
     db.session.commit()
-    review_service.run_ai_review(submission.id)
-    return submission
+    return _queue_ai_review(submission)
 
 
 def handle_cloudinary_webhook(body, timestamp, signature, payload):
@@ -62,9 +78,7 @@ def handle_cloudinary_webhook(body, timestamp, signature, payload):
 
     existing = VideoSubmission.query.filter_by(video_url=video_url).first()
     if existing:
-        if existing.status == "uploaded":
-            review_service.run_ai_review(existing.id)
-        return existing
+        return _queue_ai_review(existing)
 
     return confirm_upload(teacher_id, scenario_id, video_url)
 

@@ -36,6 +36,7 @@ class VideoSubmissionSchema(Schema):
         dump_only=True,
         validate=validate.OneOf([
             "uploaded",
+            "ai_reviewing",
             "ai_reviewed",
             "assigned",
             "in_progress",

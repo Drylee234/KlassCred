@@ -31,3 +31,7 @@ class AIServiceError(AppError):
     returns something we can't use — network error, quota exceeded, bad
     response shape, etc. Mapped to 502 (upstream failure), not 500."""
     pass
+
+
+class RetryableAIServiceError(AIServiceError):
+    pass

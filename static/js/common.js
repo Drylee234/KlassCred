@@ -1,7 +1,7 @@
 // ── KlassCred — shared utilities (loaded on every page) ──
 var liveUrl = 'https://klasscred.pxxlspace.cv';
 var localUrl = 'http://localhost:8080';
-const BASE = liveUrl;                       // API origin — switch to localUrl when running locally
+const BASE = liveUrl;
 
 // Page routes are served by Flask under this prefix (see app.py)
 const APP = '/app';
@@ -47,7 +47,7 @@ async function api(method, path, body, auth = true) {
 }
 
 // api() + the usual follow-up: show the JSON in `resp`, toast `msg` on success, run `done(res)`; toast the error otherwise
-async async function send(method, path, body, { msg, done } = {}) {
+async function send(method, path, body, { msg, done } = {}) {
   const res = await api(method, path, body);
   if (res.ok) { if (msg) toast(msg); done?.(res); }
   else toast(res.data.error ?? 'Failed', 'error');

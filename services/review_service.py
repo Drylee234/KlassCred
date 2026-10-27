@@ -14,7 +14,7 @@ def run_ai_review(video_id):
     if not submission:
         raise NotFoundError("Video submission not found")
 
-    if submission.status != "uploaded":
+    if submission.status != "ai_reviewing":
         raise BadRequestError("Video submission is not ready for AI review")
 
     scenario = submission.scenario

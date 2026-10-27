@@ -4,10 +4,14 @@ from models.video import TeachingScenario, VideoSubmission
 from models.teacher import Teacher
 from api import gemini as ai_provider  # was: from api import cencori
 from extensions import db
-from errors.exceptions import BadRequestError
+from errors.exceptions import BadRequestError, NotFoundError
 
 
 def get_scenario_for_teacher(teacher):
+    teacher = Teacher.query.filter_by(id=teacher.id).first()
+    if teacher is None:
+        raise NotFoundError("Teacher profile not found")
+
     used_ids = [
         scenario_id
         for (scenario_id,) in (

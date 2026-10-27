@@ -12,7 +12,7 @@ from errors.exceptions import (
 
 def get_profile(user_id):
     teacher = Teacher.query.filter_by(id=user_id).first()
-    if not teacher:
+    if not teacher: 
         raise NotFoundError("Teacher profile not found.")
     return teacher
 
@@ -81,7 +81,7 @@ def update_profile(user_id, data):
     return teacher
 
 
-def _check_profile_complete(teacher):
+def _check_profile_complete(teacher : Teacher )  :
     teacher.profile_complete = bool(
         teacher.full_name
         and teacher.subjects
@@ -92,7 +92,7 @@ def _check_profile_complete(teacher):
     )
 
 
-def add_work_history(user_id, data):
+def add_work_history(user_id : int , data : dict) -> WorkHistory:
     teacher = Teacher.query.filter_by(id=user_id).first()
 
     if not teacher:
