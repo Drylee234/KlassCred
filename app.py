@@ -4,6 +4,7 @@ from extensions import db, migrate, init_cloudinary
 from config import Config
 
 ROLES = ("teacher", "employer", "reviewer")
+API_BLUEPRINTS = ("auth", "teacher", "employer", "reviewer", "verification")
 
 
 def create_app():
@@ -23,11 +24,13 @@ def create_app():
     from routes.verification import bp as verification_bp
     from routes.webhooks import bp as webhooks_bp
 
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(teacher_bp)
-    app.register_blueprint(employer_bp)
-    app.register_blueprint(reviewer_bp)
-    app.register_blueprint(verification_bp)
+    # Keep browser-facing API endpoints under the same /app prefix as the portal.
+    app.register_blueprint(auth_bp, url_prefix="/app")
+    app.register_blueprint(teacher_bp, url_prefix="/app")
+    app.register_blueprint(employer_bp, url_prefix="/app")
+    app.register_blueprint(reviewer_bp, url_prefix="/app")
+    app.register_blueprint(verification_bp, url_prefix="/app")
+    # Cloudinary callbacks are provider-configured and remain at /webhooks/cloudinary.
     app.register_blueprint(webhooks_bp)
 
     from errors.handlers import register_error_handlers
