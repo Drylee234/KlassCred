@@ -1,7 +1,7 @@
 // ── KlassCred — shared utilities (loaded on every page) ──
 var liveUrl = 'https://klasscred-8m7e.onrender.com/';
 var localUrl = 'http://localhost:8080';
-const BASE = liveUrl;
+const BASE = liveUrl.replace(/\/+$/, '');
 
 // Page routes are served by Flask under this prefix (see app.py)
 const APP = '/app';
@@ -38,7 +38,8 @@ async function api(method, path, body, auth = true) {
   const opts = { method, headers };
   if (body !== undefined) opts.body = JSON.stringify(body);
   try {
-    const res = await fetch(BASE + path, opts);
+    const apiPath = String(path).replace(/^\/+/, '');
+    const res = await fetch(`${BASE}/${apiPath}`, opts);
     const data = await res.json().catch(() => ({}));
     return { ok: res.ok, status: res.status, data };
   } catch (e) {
@@ -92,7 +93,7 @@ function badge(value, map) {
 const doChangePassword = () => send('POST', '/auth/change-password',
   { old_password: $('cp_old').value, new_password: $('cp_new').value }, { resp: 'cpResp', msg: 'Password changed' });
 
-// ── Fixed subject vocabulary (keep in sync with backend SUBJECTS) ──
+// ── Fixed subject vocabulary (keep in sync with SUBJECTS in utils/subjects.py) ──
 const SUBJECTS = ['Mathematics','Further Mathematics','English','Literature','Physics','Chemistry','Biology','Computer Science','Economics','Government','Geography','History','Civic Education','Commerce','Accounting','Agricultural Science'];
 const subjectChecks = (id, sel = []) => `<div id="${id}" class="subject-grid">${SUBJECTS.map(s =>
   `<label class="subj"><input type="checkbox" value="${s}" ${sel.includes(s) ? 'checked' : ''}> ${s}</label>`).join('')}</div>`;
