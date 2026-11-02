@@ -1,5 +1,5 @@
 // ── KlassCred — shared utilities (loaded on every page) ──
-var liveUrl = 'https://klasscred.pxxlspace.cv';
+var liveUrl = 'https://klasscred-8m7e.onrender.com/';
 var localUrl = 'http://localhost:8080';
 const BASE = liveUrl;
 
