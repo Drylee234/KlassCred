@@ -36,7 +36,7 @@ Employers (schools or parents) are also verified, then search and hire from the 
 
 Active development — AIB Ship 2026 MVP.
 
-Live at **[klasscred.pxxlspace.cv](https://klasscred.pxxlspace.cv)**
+Live at **[klasscred-8m7e.onrender.com](https://klasscred-8m7e.onrender.com/)**
 
 ## Background video reviews
 
