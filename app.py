@@ -25,11 +25,11 @@ def create_app():
     from routes.webhooks import bp as webhooks_bp
 
     # Keep browser-facing API endpoints under the same /app prefix as the portal.
-    app.register_blueprint(auth_bp, url_prefix="/app")
-    app.register_blueprint(teacher_bp, url_prefix="/app")
-    app.register_blueprint(employer_bp, url_prefix="/app")
-    app.register_blueprint(reviewer_bp, url_prefix="/app")
-    app.register_blueprint(verification_bp, url_prefix="/app")
+    app.register_blueprint(auth_bp, url_prefix=f"/app{auth_bp.url_prefix}")
+    app.register_blueprint(teacher_bp, url_prefix=f"/app{teacher_bp.url_prefix}")
+    app.register_blueprint(employer_bp, url_prefix=f"/app{employer_bp.url_prefix}")
+    app.register_blueprint(reviewer_bp, url_prefix=f"/app{reviewer_bp.url_prefix}")
+    app.register_blueprint(verification_bp, url_prefix=f"/app{verification_bp.url_prefix}")
     # Cloudinary callbacks are provider-configured and remain at /webhooks/cloudinary.
     app.register_blueprint(webhooks_bp)
 

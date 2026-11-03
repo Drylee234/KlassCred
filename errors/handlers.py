@@ -1,5 +1,6 @@
 from flask import jsonify
 from marshmallow import ValidationError
+from werkzeug.exceptions import HTTPException
 
 from errors.exceptions import (
     BadRequestError,
@@ -41,9 +42,11 @@ def register_error_handlers(app):
     def handle_ai_service_error(e):
         return jsonify({"error": e.message}), 502
 
-
+    @app.errorhandler(HTTPException)
+    def handle_http_error(e):
+        return jsonify({"error": e.description}), e.code
 
     @app.errorhandler(Exception)
     def handle_unexpected_error(e):
-        import traceback
-        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
+        app.logger.exception("Unhandled application error")
+        return jsonify({"error": "Internal server error"}), 500
