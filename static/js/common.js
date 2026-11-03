@@ -38,8 +38,8 @@ async function api(method, path, body, auth = true) {
   const opts = { method, headers };
   if (body !== undefined) opts.body = JSON.stringify(body);
   try {
-    const apiPath = String(path).replace(/^\/+/, '');
-    const res = await fetch(`${BASE}/${apiPath}`, opts);
+    const apiPath = `${APP}/${String(path).replace(/^\/+/, '')}`;
+    const res = await fetch(`${BASE}${apiPath}`, opts);
     const data = await res.json().catch(() => ({}));
     return { ok: res.ok, status: res.status, data };
   } catch (e) {
