@@ -40,5 +40,13 @@ class User(UserMixin, db.Model):
         default=False
     )
 
+    # Bumped to invalidate every token issued to this user (logout, password change)
+    token_version = db.Column(
+        db.Integer,
+        nullable=False,
+        default=0,
+        server_default="0"
+    )
+
     def get_id(self):
         return f"{self.__tablename__}:{self.id}"

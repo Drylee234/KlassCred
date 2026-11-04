@@ -35,6 +35,14 @@ def login():
     return {"token": token}, 200
 
 
+@bp.post("/logout")
+@require_role("teacher", "organization", "parent", "reviewer")
+def logout():
+    auth_service.revoke_tokens(g.current_user)
+
+    return {"message": "Logged out."}, 200
+
+
 @bp.post("/change-password")
 @require_role("teacher", "organization", "parent", "reviewer")
 def change_password():

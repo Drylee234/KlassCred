@@ -83,6 +83,7 @@ def login(email, password):
     payload = {
         "user_id": user.id,
         "type": user.type,
+        "tv": user.token_version,
         "exp": now + expiry,
     }
 
@@ -118,7 +119,22 @@ def get_current_user(token):
     if user is None:
         raise UnauthorizedError("Invalid token.")
 
+    # Tokens without a version (issued before this check existed) or with a stale one are rejected
+    tv = payload.get("tv")
+
+    if tv is None or tv != user.token_version:
+        raise UnauthorizedError("Invalid token.")
+
     return user
+
+
+def revoke_tokens(user):
+    """Invalidate every token issued to this user (logout everywhere)."""
+
+    # Increment in SQL, not Python, so two concurrent bumps can't overwrite each other
+    user.token_version = User.token_version + 1
+
+    db.session.commit()
 
 
 def change_password(user, old_password, new_password):
@@ -134,6 +150,7 @@ def change_password(user, old_password, new_password):
         .decode("utf-8")
     )
 
-    db.session.commit()
+    # Also kills every existing token, including the caller's current one (commits both changes)
+    revoke_tokens(user)
 
     return user

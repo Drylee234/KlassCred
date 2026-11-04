@@ -1,6 +1,12 @@
 // ── Login / Register page ──
 $('t_subjects_mount').innerHTML = subjectChecks('t_subjects');
-if (session.token()) goHome(session.type());       // already signed in
+if (session.token() && !session.expired()) goHome(session.type());   // already signed in
+else session.clear();                                                // stale/expired token: forget it
+
+try {                                                                // note left by endSession()
+  const notice = sessionStorage.getItem('kc_notice');
+  if (notice) { sessionStorage.removeItem('kc_notice'); toast(notice, 'error'); }
+} catch {}
 
 function switchAuthTab(tab) {
   const tabs = document.querySelectorAll('#authTabs button');

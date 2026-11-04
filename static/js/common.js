@@ -24,11 +24,32 @@ const session = {
   token() { return localStorage.getItem('kc_token'); },
   type()  { return localStorage.getItem('kc_type'); },
   clear() { localStorage.removeItem('kc_token'); localStorage.removeItem('kc_type'); },
+  // Reads `exp` from the token payload. Only a convenience so we don't act on a dead token;
+  // the server is still the real authority and will 401 regardless.
+  expired() {
+    const t = this.token();
+    if (!t) return true;
+    try {
+      const { exp } = JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return !exp || exp * 1000 <= Date.now();
+    } catch { return true; }
+  },
 };
-const logout = () => { session.clear(); location.href = LOGIN; };
+// Tell the server first (it invalidates the token everywhere), but clear locally whatever the outcome
+const logout = async () => { await api('POST', '/auth/logout'); session.clear(); location.href = LOGIN; };
 
-// Portal pages carry <body data-role="…"> — no session means back to the login page
-if (document.body.dataset.role && !session.token()) location.replace(LOGIN);
+// Drop a dead session and go to login; the login page shows the note once
+function endSession(reason = 'Your session expired. Please sign in again.') {
+  session.clear();
+  try { sessionStorage.setItem('kc_notice', reason); } catch {}
+  location.replace(LOGIN);
+}
+
+// Portal pages carry <body data-role="…"> — no session (or an expired one) means back to the login page
+if (document.body.dataset.role) {
+  if (!session.token()) location.replace(LOGIN);
+  else if (session.expired()) endSession();
+}
 
 // ── API ──────────────────────────────────────────────────────
 async function api(method, path, body, auth = true) {
@@ -41,6 +62,8 @@ async function api(method, path, body, auth = true) {
     const apiPath = `${APP}/${String(path).replace(/^\/+/, '')}`;
     const res = await fetch(`${BASE}${apiPath}`, opts);
     const data = await res.json().catch(() => ({}));
+    // 401 on a request that carried our token = the token is dead (expired/invalid). Login calls send no token, so a wrong password doesn't trigger this.
+    if (res.status === 401 && t) endSession();
     return { ok: res.ok, status: res.status, data };
   } catch (e) {
     return { ok: false, status: 0, data: { error: e.message } };
