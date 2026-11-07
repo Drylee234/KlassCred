@@ -17,6 +17,14 @@ class Config:
         for email in os.environ.get("ADMIN_EMAILS", "").split(",")
         if email.strip()
     )
+    CORS_ALLOWED_ORIGINS = tuple(
+        origin.strip().rstrip("/")
+        for origin in os.environ.get(
+            "CORS_ALLOWED_ORIGINS",
+            "https://klasscred-pr-20.onrender.com",
+        ).split(",")
+        if origin.strip()
+    )
 
     CLOUDINARY_CLOUD_NAME = os.environ.get("CLOUDINARY_CLOUD_NAME", "")
     CLOUDINARY_API_KEY = os.environ.get("CLOUDINARY_API_KEY", "")
