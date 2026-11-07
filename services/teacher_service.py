@@ -1,6 +1,7 @@
 # services/teacher_service.py
 
 from models.teacher import Teacher, WorkHistory, Reference
+from models.user import User
 from extensions import db
 
 from errors.exceptions import (
@@ -24,7 +25,9 @@ def search_all_teachers(query=None):
     NOT filter out unverified or flagged teachers -- reviewing and
     verifying exactly those teachers is the reviewer's job.
     """
-    teachers = Teacher.query.all()
+    teachers = Teacher.query.join(User, Teacher.id == User.id).filter(
+        User.account_enabled.is_(True)
+    ).all()
 
     if query:
         q = query.strip().lower()

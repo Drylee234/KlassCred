@@ -17,10 +17,12 @@
       {{ field('Email', 'l_email', 'email', 'you@example.com') }}
       {{ field('Password', 'l_password', 'password', '••••••••') }}
       <button class="btn btn-primary" onclick="doLogin()">Sign in</button>
-
     </div>
 
     <div id="registerForm" style="display:none">
+      <p id="googleOnboardingNote" class="hint" style="display:none">
+        Finish setting up your account. Your Google email is already verified.
+      </p>
       <label>Account type</label>
       <select id="r_type" onchange="onTypeChange()">
         <option value="">Select type</option>
@@ -29,8 +31,8 @@
         <option value="parent">Parent</option>
         <option value="reviewer">Reviewer</option>
       </select>
-      {{ field('Email', 'r_email', 'email', 'you@example.com') }}
-      {{ field('Password', 'r_password', 'password', 'min 8 chars') }}
+      <div id="r_email_field">{{ field('Email', 'r_email', 'email', 'you@example.com') }}</div>
+      <div id="r_password_field">{{ field('Password', 'r_password', 'password', 'min 8 chars') }}</div>
 
       <div class="type-fields" id="fields_teacher" style="display:none">
         <hr class="divider"><p class="hint">Teacher profile — required to register</p>
@@ -57,8 +59,10 @@
       </div>
 
       <button class="btn btn-primary" onclick="doRegister()">Create account</button>
-
     </div>
+
+    <hr class="divider">
+    <a class="btn btn-ghost" href="{{ url_for('auth.google_login') }}">Continue with Google</a>
   </div>
 </div>
 {% endblock %}

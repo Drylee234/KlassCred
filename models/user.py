@@ -25,7 +25,7 @@ class User(UserMixin, db.Model):
 
     password_hash = db.Column(
         db.String(255),
-        nullable=False
+        nullable=True
     )
 
     created_at = db.Column(
@@ -40,6 +40,13 @@ class User(UserMixin, db.Model):
         default=False
     )
 
+    account_enabled = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True,
+        server_default=db.true()
+    )
+
     # Bumped to invalidate every token issued to this user (logout, password change)
     token_version = db.Column(
         db.Integer,
@@ -50,3 +57,19 @@ class User(UserMixin, db.Model):
 
     def get_id(self):
         return f"{self.__tablename__}:{self.id}"
+
+
+class GoogleIdentity(db.Model):
+    __tablename__ = "google_identity"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id"),
+        nullable=False,
+        unique=True,
+    )
+    subject = db.Column(db.String(255), nullable=False, unique=True)
+    email = db.Column(db.String(120), nullable=False)
+
+    user = db.relationship("User")

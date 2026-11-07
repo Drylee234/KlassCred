@@ -1,6 +1,6 @@
 from flask import Flask, abort, redirect, render_template, request, url_for
 from jinja2 import TemplateNotFound
-from extensions import db, migrate, init_cloudinary
+from extensions import db, migrate, init_cloudinary, oauth
 from config import Config
 
 ROLES = ("teacher", "employer", "reviewer", "admin")
@@ -36,6 +36,17 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     init_cloudinary(app)
+    oauth.init_app(app)
+    if app.config["GOOGLE_CLIENT_ID"] and app.config["GOOGLE_CLIENT_SECRET"]:
+        oauth.register(
+            name="google",
+            server_metadata_url=(
+                "https://accounts.google.com/.well-known/openid-configuration"
+            ),
+            client_id=app.config["GOOGLE_CLIENT_ID"],
+            client_secret=app.config["GOOGLE_CLIENT_SECRET"],
+            client_kwargs={"scope": "openid email profile"},
+        )
 
     import models
 

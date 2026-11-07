@@ -1,4 +1,4 @@
-from models.user import User
+from models.user import User, GoogleIdentity
 from models.teacher import Teacher, Reference, WorkHistory
 from models.employer import Employer, Organization, Parent, RecruitmentHistory
 from models.reviewer import Reviewer
