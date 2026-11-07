@@ -24,9 +24,10 @@ function onTypeChange() {
 
 // Read the account type from the JWT payload (base64url), store the session, return the type
 function startSession(token) {
-  const { type } = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-  session.save(token, type);
-  return type;
+  const { type, admin } = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+  const homeType = admin ? 'admin' : type;
+  session.save(token, homeType);
+  return homeType;
 }
 
 async function doLogin() {

@@ -11,6 +11,7 @@ const HOME = {
   organization: `${APP}/employer/`,
   parent: `${APP}/employer/`,
   reviewer: `${APP}/reviewer/`,
+  admin: `${APP}/admin/`,
 };
 const goHome = type => { if (HOME[type]) location.href = HOME[type]; };
 

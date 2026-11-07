@@ -3,8 +3,7 @@ from jinja2 import TemplateNotFound
 from extensions import db, migrate, init_cloudinary
 from config import Config
 
-ROLES = ("teacher", "employer", "reviewer")
-API_BLUEPRINTS = ("auth", "teacher", "employer", "reviewer", "verification")
+ROLES = ("teacher", "employer", "reviewer", "admin")
 
 
 def create_app():
@@ -22,6 +21,7 @@ def create_app():
     from routes.employer import bp as employer_bp
     from routes.reviewer import bp as reviewer_bp
     from routes.verification import bp as verification_bp
+    from routes.admin import bp as admin_bp
     from routes.webhooks import bp as webhooks_bp
 
     # Keep browser-facing API endpoints under the same /app prefix as the portal.
@@ -30,6 +30,7 @@ def create_app():
     app.register_blueprint(employer_bp, url_prefix=f"/app{employer_bp.url_prefix}")
     app.register_blueprint(reviewer_bp, url_prefix=f"/app{reviewer_bp.url_prefix}")
     app.register_blueprint(verification_bp, url_prefix=f"/app{verification_bp.url_prefix}")
+    app.register_blueprint(admin_bp, url_prefix=f"/app{admin_bp.url_prefix}")
     # Cloudinary callbacks are provider-configured and remain at /webhooks/cloudinary.
     app.register_blueprint(webhooks_bp)
 

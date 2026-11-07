@@ -36,7 +36,7 @@ def login():
 
 
 @bp.post("/logout")
-@require_role("teacher", "organization", "parent", "reviewer")
+@require_role("teacher", "organization", "parent", "reviewer", "admin")
 def logout():
     auth_service.revoke_tokens(g.current_user)
 
@@ -44,7 +44,7 @@ def logout():
 
 
 @bp.post("/change-password")
-@require_role("teacher", "organization", "parent", "reviewer")
+@require_role("teacher", "organization", "parent", "reviewer", "admin")
 def change_password():
     data = request.get_json()
 
