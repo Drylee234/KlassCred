@@ -29,7 +29,7 @@ Employers (schools or parents) are also verified, then search and hire from the 
 - **Background jobs** — Celery with Redis
 - **Auth** — JWT + bcrypt
 - **Google sign-in** — Authlib (OpenID Connect)
-- **Hosting** — [Pxxl](https://pxxlspace.cv)
+- **Hosting** — [Render]([https://pxxlspace.cv](https://render.com/))
 
 ---
 
