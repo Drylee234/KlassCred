@@ -11,6 +11,7 @@ def search_teachers(
     query = (
         Teacher.query
         .outerjoin(Rating, Rating.teacher_id == Teacher.id)
+        .filter(User.account_enabled.is_(True))
     )
 
     if verified_only:

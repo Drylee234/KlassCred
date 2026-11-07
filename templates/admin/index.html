@@ -10,6 +10,7 @@
 
 <div class="stat-grid admin-stat-grid">
   <div class="card admin-stat"><span class="hint">Total accounts</span><strong id="metric_accounts">—</strong><span class="hint">All platform users</span></div>
+  <div class="card admin-stat"><span class="hint">Deactivated accounts</span><strong id="metric_disabled_accounts">—</strong><span class="hint">Can be reactivated below</span></div>
   <div class="card admin-stat"><span class="hint">Teachers</span><strong id="metric_teachers">—</strong><span class="hint">Registered teacher profiles</span></div>
   <div class="card admin-stat"><span class="hint">Employers</span><strong id="metric_employers">—</strong><span class="hint">Organizations and parents</span></div>
   <div class="card admin-stat"><span class="hint">Verified accounts</span><strong id="metric_verified_accounts">—</strong><span class="hint">Identity checks complete</span></div>
@@ -18,6 +19,34 @@
   <div class="card admin-stat"><span class="hint">Open assignments</span><strong id="metric_open_reviews">—</strong><span class="hint">Assigned or in progress</span></div>
   <div class="card admin-stat"><span class="hint">Pending interviews</span><strong id="metric_pending_interviews">—</strong><span class="hint">Awaiting a response</span></div>
   <div class="card admin-stat"><span class="hint">New this week</span><strong id="metric_new_accounts">—</strong><span class="hint">Accounts created in 7 days</span></div>
+</div>
+
+<div class="card admin-management">
+  <div class="card-title">Account management</div>
+  <p class="hint admin-description">Find accounts, verify eligible profiles, or deactivate/reactivate access.</p>
+  <div class="admin-search">
+    <input id="account_search" type="search" placeholder="Search name or email…" autocomplete="off">
+    <button class="btn btn-ghost" id="search_accounts" type="button">Search</button>
+  </div>
+  <div id="account_status" class="hint" role="status" aria-live="polite"></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Account</th><th>Role</th><th>Access</th><th>Verification</th><th>Actions</th></tr></thead>
+      <tbody id="admin_accounts"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card admin-management">
+  <div class="card-title">Open review assignments</div>
+  <p class="hint admin-description">Reassign an open review to an active reviewer or cancel it.</p>
+  <div id="review_queue_status" class="hint" role="status" aria-live="polite"></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Assignment</th><th>Teacher</th><th>Reviewer</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="admin_review_assignments"></tbody>
+    </table>
+  </div>
 </div>
 
 <div class="card admin-activity">

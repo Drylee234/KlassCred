@@ -9,9 +9,15 @@ class Config:
     CELERY_BROKER_URL =  os.environ.get("REDIS_URL","")
     
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret")
+    SESSION_COOKIE_SECURE = os.environ.get(
+        "SESSION_COOKIE_SECURE", "false"
+    ).casefold() == "true"
 
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "dev-jwt-secret")
     JWT_EXPIRY = timedelta(minutes=7)
+    GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+    GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "")
     ADMIN_EMAILS = tuple(
         email.strip().casefold()
         for email in os.environ.get("ADMIN_EMAILS", "").split(",")

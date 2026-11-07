@@ -1,7 +1,53 @@
 // ── Login / Register page ──
 $('t_subjects_mount').innerHTML = subjectChecks('t_subjects');
-if (session.token() && !session.expired()) goHome(session.type());   // already signed in
-else session.clear();                                                // stale/expired token: forget it
+let googleOnboardingToken = null;
+let googleSignInCompleted = false;
+
+function readJwtPayload(token) {
+  const segment = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+  const padded = segment + '='.repeat((4 - segment.length % 4) % 4);
+  return JSON.parse(atob(padded));
+}
+
+const authFragment = new URLSearchParams(location.hash.slice(1));
+const googleToken = authFragment.get('kc_google_token');
+const googleError = authFragment.get('kc_oauth_error');
+if (googleToken || googleError) history.replaceState(null, '', location.pathname + location.search);
+
+if (googleToken) {
+  try {
+    const claims = readJwtPayload(googleToken);
+    if (claims.purpose === 'google_onboarding') {
+      googleOnboardingToken = googleToken;
+      $('r_email').value = claims.email;
+      $('r_email').disabled = true;
+      $('r_email_field').style.display = 'none';
+      $('r_password_field').style.display = 'none';
+      $('googleOnboardingNote').style.display = 'block';
+      switchAuthTab('register');
+    } else {
+      const type = startSession(googleToken);
+      googleSignInCompleted = true;
+      toast('Signed in with Google!');
+      setTimeout(() => goHome(type), 600);
+    }
+  } catch {
+    toast('Google sign-in could not be completed. Please try again.', 'error');
+  }
+}
+if (googleError) {
+  const messages = {
+    google_not_configured: 'Google sign-in is not configured yet.',
+    google_email_unverified: 'Use a Google account with a verified email.',
+    google_signin_failed: 'Google sign-in failed. Please try again.',
+  };
+  toast(messages[googleError] ?? 'Google sign-in failed.', 'error');
+}
+
+if (googleOnboardingToken || googleSignInCompleted) {
+  // The OAuth callback already established the next step or started a session.
+} else if (session.token() && !session.expired()) goHome(session.type());
+else session.clear(); // stale/expired token: forget it
 
 try {                                                                // note left by endSession()
   const notice = sessionStorage.getItem('kc_notice');
@@ -24,7 +70,7 @@ function onTypeChange() {
 
 // Read the account type from the JWT payload (base64url), store the session, return the type
 function startSession(token) {
-  const { type, admin } = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+  const { type, admin } = readJwtPayload(token);
   const homeType = admin ? 'admin' : type;
   session.save(token, homeType);
   return homeType;
@@ -47,9 +93,21 @@ async function doLogin() {
 
 async function doRegister() {
   const type = $('r_type').value, email = val('r_email'), password = $('r_password').value;
-  if (!type || !email || !password) return toast('Type, email and password are required', 'error');
+  if (!type || !email || (!googleOnboardingToken && !password)) return toast('Type, email and password are required', 'error');
   const extra = profileFields(type);
   if (extra === null) return toast('Fill in the required profile fields', 'error');
+
+  if (googleOnboardingToken) {
+    const { ok, data } = await api('POST', '/auth/google/complete', {
+      onboarding_token: googleOnboardingToken, type, ...extra,
+    }, false);
+    if (!(ok && data.token)) return toast(data.error ?? 'Google sign-up failed', 'error');
+    googleOnboardingToken = null;
+    const homeType = startSession(data.token);
+    toast('Account created!');
+    setTimeout(() => goHome(homeType), 600);
+    return;
+  }
 
   const { ok, data } = await api('POST', '/auth/register', { email, password, type, ...extra }, false);
 

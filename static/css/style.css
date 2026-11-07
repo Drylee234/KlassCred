@@ -239,6 +239,12 @@ textarea { resize: vertical; min-height: 80px; }
 }
 
 .admin-activity { margin-top: 20px; }
+.admin-management { margin-bottom: 20px; }
+.admin-description { margin: -4px 0 14px; }
+.admin-search { display: flex; gap: 10px; margin-bottom: 12px; }
+.admin-search input { max-width: 420px; }
+.admin-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.admin-actions select { min-width: 150px; }
 .admin-empty { text-align: center; color: var(--ink-dim); padding: 24px; }
 
 @media (max-width: 700px) {

@@ -28,6 +28,7 @@ Employers (schools or parents) are also verified, then search and hire from the 
 - **Video** — Cloudinary
 - **Background jobs** — Celery with Redis
 - **Auth** — JWT + bcrypt
+- **Google sign-in** — Authlib (OpenID Connect)
 - **Hosting** — [Pxxl](https://pxxlspace.cv)
 
 ---
@@ -45,6 +46,27 @@ only to existing accounts whose email addresses are listed in the server's
 comma-separated `ADMIN_EMAILS` environment variable. Do not add this setting to
 public client-side configuration. For example, set it to `admin@example.com`
 to grant that account access; remove the address to revoke access.
+
+Admins can search accounts, verify or unverify teachers and employers, deactivate
+or reactivate accounts, and reassign or cancel open video-review assignments.
+Deactivation is reversible and invalidates the account's existing login tokens.
+After deploying the account-management update, run
+`flask --app app db upgrade` to apply the database migration.
+
+## Google sign-in
+
+Create a Google OAuth client ID for a Web application and configure
+`GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` on the server. Set
+`GOOGLE_REDIRECT_URI` to the exact registered callback URL
+`https://<your-app-host>/app/auth/google/callback` (use the corresponding
+localhost URL for local development). Set `SECRET_KEY` to a persistent,
+random server-side value because Flask uses its signed session to protect the
+OAuth state. For HTTPS deployments, set `SESSION_COOKIE_SECURE=true`.
+
+Google sign-in verifies the Google email and links it to an existing account
+with that verified email. New users complete the existing role-specific profile
+before an account is created. Apply the database migration with
+`flask --app app db upgrade`.
 
 ## Background video reviews
 
