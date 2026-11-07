@@ -38,6 +38,14 @@ Active development — AIB Ship 2026 MVP.
 
 Live at **[klasscred-8m7e.onrender.com](https://klasscred-8m7e.onrender.com/)**
 
+## Admin dashboard
+
+The platform overview is available at `/app/admin/`. Admin access is granted
+only to existing accounts whose email addresses are listed in the server's
+comma-separated `ADMIN_EMAILS` environment variable. Do not add this setting to
+public client-side configuration. For example, set it to `admin@example.com`
+to grant that account access; remove the address to revoke access.
+
 ## Background video reviews
 
 Video confirmation queues AI review work and returns while the submission is

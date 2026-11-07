@@ -83,6 +83,7 @@ def login(email, password):
     payload = {
         "user_id": user.id,
         "type": user.type,
+        "admin": user.email.casefold() in current_app.config.get("ADMIN_EMAILS", ()),
         "tv": user.token_version,
         "exp": now + expiry,
     }

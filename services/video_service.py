@@ -27,7 +27,6 @@ def _queue_ai_review(submission):
 
 
 def request_upload_url(teacher_id, scenario_id):
-    # Ownership is enforced by the route/auth layer.
     scenario = TeachingScenario.query.get(scenario_id)
     if not scenario:
         raise NotFoundError("Teaching scenario not found")
@@ -39,7 +38,6 @@ def request_upload_url(teacher_id, scenario_id):
 
 
 def confirm_upload(teacher_id, scenario_id, video_url):
-    # Ownership is enforced by the route/auth layer.
     scenario = TeachingScenario.query.get(scenario_id)
     if not scenario:
         raise NotFoundError("Teaching scenario not found")
@@ -61,7 +59,6 @@ def confirm_upload(teacher_id, scenario_id, video_url):
 
 
 def handle_cloudinary_webhook(body, timestamp, signature, payload):
-    """Process a signed Cloudinary upload notification idempotently."""
     if not cloudinary_adapter.verify_webhook_signature(body, timestamp, signature):
         raise BadRequestError("Invalid webhook signature")
 
@@ -84,7 +81,6 @@ def handle_cloudinary_webhook(body, timestamp, signature, payload):
 
 
 def get_submissions(teacher_id):
-    """Return all video submissions belonging to the authenticated teacher."""
     return (
         VideoSubmission.query
         .filter_by(teacher_id=teacher_id)

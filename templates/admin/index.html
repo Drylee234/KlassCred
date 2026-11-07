@@ -1,0 +1,34 @@
+{% extends "admin/_layout.html" %}
+{% block content %}
+<div class="page-header admin-header">
+  <div>
+    <h2>Platform overview</h2>
+    <p>A live snapshot of activity across KlassCred.</p>
+  </div>
+  <button class="btn btn-ghost" id="refresh_dashboard" type="button">Refresh</button>
+</div>
+
+<div class="stat-grid admin-stat-grid">
+  <div class="card admin-stat"><span class="hint">Total accounts</span><strong id="metric_accounts">—</strong><span class="hint">All platform users</span></div>
+  <div class="card admin-stat"><span class="hint">Teachers</span><strong id="metric_teachers">—</strong><span class="hint">Registered teacher profiles</span></div>
+  <div class="card admin-stat"><span class="hint">Employers</span><strong id="metric_employers">—</strong><span class="hint">Organizations and parents</span></div>
+  <div class="card admin-stat"><span class="hint">Verified accounts</span><strong id="metric_verified_accounts">—</strong><span class="hint">Identity checks complete</span></div>
+  <div class="card admin-stat"><span class="hint">Pending verification</span><strong id="metric_pending_verifications">—</strong><span class="hint">Teachers and employers</span></div>
+  <div class="card admin-stat"><span class="hint">Video reviews</span><strong id="metric_video_reviews">—</strong><span class="hint">In the review pipeline</span></div>
+  <div class="card admin-stat"><span class="hint">Open assignments</span><strong id="metric_open_reviews">—</strong><span class="hint">Assigned or in progress</span></div>
+  <div class="card admin-stat"><span class="hint">Pending interviews</span><strong id="metric_pending_interviews">—</strong><span class="hint">Awaiting a response</span></div>
+  <div class="card admin-stat"><span class="hint">New this week</span><strong id="metric_new_accounts">—</strong><span class="hint">Accounts created in 7 days</span></div>
+</div>
+
+<div class="card admin-activity">
+  <div class="card-title">Recent activity</div>
+  <div id="activity_status" class="hint" role="status" aria-live="polite"></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Activity</th><th>Type</th><th>Status</th><th>When</th></tr></thead>
+      <tbody id="admin_activity"></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block role_js %}{% endblock %}

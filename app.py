@@ -1,15 +1,37 @@
-from flask import Flask, abort, redirect, render_template, url_for
+from flask import Flask, abort, redirect, render_template, request, url_for
 from jinja2 import TemplateNotFound
 from extensions import db, migrate, init_cloudinary
 from config import Config
 
-ROLES = ("teacher", "employer", "reviewer")
-API_BLUEPRINTS = ("auth", "teacher", "employer", "reviewer", "verification")
+ROLES = ("teacher", "employer", "reviewer", "admin")
 
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    @app.after_request
+    def add_cors_headers(response):
+        origin = request.headers.get("Origin")
+        allowed_origins = app.config["CORS_ALLOWED_ORIGINS"]
+        if isinstance(allowed_origins, str):
+            allowed_origins = allowed_origins.split(",")
+        allowed_origins = {
+            allowed.strip().rstrip("/")
+            for allowed in allowed_origins
+            if allowed.strip()
+        }
+        if origin and origin.rstrip("/") in allowed_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers.add("Vary", "Origin")
+            response.headers["Access-Control-Allow-Methods"] = (
+                "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+            )
+            response.headers["Access-Control-Allow-Headers"] = (
+                "Authorization, Content-Type"
+            )
+            response.headers["Access-Control-Max-Age"] = "600"
+        return response
 
     db.init_app(app)
     migrate.init_app(app, db)
@@ -22,6 +44,7 @@ def create_app():
     from routes.employer import bp as employer_bp
     from routes.reviewer import bp as reviewer_bp
     from routes.verification import bp as verification_bp
+    from routes.admin import bp as admin_bp
     from routes.webhooks import bp as webhooks_bp
 
     # Keep browser-facing API endpoints under the same /app prefix as the portal.
@@ -30,6 +53,7 @@ def create_app():
     app.register_blueprint(employer_bp, url_prefix=f"/app{employer_bp.url_prefix}")
     app.register_blueprint(reviewer_bp, url_prefix=f"/app{reviewer_bp.url_prefix}")
     app.register_blueprint(verification_bp, url_prefix=f"/app{verification_bp.url_prefix}")
+    app.register_blueprint(admin_bp, url_prefix=f"/app{admin_bp.url_prefix}")
     # Cloudinary callbacks are provider-configured and remain at /webhooks/cloudinary.
     app.register_blueprint(webhooks_bp)
 
